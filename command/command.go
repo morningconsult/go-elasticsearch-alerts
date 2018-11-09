@@ -57,7 +57,7 @@ func Run() int {
 
 	wg.Add(len(queryHandlers) + 1)
 
-	outputCh := make(chan []*poll.Record, len(queryHandlers))
+	outputCh := make(chan *poll.Alert, len(queryHandlers))
 
 	go ah.Run(ctx, outputCh, &wg)
 	for _, qh := range queryHandlers {

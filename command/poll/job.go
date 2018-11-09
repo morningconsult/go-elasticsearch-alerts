@@ -13,9 +13,11 @@ import (
 
 	"github.com/robfig/cron"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-uuid"
 	"github.com/mitchellh/mapstructure"
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 )
 
 const (
@@ -23,45 +25,30 @@ const (
 	defaultTimestampFormat string = time.RFC3339
 )
 
-type Field struct {
-	Key   string `mapstructure:"key"`
-	Count int    `mapstructure:"doc_count"`
-}
-
-type Record struct {
-	Title  string
-	Text   string
-	Fields []*Field
-}
-
 type QueryHandlerConfig struct {
-	Name       string
-	Logger     hclog.Logger
-	Client     *http.Client
-	ESUrl      string
-	QueryData  map[string]interface{}
-	QueryIndex string
-	Schedule   string
-	StateIndex string
-	Filters    []string
+	Name         string
+	Logger       hclog.Logger
+	AlertMethods []alert.AlertMethod
+	Client       *http.Client
+	ESUrl        string
+	QueryData    map[string]interface{}
+	QueryIndex   string
+	Schedule     string
+	StateIndex   string
+	Filters      []string
 }
 
 type QueryHandler struct {
-	name      string
-	logger    hclog.Logger
-	client    *http.Client
-	queryURL  string
-	queryData map[string]interface{}
-	stateURL  string
-	schedule  cron.Schedule
-	filters   []string
+	name         string
+	logger       hclog.Logger
+	alertMethods []alert.AlertMethod
+	client       *http.Client
+	queryURL     string
+	queryData    map[string]interface{}
+	stateURL     string
+	schedule     cron.Schedule
+	filters      []string
 }
-
-// type Record struct {
-// 	NextQuery  time.Time
-// 	Executed   bool
-// 	ExecutedAt time.Time
-// }
 
 func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	schedule, err := cron.Parse(config.Schedule)
@@ -74,18 +61,19 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	}
 
 	return &QueryHandler{
-		name:      config.Name,
-		logger:    config.Logger,
-		client:    config.Client,
-		queryURL:  fmt.Sprintf("%s/%s", config.ESUrl, config.QueryIndex),
-		queryData: config.QueryData,
-		stateURL:  fmt.Sprintf("%s/%s", config.ESUrl, config.StateIndex),
-		schedule:  schedule,
-		filters:   config.Filters,
+		name:         config.Name,
+		logger:       config.Logger,
+		alertMethods: config.AlertMethods,
+		client:       config.Client,
+		queryURL:     fmt.Sprintf("%s/%s", config.ESUrl, config.QueryIndex),
+		queryData:    config.QueryData,
+		stateURL:     fmt.Sprintf("%s/%s", config.ESUrl, config.StateIndex),
+		schedule:     schedule,
+		filters:      config.Filters,
 	}, nil
 }
 
-func (q *QueryHandler) Run(ctx context.Context, outputCh chan interface{}, wg *sync.WaitGroup) {
+func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *sync.WaitGroup) {
 	var now  = time.Now()
 	var next = now
 
@@ -112,14 +100,25 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan interface{}, wg *s
 				break
 			}
 
-			records, err := q.Transform(data)
+			records, err := q.transform(data)
 			if err != nil {
 				q.logger.Error("error processing response", err.Error())
 				break
 			}
 
+			id, err := uuid.GenerateUUID()
+			if err != nil {
+				q.logger.Error("error creating new UUID", err.Error())
+				break
+			}
+
 			if records != nil && len(records) > 0 {
-				outputCh <- records
+				a := &alert.Alert{
+					ID:       id,
+					Records:  records,
+					Handlers: q.alertHandlers,
+				}
+				outputCh <- a
 			}
 		}
 		now = time.Now()
@@ -146,8 +145,8 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 	return data, nil
 }
 
-func (q *QueryHandler) transform(respData map[string]interface{}) ([]*Record, error) {
-	var records []*Record
+func (q *QueryHandler) transform(respData map[string]interface{}) ([]*alert.Record, error) {
+	var records []*alert.Record
 
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
@@ -155,18 +154,18 @@ func (q *QueryHandler) transform(respData map[string]interface{}) ([]*Record, er
 			continue
 		}
 
-		record := &Record{
+		record := &alert.Record{
 			Title: filter,
 		}
 
-		var fields []*Field
+		var fields []*alert.Field
 		for _, elem := range elems {
 			obj, ok := elem.(map[string]interface{})
 			if !ok {
 				continue
 			}
 
-			field := new(Field)
+			field := new(alert.Field)
 			if err := mapstructure.Decode(obj, field); err != nil {
 				return nil, err
 			}
@@ -208,7 +207,7 @@ func (q *QueryHandler) transform(respData map[string]interface{}) ([]*Record, er
 			return nil, err
 		}
 		
-		record := &Record{
+		record := &alert.Record{
 			Title: "hits.hits._source",
 			Text:  string(data),
 		}
