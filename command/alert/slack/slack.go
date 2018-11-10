@@ -3,6 +3,7 @@ package slack
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/hashicorp/go-cleanhttp"
@@ -17,9 +18,9 @@ const (
 )
 
 // Ensure Helper adheres to the alert.AlertHandler interface
-var _ alert.AlertMethod = (*slackAlertMethod)(nil)
+var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
 
-type SlackAlertMethodConfig {
+type SlackAlertMethodConfig struct {
 	WebhookURL string
 	Client     *http.Client
 	Channel    string
@@ -28,7 +29,7 @@ type SlackAlertMethodConfig {
 	Emoji      string
 }
 
-type slackAlertMethod struct {
+type SlackAlertMethod struct {
 	webhookURL string
 	client     *http.Client
 	channel    string
@@ -45,24 +46,25 @@ type Payload struct {
 	Attachments []*Attachment `json:"attachments,omitempty"`
 }
 
-func NewSlackAlertMethod(config *SlackAlertHandlerConfig) *slackAlertMethod {
+func NewSlackAlertMethod(config *SlackAlertMethodConfig) *SlackAlertMethod {
 	if config.Client == nil {
 		config.Client = cleanhttp.DefaultClient()
 	}
 
 	if config.Channel == "" {
-		config.channel = defaultChannel
+		config.Channel = defaultChannel
 	}
 
 	if config.Username == "" {
-		config.username = defaultUsername
+		config.Username = defaultUsername
 	}
 
 	if config.Emoji == "" {
-		config.emoji = defaultEmoji
+		config.Emoji = defaultEmoji
 	}
 
-	return &slackAlertMethod{
+	return &SlackAlertMethod{
+		channel:    config.Channel,
 		webhookURL: config.WebhookURL,
 		client:     config.Client,
 		text:       config.Text,
@@ -70,7 +72,14 @@ func NewSlackAlertMethod(config *SlackAlertHandlerConfig) *slackAlertMethod {
 	}
 }
 
-func (s *slackAlertMethod) Send(ctx context.Context, records []*alert.Record) error {
+func (s *SlackAlertMethod) Write(ctx context.Context, records []*alert.Record) error {
+	if records == nil || len(records) < 1 {
+		return nil
+	}
+	return s.post(ctx, s.BuildPayload(records))
+}
+
+func (s *SlackAlertMethod) BuildPayload(records []*alert.Record) *Payload {
 	payload := &Payload{
 		Channel:  s.channel,
 		Username: s.username,
@@ -79,7 +88,7 @@ func (s *slackAlertMethod) Send(ctx context.Context, records []*alert.Record) er
 	}
 
 	for _, record := range records {
-		att := NewAttachment(&config.AttachmentConfig{
+		att := NewAttachment(&AttachmentConfig{
 			Fallback: record.Title,
 			Pretext:  record.Title,
 			Text:     record.Text,
@@ -88,14 +97,17 @@ func (s *slackAlertMethod) Send(ctx context.Context, records []*alert.Record) er
 		for _, field := range record.Fields {
 			f := &Field{
 				Title: field.Key,
-				Value: field.Count,
+				Value: fmt.Sprintf("%d", field.Count),
 				Short: true,
 			}
 			att.Fields = append(att.Fields, f)
 		}
 		payload.Attachments = append(payload.Attachments, att)
 	}
+	return payload
+}
 
+func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
 	data, err := jsonutil.EncodeJSON(payload)
 	if err != nil {
 		return err
@@ -104,5 +116,15 @@ func (s *slackAlertMethod) Send(ctx context.Context, records []*alert.Record) er
 	req.Header.Add("Content-Type", "application/json")
 	req = req.WithContext(ctx)
 
-	s.client.Do(req)
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making HTTP request: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 || resp.StatusCode != 201 || resp.StatusCode != 202 {
+		return fmt.Errorf("received non-200 status code: %s", resp.Status)
+	}
+
+	return err
 }

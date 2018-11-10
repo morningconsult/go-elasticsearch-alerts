@@ -31,7 +31,7 @@ type AlertMethod interface {
 	Write(context.Context, []*Record) error
 }
 
-type SlackAlertHandlerConfig struct {
+type AlertHandlerConfig struct {
 	Logger hclog.Logger
 }
 
@@ -46,13 +46,11 @@ func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
 }
 
 func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync.WaitGroup) {
-	alertCh := make(chan func() error, 8)
-
 	defer func() {
-		close(alertCh)
 		wg.Done()
 	}()
 
+	alertCh := make(chan func() error, 8)
 	active := new(inventory)
 
 	alertFunc := func(ctx context.Context, alertID string, method AlertMethod, records []*Record) func() error {
@@ -84,7 +82,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 			}
 
 			if err := writeAlert(); err != nil {
-				backoff := newBackoff()
+				backoff := a.newBackoff()
 				a.logger.Error("error returned by sink function, retrying", "error", err.Error(), "backoff", backoff.String())
 				select {
 				case <-ctx.Done():

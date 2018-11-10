@@ -12,31 +12,31 @@ type inventory struct {
 }
 
 func (i *inventory) register(id string) {
-	mutex.Lock()
+	i.mutex.Lock()
 	if _, ok := i.alerts[id]; ok {
 		return
 	}
 	i.alerts[id] = defaultNumAttempts
-	mutex.Unlock()
+	i.mutex.Unlock()
 }
 
 func (i *inventory) deregister(id string) {
-	mutex.Lock()
+	i.mutex.Lock()
 	delete(i.alerts, id)
-	mutex.Unlock()
+	i.mutex.Unlock()
 }
 
 func (i *inventory) decrement(id string) {
-	mutex.Lock()
+	i.mutex.Lock()
 	if v, ok := i.alerts[id]; ok {
 		i.alerts[id] = v - 1
 	}
-	mutex.Unlock()
+	i.mutex.Unlock()
 }
 
 func (i *inventory) remaining(id string) int {
-	mutex.RLock()
-	defer mutex.RUnlock()
+	i.mutex.RLock()
+	defer i.mutex.RUnlock()
 
 	remaining := 0
 	if v, ok := i.alerts[id]; ok {

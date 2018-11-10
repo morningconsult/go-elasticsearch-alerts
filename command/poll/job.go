@@ -114,9 +114,9 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 
 			if records != nil && len(records) > 0 {
 				a := &alert.Alert{
-					ID:       id,
-					Records:  records,
-					Handlers: q.alertHandlers,
+					ID:      id,
+					Records: records,
+					Methods: q.alertMethods,
 				}
 				outputCh <- a
 			}
