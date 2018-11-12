@@ -2,7 +2,7 @@ package command
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -15,6 +15,7 @@ import (
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/query"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/slack"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
 )
 
 func Run() int {
@@ -61,7 +62,19 @@ func Run() int {
 					logger.Error("error creating new Slack output method", err.Error())
 					return 1
 				}
-			// more methods to be added in the future (e.g. file)
+			case "file":
+				fileConfig := new(file.FileAlertMethodConfig)
+				if err = mapstructure.Decode(output.Config, fileConfig); err != nil {
+					logger.Error("error decoding file output configuration", err.Error())
+					return 1
+				}
+				fileConfig.RuleName = rule.Name
+
+				method, err = file.NewFileAlertMethod(fileConfig)
+				if err != nil {
+					logger.Error("error creating new file output method", err.Error())
+					return 1
+				}
 			default:
 				logger.Error("output type %q is not a valid type", output.Type)
 				return 1

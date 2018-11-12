@@ -11,7 +11,7 @@ import (
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 )
 
-// Ensure Helper adheres to the alert.AlertHandler interface
+// Ensure SlackAlertMethod adheres to the alert.AlertMethod interface
 var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
 
 type SlackAlertMethodConfig struct {

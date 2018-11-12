@@ -11,14 +11,14 @@ import (
 )
 
 type Field struct {
-	Key   string `mapstructure:"key"`
-	Count int    `mapstructure:"doc_count"`
+	Key   string `json:"key" mapstructure:"key`
+	Count int    `json:"doc_count" mapstructure:"doc_count"`
 }
 
 type Record struct {
-	Title  string
-	Text   string
-	Fields []*Field
+	Title  string   `json:"filter,omitempty"`
+	Text   string   `json:"text,omitempty"`
+	Fields []*Field `json:"fields,omitempty"`
 }
 
 type Alert struct {
