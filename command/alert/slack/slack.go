@@ -11,22 +11,16 @@ import (
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 )
 
-const (
-	defaultChannel  string = "#error-alerts"
-	defaultUsername string = "go-alerts"
-	defaultEmoji    string = ":robot_face:"
-)
-
 // Ensure Helper adheres to the alert.AlertHandler interface
 var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
 
 type SlackAlertMethodConfig struct {
-	WebhookURL string
+	WebhookURL string       `mapstructure:"webhook"`
+	Channel    string       `mapstructure:"channel"`
+	Username   string       `mapstructure:"username"`
+	Text       string       `mapstructure:"text"`
+	Emoji      string       `mapstructure:"emoji"`
 	Client     *http.Client
-	Channel    string
-	Username   string
-	Text       string
-	Emoji      string
 }
 
 type SlackAlertMethod struct {
@@ -46,21 +40,13 @@ type Payload struct {
 	Attachments []*Attachment `json:"attachments,omitempty"`
 }
 
-func NewSlackAlertMethod(config *SlackAlertMethodConfig) *SlackAlertMethod {
+func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, error) {
+	if config.WebhookURL == "" {
+		return nil, fmt.Errorf("field 'output.config.webhook' must not be empty for the Slack output method")
+	}
+
 	if config.Client == nil {
 		config.Client = cleanhttp.DefaultClient()
-	}
-
-	if config.Channel == "" {
-		config.Channel = defaultChannel
-	}
-
-	if config.Username == "" {
-		config.Username = defaultUsername
-	}
-
-	if config.Emoji == "" {
-		config.Emoji = defaultEmoji
 	}
 
 	return &SlackAlertMethod{
@@ -69,7 +55,7 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) *SlackAlertMethod {
 		client:     config.Client,
 		text:       config.Text,
 		emoji:      config.Emoji,
-	}
+	}, nil
 }
 
 func (s *SlackAlertMethod) Write(ctx context.Context, records []*alert.Record) error {

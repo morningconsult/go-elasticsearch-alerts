@@ -10,10 +10,11 @@ import (
 	// "time"
 
 	"github.com/hashicorp/go-hclog"
-	// "github.com/hashicorp/go-cleanhttp"
-
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/poll"
+	"github.com/mitchellh/mapstructure"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/config"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/query"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/slack"
 )
 
 func Run() int {
@@ -24,40 +25,71 @@ func Run() int {
 
 	shutdownCh := makeShutdownCh()
 
-	client := cleanhttp.DefaultClient()
-	// set up TLS?
+	config, err := config.ParseConfig()
+	if err != nil {
+		logger.Error("error loading config file", err.Error())
+		return 1
+	}
 
-	// config, err := config.LoadConfig(logger)
-	// if err != nil {
-	// 	logger.Error("error loading config file", err.Error())
-	// 	return 1
-	// }
+	client, err := config.NewClient()
+	if err != nil {
+		logger.Error("error creating new HTTP client", err.Error())
+		return 1
+	}
+	ah := alert.NewAlertHandler(&alert.AlertHandlerConfig{
+		Logger: logger,
+	})
 
-	ah := alert.NewAlertHandler(&alert.AlertHandlerConfig{logger})
+	var queryHandlers []*query.QueryHandler
+	for _, rule := range config.Rules {
 
-	var queryHandlers []*poll.QueryHandler
-	// for _, a := range config.Alerts {
-	// 	handler, err := poll.NewQueryHandler(&poll.QueryHandlerConfig{})
-	// 	if err != nil {
-	// 		logger.Error("error creating new job handler", err.Error())
-	// 	}
-	// 	queryHandlers = append(queryHandlers, handler)
-	// }
+		// Build alert.AlertMethod array for this rule
+		var methods []alert.AlertMethod
+		for _, output := range rule.Outputs {
+			var method alert.AlertMethod
+			switch output.Type {
+			case "slack":
+				slackConfig := new(slack.SlackAlertMethodConfig)
+				if err = mapstructure.Decode(output.Config, slackConfig); err != nil {
+					logger.Error("error decoding Slack output configuration", err.Error())
+					return 1
+				}
+				slackConfig.Client = client
 
-	for _, a := range []int{10, 12, 14, 16, 18} {
-		handler, err := poll.NewQueryHandler(&poll.QueryHandlerConfig{
-			Name:     fmt.Sprintf("%d seconds", a),
-			Schedule: fmt.Sprintf("*/%d * * * * *", a),
+				method, err = slack.NewSlackAlertMethod(slackConfig)
+				if err != nil {
+					logger.Error("error creating new Slack output method", err.Error())
+					return 1
+				}
+			// more methods to be added in the future (e.g. file)
+			default:
+				logger.Error("output type %q is not a valid type", output.Type)
+				return 1
+			}
+			methods = append(methods, method)
+		}
+		handler, err := query.NewQueryHandler(&query.QueryHandlerConfig{
+			Name:         rule.Name,
+			Logger:       logger,
+			AlertMethods: methods,
+			Client:       client,
+			ESUrl:        config.Server.ElasticSearchURL,
+			QueryData:    rule.ElasticSearchBody,
+			QueryIndex:   rule.ElasticSearchIndex,
+			Schedule:     rule.CronSchedule,
+			StateIndex:   config.Server.ElasticSearchStateIndex,
+			Filters:      rule.Filters,
 		})
 		if err != nil {
-			logger.Error("error creating new query handler", err.Error())
+			logger.Error("error creating new job handler", err.Error())
+			return 1
 		}
 		queryHandlers = append(queryHandlers, handler)
 	}
 
 	wg.Add(len(queryHandlers) + 1)
 
-	outputCh := make(chan *poll.Alert, len(queryHandlers))
+	outputCh := make(chan *alert.Alert, len(queryHandlers))
 
 	go ah.Run(ctx, outputCh, &wg)
 	for _, qh := range queryHandlers {
@@ -71,7 +103,7 @@ func Run() int {
 
 	select {
 	case <-shutdownCh:
-		fmt.Println("SIGKILL received")
+		logger.Info("SIGKILL received")
 		cancel()
 		// Wait for goroutines to cleanup
 		<-outputCh

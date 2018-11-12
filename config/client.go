@@ -1,4 +1,4 @@
-package utils
+package config
 
 import (
 	"crypto/tls"
@@ -10,38 +10,38 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 )
 
-type ClientOptions struct {
-	TLSEnabled bool
-	CACert     string
-	ClientCert string
-	ClientKey  string
-	ServerName string
+type ClientConfig struct {
+	TLSEnabled bool   `json:"tls_enabled"`
+	CACert     string `json:"ca_cert"`
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
+	ServerName string `json:"server_name"`
 }
 
-func NewClient(opts *ClientOptions) (*http.Client, error) {
+func (c *Config) NewClient() (*http.Client, error) {
 	client := cleanhttp.DefaultClient()
-	if !opts.TLSEnabled {
+	if c.Client == nil || !c.Client.TLSEnabled {
 		return client, nil
 	}
 
-	if opts.CACert == "" {
+	if c.Client.CACert == "" {
 		return nil, fmt.Errorf("no path to CA certificate")
 	}
-	if opts.ClientCert == "" {
+	if c.Client.ClientCert == "" {
 		return nil, fmt.Errorf("no path to client certificate")
 	}
-	if opts.ClientKey == "" {
+	if c.Client.ClientKey == "" {
 		return nil, fmt.Errorf("no path to client key")
 	}
 
 	// Load client certificate
-	cert, err := tls.LoadX509KeyPair(opts.ClientCert, opts.ClientKey)
+	cert, err := tls.LoadX509KeyPair(c.Client.ClientCert, c.Client.ClientKey)
 	if err != nil {
 		return nil, fmt.Errorf("error loading X509 key pair: %v", err)
 	}
 
 	// Load CA certificate
-	caCert, err := ioutil.ReadFile(opts.CACert)
+	caCert, err := ioutil.ReadFile(c.Client.CACert)
 	if err != nil {
 		return nil, fmt.Errorf("error reading CA certificate file: %v", err)
 	}
@@ -51,7 +51,7 @@ func NewClient(opts *ClientOptions) (*http.Client, error) {
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      caCertPool,
-		ServerName:   opts.ServerName,
+		ServerName:   c.Client.ServerName,
 	}
 	tlsConfig.BuildNameToCertificate()
 	client.Transport.(*http.Transport).TLSClientConfig = tlsConfig

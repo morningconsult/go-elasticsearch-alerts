@@ -1,10 +1,9 @@
-package poll
+package query
 
 import (
 	"bytes"
 	"context"
 	"fmt"
-	"encoding/json"
 	"net/http"
 	"path"
 	// "strconv"
@@ -14,7 +13,6 @@ import (
 	"github.com/robfig/cron"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
-	"github.com/mitchellh/mapstructure"
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
@@ -81,9 +79,9 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		wg.Done()
 	}()
 
-	t, err := q.nextQuery(ctx)
+	t, err := q.getNextQuery(ctx)
 	if err != nil {
-		q.logger.Error("error looking up next scheduled query in ElasticSearch", err.Error())
+		q.logger.Error("error looking up next scheduled query in ElasticSearch", err.Error(), "running query now instead")
 	}
 	if t != nil {
 		next = *t
@@ -123,11 +121,14 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		}
 		now = time.Now()
 		next = q.schedule.Next(now)
+		if err = q.setNextQuery(ctx, next); err != nil {
+			q.logger.Error("error creating next query document in ElasticSearch", err.Error())
+		}
 	}
 }
 
 func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
-	req, err := q.newSearchRequest(ctx, q.queryURL, q.queryData)
+	req, err := q.newRequest(ctx, "GET", path.Join(q.queryURL, "_search"), q.queryData)
 	if err != nil {
 		return nil, fmt.Errorf("error making HTTP request to ElasticSearch: %v", err)
 	}
@@ -145,78 +146,30 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 	return data, nil
 }
 
-func (q *QueryHandler) transform(respData map[string]interface{}) ([]*alert.Record, error) {
-	var records []*alert.Record
-
-	for _, filter := range q.filters {
-		elems := utils.GetAll(respData, filter)
-		if elems == nil || len(elems) < 1 {
-			continue
-		}
-
-		record := &alert.Record{
-			Title: filter,
-		}
-
-		var fields []*alert.Field
-		for _, elem := range elems {
-			obj, ok := elem.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			field := new(alert.Field)
-			if err := mapstructure.Decode(obj, field); err != nil {
-				return nil, err
-			}
-
-			if field.Key == "" || field.Count < 1 {
-				continue
-			}
-
-			fields = append(fields, field)
-		}
-		record.Fields = fields
-		records = append(records, record)
+func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
+	payload := map[string]interface{}{
+		"rule_name":  q.name,
+		"next_query": ts.Format(defaultTimestampFormat),
 	}
 
-	// Make one record per hits.hits
-	hitsRaw := utils.Get(respData, "hits.hits")
-	if hitsRaw == nil {
-		return records, nil
+	req, err := q.newRequest(ctx, "POST", path.Join(q.stateURL, "_doc"), payload)
+	if err != nil {
+		return fmt.Errorf("error creating new request: %v", err)
 	}
 
-	hits, ok := hitsRaw.([]interface{})
-	if !ok {
-		return records, nil
+	resp, err := q.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making HTTP request: %v", err)
 	}
+	resp.Body.Close()
 
-	for _, hit := range hits {
-		obj, ok := hit.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		source, ok := obj["_source"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		data, err := json.MarshalIndent(source, "", "    ")
-		if err != nil {
-			return nil, err
-		}
-		
-		record := &alert.Record{
-			Title: "hits.hits._source",
-			Text:  string(data),
-		}
-		records = append(records, record)
+	if resp.StatusCode != 201 {
+		return fmt.Errorf("failed to create new document (received status: %q)", resp.Status)
 	}
-	return records, nil
+	return nil
 }
 
-func (q *QueryHandler) nextQuery(ctx context.Context) (*time.Time, error) {
+func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	payload := map[string]interface{}{
 		"query": map[string]interface{}{
 			"term": map[string]interface{}{
@@ -233,7 +186,7 @@ func (q *QueryHandler) nextQuery(ctx context.Context) (*time.Time, error) {
 		"size": 1,
 	}
 
-	req, err := q.newSearchRequest(ctx, q.stateURL, payload)
+	req, err := q.newRequest(ctx, "GET", path.Join(q.stateURL, "_search"), payload)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new request: %v", err)
 	}
@@ -253,7 +206,7 @@ func (q *QueryHandler) nextQuery(ctx context.Context) (*time.Time, error) {
 
 	var data = make(map[string]interface{})
 	if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error JSON-decoding HTTP response: %v", err)
 	}
 
 	nextRaw := utils.Get(data, "hits.hits[0]._source.next_query")
@@ -273,13 +226,13 @@ func (q *QueryHandler) nextQuery(ctx context.Context) (*time.Time, error) {
 	return &t, nil
 }
 
-func (q *QueryHandler) newSearchRequest(ctx context.Context, url string, payload map[string]interface{}) (*http.Request, error) {
+func (q *QueryHandler) newRequest(ctx context.Context, method, url string, payload map[string]interface{}) (*http.Request, error) {
 	data, err := jsonutil.EncodeJSON(payload)
 	if err != nil {
 		return nil, fmt.Errorf("error JSON-encoding payload: %v", err)
 	}
 
-	req, err := http.NewRequest("GET", path.Join(url, "_search"), bytes.NewBuffer(data))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
 	}
