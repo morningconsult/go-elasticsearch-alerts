@@ -1,7 +1,6 @@
 package file
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -69,16 +68,8 @@ func (f *FileAlertMethod) Write(ctx context.Context, records []*alert.Record) er
 	if err != nil {
 		return fmt.Errorf("error JSON-encoding data: %v", err)
 	}
-	buf := bytes.NewBufferString("\n")
 
-	if err = write(buf, data); err != nil {
-		return err
-	}
-
-	if err = write(outfile, buf.Bytes()); err != nil {
-		return err
-	}
-	return nil
+	return write(outfile, data)
 }
 
 func write(writer io.Writer, data []byte) error {
