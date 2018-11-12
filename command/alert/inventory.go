@@ -8,7 +8,14 @@ const defaultNumAttempts int = 3
 
 type inventory struct {
 	alerts map[string]int
-	mutex  sync.RWMutex
+	mutex  *sync.RWMutex
+}
+
+func NewInventory() *inventory {
+	return &inventory{
+		alerts: make(map[string]int),
+		mutex:  &sync.RWMutex{},
+	}
 }
 
 func (i *inventory) register(id string) {

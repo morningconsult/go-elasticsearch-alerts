@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"path"
 	// "strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,6 +58,8 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		config.StateIndex = defaultStateIndex
 	}
 
+	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
+
 	return &QueryHandler{
 		name:         config.Name,
 		logger:       config.Logger,
@@ -78,6 +80,20 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	defer func() {
 		wg.Done()
 	}()
+
+	if err := q.stateIndexExists(ctx); err != nil {
+		q.logger.Error(fmt.Sprintf("error checking if index %q exists", q.stateURL), err.Error())
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		q.logger.Info(fmt.Sprintf("ElasticSearch index %q does not exist. Attempting to create it.", q.stateURL))
+		if err := q.createStateIndex(ctx); err != nil {
+			q.logger.Error("error creating ElasticSearch state index", err.Error())
+			return
+		}
+	}
 
 	t, err := q.getNextQuery(ctx)
 	if err != nil {
@@ -127,8 +143,44 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	}
 }
 
+func (q *QueryHandler) stateIndexExists(ctx context.Context) error {
+	req, err := q.newRequest(ctx, "GET", q.stateURL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := q.client.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("ElasticSearch index %q does not exist", q.stateURL)
+	}
+	return nil
+}
+
+func (q *QueryHandler) createStateIndex(ctx context.Context) error {
+	req, err := q.newRequest(ctx, "PUT", q.stateURL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := q.client.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("error creating ElasticSearch index %q", q.stateURL)
+	}
+	return nil
+}
+
 func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
-	req, err := q.newRequest(ctx, "GET", path.Join(q.queryURL, "_search"), q.queryData)
+	req, err := q.newRequest(ctx, "GET", q.queryURL+"/_search", q.queryData)
 	if err != nil {
 		return nil, fmt.Errorf("error making HTTP request to ElasticSearch: %v", err)
 	}
@@ -152,7 +204,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
 		"next_query": ts.Format(defaultTimestampFormat),
 	}
 
-	req, err := q.newRequest(ctx, "POST", path.Join(q.stateURL, "_doc"), payload)
+	req, err := q.newRequest(ctx, "POST", q.stateURL+"/_doc", payload)
 	if err != nil {
 		return fmt.Errorf("error creating new request: %v", err)
 	}
@@ -186,7 +238,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 		"size": 1,
 	}
 
-	req, err := q.newRequest(ctx, "GET", path.Join(q.stateURL, "_search"), payload)
+	req, err := q.newRequest(ctx, "GET", q.stateURL+"/_search", payload)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new request: %v", err)
 	}
@@ -227,16 +279,26 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 }
 
 func (q *QueryHandler) newRequest(ctx context.Context, method, url string, payload map[string]interface{}) (*http.Request, error) {
-	data, err := jsonutil.EncodeJSON(payload)
-	if err != nil {
-		return nil, fmt.Errorf("error JSON-encoding payload: %v", err)
+	var req *http.Request
+	var err error
+	if payload != nil {
+		data, err := jsonutil.EncodeJSON(payload)
+		if err != nil {
+			return nil, fmt.Errorf("error JSON-encoding payload: %v", err)
+		}
+
+		req, err = http.NewRequest(method, url, bytes.NewBuffer(data))
+		if err != nil {
+			return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
+		}
+		req.Header.Add("Content-Type", "application/json")
+	} else {
+		req, err = http.NewRequest(method, url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
+		}
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
-	}
 	req = req.WithContext(ctx)
-	req.Header.Add("Content-Type", "application/json")
 	return req, nil
 }

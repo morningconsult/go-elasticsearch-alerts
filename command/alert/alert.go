@@ -51,7 +51,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 	}()
 
 	alertCh := make(chan func() error, 8)
-	active := new(inventory)
+	active := NewInventory()
 
 	alertFunc := func(ctx context.Context, alertID string, method AlertMethod, records []*Record) func() error {
 		return func() error {

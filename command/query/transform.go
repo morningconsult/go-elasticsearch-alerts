@@ -38,6 +38,9 @@ func (q *QueryHandler) transform(respData map[string]interface{}) ([]*alert.Reco
 
 			fields = append(fields, field)
 		}
+		if len(fields) < 1 {
+			continue
+		}
 		record.Fields = fields
 		records = append(records, record)
 	}

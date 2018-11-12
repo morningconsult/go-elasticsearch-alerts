@@ -46,13 +46,10 @@ func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error)
 	if err != nil {
 		return nil, fmt.Errorf("error expanding file path %q: %v", config.OutputFilepath, err)
 	}
-	if _, err := os.Stat(expanded); os.IsNotExist(err) {
-		return nil, fmt.Errorf("file %q does not exist", expanded)
-	}
 
 	return &FileAlertMethod{
 		ruleName:       config.RuleName,
-		outputFilepath: config.OutputFilepath,
+		outputFilepath: expanded,
 	}, nil
 }
 

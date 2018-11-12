@@ -37,6 +37,7 @@ func Run() int {
 		logger.Error("error creating new HTTP client", err.Error())
 		return 1
 	}
+
 	ah := alert.NewAlertHandler(&alert.AlertHandlerConfig{
 		Logger: logger,
 	})
