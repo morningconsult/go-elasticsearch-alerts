@@ -103,11 +103,12 @@ The rule configuration files are used to configure what ElasticSearch queries wi
 }
 ```
 
-In the example above, the application would execute the following query to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and send the results to a Slack and write them to local disk.
+In the example above, the application would execute the following query (show as a `cURL` request) to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and send the results to a Slack and write them to local disk.
 
-```json
-GET http://<your_elasticsearch_host>/filebeat-*/_search
-{
+```shell
+$ curl http://<your_elasticsearch_host>/filebeat-*/_search \
+  --header "Content-Type: application/json" \
+  --data '{
   "query": {
     "bool": {
       "must": [
@@ -128,7 +129,7 @@ GET http://<your_elasticsearch_host>/filebeat-*/_search
   },
   "size": 20,
   "_source": "system.syslog"
-}
+}'
 ```
 
 ### Rule configuration file parameters
@@ -186,11 +187,13 @@ The application will group the response to the ElasticSearch query by each eleme
 }
 ```
 
-Also given the filters `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets` and that the Slack output method is used, the application will make the following POST request to Slack after running the query and receiving the aforementioned data:
+Also given the filters `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets` and that the Slack output method is used, the application will make the following request to Slack (shown as a `cURL` request) after running the query and receiving the aforementioned data:
 
-```json
-POST https://slack.webhooks.foo/asdf
-{
+```shell
+$ curl https://slack.webhooks.foo/asdf \
+  --request POST \
+  --header "Content-Type: application/json" \
+  --data '{
   "channel": "#error-alerts",
   "text": "New errors",
   "emoji": ":hankey:",
@@ -238,7 +241,7 @@ POST https://slack.webhooks.foo/asdf
       ]
     }
   ]
-}
+}'
 ``` 
 
 Note: The last element of the `filter` value should be an array with both the `key` and `doc_count` fields (e.g. if you use `aggregations.hostname.buckets`, then `buckets` should be an array).
