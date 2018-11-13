@@ -143,7 +143,7 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 
 ### Filters
 
-The application will group the response to the ElasticSearch query by each element of the `filters` field and include each result of the filters as a separate record. For example, given the [rule file above](#example), assume ElasticSearch returns the following in response to the query:
+The application will group the response to the ElasticSearch query by each element of the `filters` field and include each result of the filters as a separate record. For example, given the [rule file above](#example) let's assume that ElasticSearch returns the following in response to the query:
 ```json
 {
   "aggregations": {
@@ -200,7 +200,7 @@ $ curl https://slack.webhooks.foo/asdf \
   "attachments": [
     {
       "fallback": "aggregations.service_name.buckets",
-	    "pretext": "aggregations.service_name.buckets",
+      "pretext": "aggregations.service_name.buckets",
       "fields": [
         {
           "title": "foo",
