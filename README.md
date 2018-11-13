@@ -52,34 +52,6 @@ The rule configuration files are used to configure what ElasticSearch queries wi
 
 ### Example
 
-In the following example, the application would execute the following query to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and send the results to a Slack and write them to local disk.
-
-```json
-GET http://<your_elasticsearch_host>/filebeat-*/_search
-{
-  "query": {
-    "bool": {
-      "must": [
-        { "query_string" : {
-          "query" : "*",
-          "fields" : [ "system.syslog.message", "message" ]
-        } }
-      ]
-    }
-  },
-  "aggs": {
-    "hostname": {
-      "terms": {
-        "field": "system.syslog.hostname",
-        "min_doc_count": 1
-      }
-    }
-  },
-  "size": 20,
-  "_source": "system.syslog"
-}
-```
-
 ```json
 {
   "name": "filebeat_errors",
@@ -131,13 +103,41 @@ GET http://<your_elasticsearch_host>/filebeat-*/_search
 }
 ```
 
+In the example above, the application would execute the following query to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and send the results to a Slack and write them to local disk.
+
+```json
+GET http://<your_elasticsearch_host>/filebeat-*/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "query_string" : {
+          "query" : "*",
+          "fields" : [ "system.syslog.message", "message" ]
+        } }
+      ]
+    }
+  },
+  "aggs": {
+    "hostname": {
+      "terms": {
+        "field": "system.syslog.hostname",
+        "min_doc_count": 1
+      }
+    }
+  },
+  "size": 20,
+  "_source": "system.syslog"
+}
+```
+
 ### Rule configuration file parameters
 
 * `name` (string: `""`) - The name of the rule. This should be unique and have no spaces. This field is required.
 * `index` (string: `""`) - The index to be queried. This field is required.
 * `schedule` (string: `""`) - The schedule of when the query will be executed in [cron syntax](https://en.wikipedia.org/wiki/Cron).
 * `body` (JSON object: `<nil>`) - The body of the [search query](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html) request. This should be exactly what you would include in an ElasticSearch `_search` request to the index specified above. This value will dictate the layout of the data that your ElasticSearch instance sends to this application; therefore, the subsequent `filters` section is dictated by this section. It is recommended that you manually run this query and understand the structure of the response data before writing the `filters` section.
-* `filters` (\[\]string: `"[]"`) - How the response to this query should be grouped. More information on this field is provided in the [filters](#filters) section. This field is optional. If no filters are provided, only elements of the `hits.hits._source` field of the response will be recorded.
+* `filters` (\[\]string: `<nil>`) - How the response to this query should be grouped. More information on this field is provided in the [filters](#filters) section. This field is optional. If no filters are provided, only elements of the `hits.hits._source` field of the response will be recorded.
 * `outputs` (\[\][Output](#outputs-parameter)) - Specifies the outputs to which the results of the query should be written. See the [Output](#output-parameter) section for more details. At least one output must be specified.
 
 ### Filters
