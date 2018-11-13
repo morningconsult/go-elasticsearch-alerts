@@ -139,7 +139,7 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 * `schedule` (string: `""`) - The schedule of when the query will be executed in [cron syntax](https://en.wikipedia.org/wiki/Cron).
 * `body` (JSON object: `<nil>`) - The body of the [search query](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html) request. This should be exactly what you would include in an ElasticSearch `_search` request to the index specified above. This value will dictate the layout of the data that your ElasticSearch instance sends to this application; therefore, the subsequent `filters` section is dictated by this section. It is recommended that you manually run this query and understand the structure of the response data before writing the `filters` section.
 * `filters` (\[\]string: `<nil>`) - How the response to this query should be grouped. More information on this field is provided in the [filters](#filters) section. This field is optional. If no filters are provided, only elements of the `hits.hits._source` field of the response will be recorded.
-* `outputs` (\[\][Output](#outputs-parameter)) - Specifies the outputs to which the results of the query should be written. See the [Output](#output-parameter) section for more details. At least one output must be specified.
+* `outputs` (\[\][Output](#outputs-parameter): `<nil>`) - Specifies the outputs to which the results of the query should be written. See the [Output](#output-parameter) section for more details. At least one output must be specified.
 
 ### Filters
 
@@ -255,9 +255,12 @@ The `outputs` parameter of the rule file specifies where the results of the quer
 
 #### Slack Output Configuration Parameters
 
-* `webhook` (string: `""`) - The Slack webhook where error alerts will be sent. This field is always required.
+* `webhook` (string: `""`) - The Slack webhook where error alerts will be sent. This field is required.
 * `channel` (string: `""`) - The Slack channel where error alerts will be posted. This field is optional.
 * `username` (string: `""`) - The Slack bot username which will be used to post new error alerts. This field is optional.
 * `text` (string: `""`) - Text that will be included in the Slack posts. This field is optional.
 * `emoji` (string: `""`) - The emoji that will be included in the Slack posts. This field is optional.
 
+#### File Output Configuration Parameters
+
+* `file` (string: `""`) - The file to which alerts should be written. This field is required.
