@@ -22,9 +22,10 @@ type Record struct {
 }
 
 type Alert struct {
-	ID      string
-	Methods []AlertMethod
-	Records []*Record
+	ID       string
+	RuleName string
+	Methods  []AlertMethod
+	Records  []*Record
 }
 
 type AlertMethod interface {
@@ -37,11 +38,13 @@ type AlertHandlerConfig struct {
 
 type AlertHandler struct {
 	logger hclog.Logger
+	rand   *rand.Rand
 }
 
 func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
 	return &AlertHandler{
 		logger: config.Logger,
+		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))),
 	}
 }
 
@@ -49,6 +52,8 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 	defer func() {
 		wg.Done()
 	}()
+
+	a.logger.Info("starting alert handler")
 
 	alertCh := make(chan func() error, 8)
 	active := NewInventory()
@@ -69,6 +74,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 		case <-ctx.Done():
 			return
 		case alert := <-outputCh:
+			a.logger.Info("new query results received from rule", "\""+alert.RuleName+"\"")
 			for i, method := range alert.Methods {
 				alertMethodID := fmt.Sprintf("%d|%s", i, alert.ID)
 				active.register(alertMethodID)
@@ -83,7 +89,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 
 			if err := writeAlert(); err != nil {
 				backoff := a.newBackoff()
-				a.logger.Error("error returned by sink function, retrying", "error", err.Error(), "backoff", backoff.String())
+				a.logger.Error("error returned by alert function, retrying", "error", err.Error(), "backoff", backoff.String())
 				select {
 				case <-ctx.Done():
 					return
@@ -96,6 +102,5 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 }
 
 func (a *AlertHandler) newBackoff() time.Duration {
-	random := rand.New(rand.NewSource(int64(time.Now().Nanosecond())))
-	return 2*time.Second + time.Duration(random.Int63()%int64(time.Second*2)-int64(time.Second))
+	return 2*time.Second + time.Duration(a.rand.Int63()%int64(time.Second*2)-int64(time.Second))
 }

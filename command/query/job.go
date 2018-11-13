@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	defaultStateIndex      string = "elasticsearch-alerts-status"
+	defaultStateIndex      string = "go-elasticsearch-alerts-state"
 	defaultTimestampFormat string = time.RFC3339
 )
 
@@ -82,26 +82,30 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	}()
 
 	if err := q.stateIndexExists(ctx); err != nil {
-		q.logger.Error(fmt.Sprintf("error checking if index %q exists", q.stateURL), err.Error())
+		q.logger.Error(fmt.Sprintf("[Rule: %q] error checking if index %q exists", q.name, q.stateURL), err.Error())
 		select {
 		case <-ctx.Done():
 			return
 		default:
 		}
-		q.logger.Info(fmt.Sprintf("ElasticSearch index %q does not exist. Attempting to create it.", q.stateURL))
+		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
 		if err := q.createStateIndex(ctx); err != nil {
-			q.logger.Error("error creating ElasticSearch state index", err.Error())
+			q.logger.Error(fmt.Sprintf("[Rule: %q] error creating ElasticSearch state index %q", q.name, q.stateURL), err.Error())
 			return
 		}
+		q.logger.Info(fmt.Sprintf("[Rule: %q] created new ElasticSearch index %q", q.name, q.stateURL))
 	}
 
 	t, err := q.getNextQuery(ctx)
 	if err != nil {
-		q.logger.Error("error looking up next scheduled query in ElasticSearch", err.Error(), "running query now instead")
+		q.logger.Error(fmt.Sprintf("[Rule: %q] error looking up next scheduled query in ElasticSearch", q.name), err.Error(),
+			"running query now instead")
 	}
 	if t != nil {
 		next = *t
 	}
+
+	q.logger.Info(fmt.Sprintf("[Rule: %q] scheduling job now (next run at %s)", q.name, next.Format(time.RFC822)))
 
 	for {
 		select {
@@ -110,27 +114,28 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		case <-time.After(next.Sub(now)):
 			data, err := q.query(ctx)
 			if err != nil {
-				q.logger.Error("error making HTTP request to ElasticSearch", err.Error())
+				q.logger.Error(fmt.Sprintf("[Rule: %q] error making HTTP request to ElasticSearch", q.name), err.Error())
 				break
 			}
 
 			records, err := q.transform(data)
 			if err != nil {
-				q.logger.Error("error processing response", err.Error())
+				q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), err.Error())
 				break
 			}
 
 			id, err := uuid.GenerateUUID()
 			if err != nil {
-				q.logger.Error("error creating new UUID", err.Error())
+				q.logger.Error(fmt.Sprintf("[Rule: %q] error creating new UUID", q.name), err.Error())
 				break
 			}
 
 			if records != nil && len(records) > 0 {
 				a := &alert.Alert{
-					ID:      id,
-					Records: records,
-					Methods: q.alertMethods,
+					ID:       id,
+					RuleName: q.name,
+					Records:  records,
+					Methods:  q.alertMethods,
 				}
 				outputCh <- a
 			}
@@ -138,7 +143,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		now = time.Now()
 		next = q.schedule.Next(now)
 		if err = q.setNextQuery(ctx, next); err != nil {
-			q.logger.Error("error creating next query document in ElasticSearch", err.Error())
+			q.logger.Error(fmt.Sprintf("[Rule: %q] error creating next query document in ElasticSearch", q.name), err.Error())
 		}
 	}
 }

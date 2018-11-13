@@ -2,6 +2,7 @@ package config
 
 import (
 	"path/filepath"
+	"errors"
 	"fmt"
 	// "net/http"
 	"os"
@@ -65,6 +66,14 @@ func ParseConfig() (*Config, error) {
 		return nil, err
 	}
 	file.Close()
+
+	if cfg.Server == nil {
+		return nil, errors.New("no 'server' section found in main configuration file")
+	}
+
+	if cfg.Server.ElasticSearchURL == "" {
+		return nil, errors.New("field 'server.url' of main configuration file is empty")
+	}
 
 	rules, err := parseRules()
 	if err != nil {
@@ -131,6 +140,10 @@ func parseRules() ([]*RuleConfig, error) {
 
 		if rule.CronSchedule == "" {
 			return nil, fmt.Errorf("no 'schedule' field found in rule file %s", file.Name())
+		}
+
+		if rule.Filters == nil {
+			rule.Filters = []string{}
 		}
 
 		if rule.Outputs == nil {

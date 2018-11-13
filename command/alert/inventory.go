@@ -14,7 +14,7 @@ type inventory struct {
 func NewInventory() *inventory {
 	return &inventory{
 		alerts: make(map[string]int),
-		mutex:  &sync.RWMutex{},
+		mutex:  new(sync.RWMutex),
 	}
 }
 
