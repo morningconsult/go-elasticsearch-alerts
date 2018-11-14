@@ -107,11 +107,6 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		maintainState = false
 	} else if !exists {
 		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
 		if err := q.createStateIndex(ctx); err != nil {
 			q.logger.Error(fmt.Sprintf("[Rule: %q] error creating ElasticSearch state index %q", q.name, q.stateURL), "error", err)
 			select {
@@ -193,7 +188,7 @@ func (q *QueryHandler) stateIndexExists(ctx context.Context) (bool, error) {
 		return false, fmt.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != 200 {
 		if resp.StatusCode == 404 {
 			return false, nil
