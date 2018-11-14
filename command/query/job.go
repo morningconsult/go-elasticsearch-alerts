@@ -105,8 +105,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		}
 		q.logger.Info("continuing without maintaining job state in ElasticSearch")
 		maintainState = false
-	}
-	if !exists {
+	} else if !exists {
 		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
 		select {
 		case <-ctx.Done():
