@@ -90,7 +90,6 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		maintainState = true
 	)
 
-
 	defer func() {
 		wg.Done()
 	}()
@@ -301,8 +300,23 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	payload := map[string]interface{}{
 		"query": map[string]interface{}{
-			"term": map[string]interface{}{
-				"rule_name": q.name,
+			"bool": map[string]interface{}{
+				"should": []interface{}{
+					map[string]interface{}{
+						"term": map[string]interface{}{
+							"rule_name": map[string]interface{}{
+								"value": q.name,
+							},
+						},
+					},
+					map[string]interface{}{
+						"term": map[string]interface{}{
+							"hostname": map[string]interface{}{
+								"value": q.hostname,
+							},
+						},
+					},
+				},
 			},
 		},
 		"sort": []map[string]interface{}{
