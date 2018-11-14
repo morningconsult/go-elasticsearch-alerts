@@ -95,17 +95,32 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		wg.Done()
 	}()
 
-	if err := q.stateIndexExists(ctx); err != nil {
+	exists, err := q.stateIndexExists(ctx)
+	if err != nil {
 		q.logger.Error(fmt.Sprintf("[Rule: %q] error checking if index %q exists", q.name, q.stateURL), "error", err)
 		select {
 		case <-ctx.Done():
 			return
 		default:
 		}
+		q.logger.Info("continuing without maintaining job state in ElasticSearch")
+		maintainState = false
+	}
+	if !exists {
 		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
 		if err := q.createStateIndex(ctx); err != nil {
 			q.logger.Error(fmt.Sprintf("[Rule: %q] error creating ElasticSearch state index %q", q.name, q.stateURL), "error", err)
-			q.logger.Info("continuing without maintaining state in ElasticSearch")
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			q.logger.Info("continuing without maintaining job state in ElasticSearch")
 			maintainState = false
 		} else {
 			q.logger.Info(fmt.Sprintf("[Rule: %q] created new ElasticSearch index %q", q.name, q.stateURL))
@@ -117,6 +132,11 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		if err != nil {
 			q.logger.Error(fmt.Sprintf("[Rule: %q] error looking up next scheduled query in ElasticSearch, running query now instead", q.name),
 				"error", err)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 		}
 		if t != nil {
 			next = *t
@@ -168,23 +188,21 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	}
 }
 
-func (q *QueryHandler) stateIndexExists(ctx context.Context) error {
+func (q *QueryHandler) stateIndexExists(ctx context.Context) (bool, error) {
 	resp, err := q.makeRequest(ctx, "GET", q.stateURL, nil)
 	if err != nil {
-		return fmt.Errorf("error making HTTP request: %v", err)
+		return false, fmt.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
-
-
 	
 	if resp.StatusCode != 200 {
 		if resp.StatusCode == 404 {
-			return fmt.Errorf("ElasticSearch index %q does not exist", q.stateURL)
+			return false, nil
 		}
-		return fmt.Errorf(" failed to lookup ElasticSearch index %q (received status: %s). Response body:\n%s",
+		return false, fmt.Errorf("error looking up ElasticSearch index %q (received status: %q). Response body:\n%s",
 			q.stateURL, resp.Status, q.readErrRespBody(resp.Body))
 	}
-	return nil
+	return true, nil
 }
 
 func (q *QueryHandler) createStateIndex(ctx context.Context) error {
@@ -246,7 +264,7 @@ func (q *QueryHandler) createStateIndex(ctx context.Context) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("error creating ElasticSearch index %q (received status: %s). Response body:\n%s",
+		return fmt.Errorf("error creating ElasticSearch index %q (received status: %q). Response body:\n%s",
 			q.stateURL, resp.Status, q.readErrRespBody(resp.Body))
 	}
 	return nil
