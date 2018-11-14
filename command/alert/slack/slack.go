@@ -58,14 +58,14 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, err
 	}, nil
 }
 
-func (s *SlackAlertMethod) Write(ctx context.Context, records []*alert.Record) error {
+func (s *SlackAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	if records == nil || len(records) < 1 {
 		return nil
 	}
-	return s.post(ctx, s.BuildPayload(records))
+	return s.post(ctx, s.BuildPayload(rule, records))
 }
 
-func (s *SlackAlertMethod) BuildPayload(records []*alert.Record) *Payload {
+func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *Payload {
 	payload := &Payload{
 		Channel:  s.channel,
 		Username: s.username,
@@ -75,7 +75,7 @@ func (s *SlackAlertMethod) BuildPayload(records []*alert.Record) *Payload {
 
 	for _, record := range records {
 		att := NewAttachment(&AttachmentConfig{
-			Fallback: record.Title,
+			Fallback: rule,
 			Pretext:  record.Title,
 			Text:     record.Text,
 		})
@@ -108,7 +108,7 @@ func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
 	}
 	resp.Body.Close()
 
-	if resp.StatusCode != 200 || resp.StatusCode != 201 || resp.StatusCode != 202 {
+	if resp.StatusCode != 200 {
 		return fmt.Errorf("received non-200 status code: %s", resp.Status)
 	}
 

@@ -10,6 +10,7 @@ import (
 	// "time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/mitchellh/mapstructure"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/config"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/query"
@@ -28,15 +29,16 @@ func Run() int {
 
 	config, err := config.ParseConfig()
 	if err != nil {
-		logger.Error("error loading config file", err.Error())
+		logger.Error("error loading config file", "error", err)
 		return 1
 	}
 
-	client, err := config.NewClient()
+	esClient, err := config.NewESClient()
 	if err != nil {
-		logger.Error("error creating new HTTP client", err.Error())
+		logger.Error("error creating new HTTP client", "error", err)
 		return 1
 	}
+	apiClient := cleanhttp.DefaultClient()
 
 	ah := alert.NewAlertHandler(&alert.AlertHandlerConfig{
 		Logger: logger,
@@ -53,31 +55,30 @@ func Run() int {
 			case "slack":
 				slackConfig := new(slack.SlackAlertMethodConfig)
 				if err = mapstructure.Decode(output.Config, slackConfig); err != nil {
-					logger.Error("error decoding Slack output configuration", err.Error())
+					logger.Error("error decoding Slack output configuration", "error", err)
 					return 1
 				}
-				slackConfig.Client = client
+				slackConfig.Client = apiClient
 
 				method, err = slack.NewSlackAlertMethod(slackConfig)
 				if err != nil {
-					logger.Error("error creating new Slack output method", err.Error())
+					logger.Error("error creating new Slack output method", "error", err)
 					return 1
 				}
 			case "file":
 				fileConfig := new(file.FileAlertMethodConfig)
 				if err = mapstructure.Decode(output.Config, fileConfig); err != nil {
-					logger.Error("error decoding file output configuration", err.Error())
+					logger.Error("error decoding file output configuration", "error", err)
 					return 1
 				}
-				fileConfig.RuleName = rule.Name
 
 				method, err = file.NewFileAlertMethod(fileConfig)
 				if err != nil {
-					logger.Error("error creating new file output method", err.Error())
+					logger.Error("error creating new file output method", "error", err)
 					return 1
 				}
 			default:
-				logger.Error("output type %q is not a valid type", output.Type)
+				logger.Error("output type is not valid", "'output.type'", output.Type)
 				return 1
 			}
 			methods = append(methods, method)
@@ -86,7 +87,7 @@ func Run() int {
 			Name:         rule.Name,
 			Logger:       logger,
 			AlertMethods: methods,
-			Client:       client,
+			Client:       esClient,
 			ESUrl:        config.Server.ElasticSearchURL,
 			QueryData:    rule.ElasticSearchBody,
 			QueryIndex:   rule.ElasticSearchIndex,
@@ -95,7 +96,7 @@ func Run() int {
 			Filters:      rule.Filters,
 		})
 		if err != nil {
-			logger.Error("error creating new job handler", err.Error())
+			logger.Error("error creating new job handler", "error", err)
 			return 1
 		}
 		queryHandlers = append(queryHandlers, handler)

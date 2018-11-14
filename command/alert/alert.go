@@ -29,7 +29,7 @@ type Alert struct {
 }
 
 type AlertMethod interface {
-	Write(context.Context, []*Record) error
+	Write(context.Context, string, []*Record) error
 }
 
 type AlertHandlerConfig struct {
@@ -55,17 +55,18 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 
 	a.logger.Info("starting alert handler")
 
-	alertCh := make(chan func() error, 8)
+	alertCh := make(chan func() (int, error), 8)
 	active := NewInventory()
 
-	alertFunc := func(ctx context.Context, alertID string, method AlertMethod, records []*Record) func() error {
-		return func() error {
+	alertFunc := func(ctx context.Context, alertID, rule string, method AlertMethod, records []*Record) func() (int, error) {
+		return func() (int, error) {
 			if active.remaining(alertID) < 1 {
 				active.deregister(alertID)
-				return nil
+				return 0, nil
 			}
 			active.decrement(alertID)
-			return method.Write(ctx, records)
+			err := method.Write(ctx, rule, records)
+			return active.remaining(alertID), err
 		}
 	}
 
@@ -78,7 +79,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 			for i, method := range alert.Methods {
 				alertMethodID := fmt.Sprintf("%d|%s", i, alert.ID)
 				active.register(alertMethodID)
-				alertCh <- alertFunc(ctx, alertMethodID, method, alert.Records)
+				alertCh <- alertFunc(ctx, alertMethodID, alert.RuleName, method, alert.Records)
 			}
 		case writeAlert := <-alertCh:
 			select {
@@ -87,9 +88,10 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 			default:
 			}
 
-			if err := writeAlert(); err != nil {
+			n, err := writeAlert()
+			if err != nil {
 				backoff := a.newBackoff()
-				a.logger.Error("error returned by alert function, retrying", "error", err.Error(), "backoff", backoff.String())
+				a.logger.Error("error returned by alert function", "error", err, "remaining_retries", n, "backoff", backoff.String())
 				select {
 				case <-ctx.Done():
 					return

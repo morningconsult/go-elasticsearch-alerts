@@ -23,20 +23,14 @@ type OutputJSON struct {
 }
 
 type FileAlertMethodConfig struct {
-	RuleName       string
 	OutputFilepath string `mapstructure:"file"`
 }
 
 type FileAlertMethod struct {
-	ruleName       string
 	outputFilepath string
 }
 
 func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error) {
-	if config.RuleName == "" {
-		return nil, errors.New("no rule name provided")
-	}
-
 	if config.OutputFilepath == "" {
 		return nil, errors.New("no file path provided")
 	}
@@ -47,12 +41,11 @@ func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error)
 	}
 
 	return &FileAlertMethod{
-		ruleName:       config.RuleName,
 		outputFilepath: expanded,
 	}, nil
 }
 
-func (f *FileAlertMethod) Write(ctx context.Context, records []*alert.Record) error {
+func (f *FileAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return fmt.Errorf("error opening new file: %v", err)
@@ -60,7 +53,7 @@ func (f *FileAlertMethod) Write(ctx context.Context, records []*alert.Record) er
 	defer outfile.Close()
 
 	entry := &OutputJSON{
-		RuleName:   f.ruleName,
+		RuleName:   rule,
 		ReceivedAt: time.Now(),
 		Records:    records,
 	}

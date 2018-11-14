@@ -18,7 +18,7 @@ type ClientConfig struct {
 	ServerName string `json:"server_name"`
 }
 
-func (c *Config) NewClient() (*http.Client, error) {
+func (c *Config) NewESClient() (*http.Client, error) {
 	client := cleanhttp.DefaultClient()
 	if c.Client == nil || !c.Client.TLSEnabled {
 		return client, nil

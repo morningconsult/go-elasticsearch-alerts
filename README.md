@@ -23,7 +23,7 @@ This example shows a sample main configuration file.
 {
   "server": {
     "url": "https://my.elasticsearch.com",
-    "state_index": "go-elasticsearch-status"
+    "state_index": "go_elasticsearch_status"
   },
   "client": {
     "tls_enabled": true,
@@ -37,7 +37,7 @@ This example shows a sample main configuration file.
 ### `server` parameters
 
 * `url` (string: `""`) - The URL of your ElasticSearch instance. This field is always required.
-* `state_index` (string: `"go-elasticsearch-alerts-state"`) - The ElasticSearch index where the records of when each rule is schedule to run next is stored. If this index does not already exist, the application will attempt to create it at runtime. This is used to ensure that if the process is killed at any point it can lookup the next scheduled run when started again. This field is optional. If not specified, the default will be `go-elasticsearch-alerts-state`.
+* `state_index` (string: `"go_elasticsearch_alerts_state"`) - The ElasticSearch index where the records of when each rule is schedule to run next is stored. If this index does not already exist, the application will attempt to create it at runtime. This is used to ensure that if the process is killed at any point it can lookup the next scheduled run when started again. This field is optional. If not specified, the default will be `go_elasticsearch_alerts_state`.
 
 ### `client` parameters
 * `tls_enabled` (bool: `false`) - Whether the application should use TLS when communicating with your ElasticSearch instance. This field is optional.
@@ -199,7 +199,7 @@ $ curl https://slack.webhooks.foo/asdf \
   "emoji": ":hankey:",
   "attachments": [
     {
-      "fallback": "aggregations.service_name.buckets",
+      "fallback": "filebeat_errors",
       "pretext": "aggregations.service_name.buckets",
       "fields": [
         {
@@ -215,7 +215,7 @@ $ curl https://slack.webhooks.foo/asdf \
       ]
     },
     {
-      "fallback": "aggregations.service_name.buckets.program.buckets",
+      "fallback": "filebeat_errors",
       "pretext": "aggregations.service_name.buckets.program.buckets",
       "fields": [
         {
