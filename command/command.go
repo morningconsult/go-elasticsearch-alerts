@@ -157,7 +157,7 @@ func Run() int {
 							handler.HaveLockCh <- false
 						}
 						lock.Unlock()
-						break UnlockedLoop				
+						break UnlockedLoop
 					}
 				}
 			}

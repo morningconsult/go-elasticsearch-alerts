@@ -75,7 +75,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 		case <-ctx.Done():
 			return
 		case alert := <-outputCh:
-			a.logger.Info("new query results received from rule", "\""+alert.RuleName+"\"")
+			a.logger.Info(fmt.Sprintf("new query results received from rule %q", alert.RuleName))
 			for i, method := range alert.Methods {
 				alertMethodID := fmt.Sprintf("%d|%s", i, alert.ID)
 				active.register(alertMethodID)

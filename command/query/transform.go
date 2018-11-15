@@ -2,6 +2,7 @@ package query
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
@@ -56,6 +57,7 @@ func (q *QueryHandler) transform(respData map[string]interface{}) ([]*alert.Reco
 		return records, nil
 	}
 
+	var hitsArr []string
 	for _, hit := range hits {
 		obj, ok := hit.(map[string]interface{})
 		if !ok {
@@ -71,10 +73,13 @@ func (q *QueryHandler) transform(respData map[string]interface{}) ([]*alert.Reco
 		if err != nil {
 			return nil, err
 		}
-		
+		hitsArr = append(hitsArr, string(data))
+	}
+
+	if len(hitsArr) > 0 {
 		record := &alert.Record{
 			Title: "hits.hits._source",
-			Text:  string(data),
+			Text:  strings.Join(hitsArr, "\n----------------------------------------\n"),
 		}
 		records = append(records, record)
 	}
