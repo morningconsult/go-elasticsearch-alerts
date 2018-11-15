@@ -30,6 +30,10 @@ This example shows a sample main configuration file.
     "ca_cert": "/tmp/cacert.pem",
     "client_cert": "/tmp/client_cert.pem",
     "client_key": "/tmp/client_key.pem"
+  },
+  "distributed": {
+    "consul_address": "http://127.0.0.1:8500",
+    "consul_lock_key": "go-elasticsearch-alerts/leader"
   }
 }
 ```
@@ -45,6 +49,10 @@ This example shows a sample main configuration file.
 * `client_cert` (string: `""`) - Path to a PEM-encoded client certificate on the local disk. This file is used for TLS communication with the ElasticSearch server.
 * `client_key` (string: `""`) - Path to an unencrypted, PEM-encoded private key on disk which corresponds to the matching client certificate.
 * `server_name` (string: `""`) - Name to use as the SNI host when connecting via TLS.
+
+### `distributed` parameters
+* `consul_address` (string: `""`) - The URL of your Consul server.
+* `consul_lock_key` (string: `""`) - They name of the key that Consul should use to create the lock.
 
 ### Rule Configuration Files
 

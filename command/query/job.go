@@ -29,6 +29,7 @@ const (
 type QueryHandlerConfig struct {
 	Name         string
 	Logger       hclog.Logger
+	Distributed  bool
 	AlertMethods []alert.AlertMethod
 	Client       *http.Client
 	ESUrl        string
@@ -40,7 +41,10 @@ type QueryHandlerConfig struct {
 }
 
 type QueryHandler struct {
+	HaveLockCh   chan bool
+
 	name         string
+	distributed  bool
 	hostname     string
 	logger       hclog.Logger
 	alertMethods []alert.AlertMethod
@@ -70,7 +74,9 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	}
 
 	return &QueryHandler{
+		HaveLockCh:   make(chan bool),
 		name:         config.Name,
+		distributed:  config.Distributed,
 		hostname:     hostname,
 		logger:       config.Logger,
 		alertMethods: config.AlertMethods,
@@ -85,12 +91,32 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 
 func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *sync.WaitGroup) {
 	var (
-		now  = time.Now()
-		next = now
+		now           = time.Now()
+		next          = now
 		maintainState = true
+		doneCh        = make(chan struct{})
+		lockAcquired  = new(bool)
 	)
 
+	if q.distributed {
+		go func(ctx context.Context) {
+			for {
+				select {
+				case <-ctx.Done():
+					close(doneCh)
+					return
+				case b := <-q.HaveLockCh:
+					*lockAcquired = b
+				}
+			}
+		}(ctx)
+	} else {
+		*lockAcquired = true
+		close(doneCh)
+	}
+
 	defer func() {
+		<-doneCh
 		wg.Done()
 	}()
 
@@ -136,39 +162,43 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		}
 	}
 
-	q.logger.Info(fmt.Sprintf("[Rule: %q] scheduling job now (next run at %s)", q.name, next.Format(time.RFC822)))
+	if *lockAcquired {
+		q.logger.Info(fmt.Sprintf("[Rule: %q] scheduling query now (next execution at: %s)", q.name, next.Format(time.RFC822)))
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-time.After(next.Sub(now)):
-			data, err := q.query(ctx)
-			if err != nil {
-				q.logger.Error(fmt.Sprintf("[Rule: %q] error making HTTP request to ElasticSearch", q.name), "error", err)
-				break
-			}
-
-			records, err := q.transform(data)
-			if err != nil {
-				q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), "error", err)
-				break
-			}
-
-			id, err := uuid.GenerateUUID()
-			if err != nil {
-				q.logger.Error(fmt.Sprintf("[Rule: %q] error creating new UUID", q.name), "error", err)
-				break
-			}
-
-			if records != nil && len(records) > 0 {
-				a := &alert.Alert{
-					ID:       id,
-					RuleName: q.name,
-					Records:  records,
-					Methods:  q.alertMethods,
+			if *lockAcquired {
+				data, err := q.query(ctx)
+				if err != nil {
+					q.logger.Error(fmt.Sprintf("[Rule: %q] error making HTTP request to ElasticSearch", q.name), "error", err)
+					break
 				}
-				outputCh <- a
+
+				records, err := q.transform(data)
+				if err != nil {
+					q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), "error", err)
+					break
+				}
+
+				id, err := uuid.GenerateUUID()
+				if err != nil {
+					q.logger.Error(fmt.Sprintf("[Rule: %q] error creating new UUID", q.name), "error", err)
+					break
+				}
+
+				if records != nil && len(records) > 0 {
+					a := &alert.Alert{
+						ID:       id,
+						RuleName: q.name,
+						Records:  records,
+						Methods:  q.alertMethods,
+					}
+					outputCh <- a
+				}
 			}
 		}
 		now = time.Now()
@@ -199,58 +229,9 @@ func (q *QueryHandler) stateIndexExists(ctx context.Context) (bool, error) {
 }
 
 func (q *QueryHandler) createStateIndex(ctx context.Context) error {
-	payload := map[string]interface{}{
-		"settings": map[string]interface{}{
-			"index": map[string]interface{}{
-				"number_of_shards":     3,
-				"number_of_replicas":   1,
-				"auto_expand_replicas": "0-2",
-				"translog": map[string]interface{}{
-					"flush_threshold_size": "752mb",
-				},
-				"sort": map[string]interface{}{
-					"field": []string{
-						"next_query",
-						"rule_name",
-					},
-					"order": []string{
-						"desc",
-						"desc",
-					},
-				},
-			},
-		},
-		"mappings": map[string]interface{}{
-			"_doc": map[string]interface{}{
-				"dynamic_templates": []map[string]interface{}{
-					map[string]interface{}{
-						"strings_as_keywords": map[string]interface{}{
-							"match_mapping_type": "string",
-							"mapping": map[string]interface{}{
-								"type": "keyword",
-							},
-						},
-					},
-				},
-				"properties": map[string]interface{}{
-					"@timestamp": map[string]interface{}{
-						"type": "date",
-					},
-					"rule_name": map[string]interface{}{
-						"type": "keyword",
-					},
-					"next_query": map[string]interface{}{
-						"type": "date",
-					},
-					"hostname": map[string]interface{}{
-						"type": "text",
-					},
-				},
-			},
-		},
-	}
+	payload := `{"settings":{"index":{"number_of_shards":3,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"}}}}}`
 
-	resp, err := q.makeRequest(ctx, "PUT", q.stateURL, payload)
+	resp, err := q.makeRequest(ctx, "PUT", q.stateURL, []byte(payload))
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -264,7 +245,12 @@ func (q *QueryHandler) createStateIndex(ctx context.Context) error {
 }
 
 func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
-	resp, err := q.makeRequest(ctx, "GET", q.queryURL+"/_search", q.queryData)
+	queryData, err := jsonutil.EncodeJSON(q.queryData)
+	if err != nil {
+		return nil, fmt.Errorf("error JSON-encoding ElasticSearch query body: %v", err)
+	}
+
+	resp, err := q.makeRequest(ctx, "GET", q.queryURL+"/_search", queryData)
 	if err != nil {
 		return nil, fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -278,13 +264,9 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 }
 
 func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
-	payload := map[string]interface{}{
-		"rule_name":  q.name,
-		"next_query": ts.Format(defaultTimestampFormat),
-		"hostname":   q.hostname,
-	}
+	payload := fmt.Sprintf(`{"rule_name":%q,"next_query":%q,"hostname":%q}`, q.name, ts.Format(defaultTimestampFormat), q.hostname)
 
-	resp, err := q.makeRequest(ctx, "POST", q.stateURL+"/_doc", payload)
+	resp, err := q.makeRequest(ctx, "POST", q.stateURL+"/_doc", []byte(payload))
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -298,36 +280,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
 }
 
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
-	payload := map[string]interface{}{
-		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
-				"should": []interface{}{
-					map[string]interface{}{
-						"term": map[string]interface{}{
-							"rule_name": map[string]interface{}{
-								"value": q.name,
-							},
-						},
-					},
-					map[string]interface{}{
-						"term": map[string]interface{}{
-							"hostname": map[string]interface{}{
-								"value": q.hostname,
-							},
-						},
-					},
-				},
-			},
-		},
-		"sort": []map[string]interface{}{
-			map[string]interface{}{
-				"next_query": map[string]interface{}{
-					"order": "desc",
-				},
-			},
-		},
-		"size": 1,
-	}
+	payload := fmt.Sprintf(`{"query":{"bool":{"should":[{"term":{"rule_name":{"value":%q}}},{"term":{"hostname":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.name, q.hostname)
 
 	u, err := url.Parse(q.stateURL+"/_search")
 	if err != nil {
@@ -337,7 +290,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	query.Add("filter_path", "hits.hits._source.next_query")
 	u.RawQuery = query.Encode()
 
-	resp, err := q.makeRequest(ctx, "GET", u.String(), payload)
+	resp, err := q.makeRequest(ctx, "GET", u.String(), []byte(payload))
 	if err != nil {
 		return nil, fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -365,7 +318,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	return &t, nil
 }
 
-func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, payload map[string]interface{}) (*http.Response, error) {
+func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, payload []byte) (*http.Response, error) {
 	req, err := q.newRequest(ctx, method, url, payload)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new request: %v", err)
@@ -373,16 +326,11 @@ func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, payl
 	return q.client.Do(req)
 }
 
-func (q *QueryHandler) newRequest(ctx context.Context, method, url string, payload map[string]interface{}) (*http.Request, error) {
+func (q *QueryHandler) newRequest(ctx context.Context, method, url string, payload []byte) (*http.Request, error) {
 	var req *http.Request
 	var err error
 	if payload != nil {
-		data, err := jsonutil.EncodeJSON(payload)
-		if err != nil {
-			return nil, fmt.Errorf("error JSON-encoding payload: %v", err)
-		}
-
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(data))
+		req, err = http.NewRequest(method, url, bytes.NewBuffer(payload))
 		if err != nil {
 			return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
 		}

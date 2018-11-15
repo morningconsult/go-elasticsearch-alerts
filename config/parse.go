@@ -34,15 +34,21 @@ type RuleConfig struct {
 	Outputs              []*OutputConfig        `json:"outputs"`
 }
 
+type DistributedConfig struct {
+	ConsulAddr    string `json:"consul_address"`
+	ConsulLockKey string `json:"consul_lock_key"`
+}
+
 type ServerConfig struct {
 	ElasticSearchURL        string `json:"url"`
 	ElasticSearchStateIndex string `json:"state_index"`
 }
 
 type Config struct {
-	Server *ServerConfig `json:"server"`
-	Client *ClientConfig `json:"client"`
-	Rules  []*RuleConfig `json:"-"`
+	Distributed *DistributedConfig `json:"distributed"`
+	Server      *ServerConfig      `json:"server"`
+	Client      *ClientConfig      `json:"client"`
+	Rules       []*RuleConfig      `json:"-"`
 }
 
 func ParseConfig() (*Config, error) {
@@ -73,6 +79,14 @@ func ParseConfig() (*Config, error) {
 
 	if cfg.Server.ElasticSearchURL == "" {
 		return nil, errors.New("field 'server.url' of main configuration file is empty")
+	}
+
+	if cfg.Distributed != nil && cfg.Distributed.ConsulAddr == "" {
+		return nil, errors.New("field 'distributed.consul_address' of main configuration file is empty")
+	}
+
+	if cfg.Distributed != nil && cfg.Distributed.ConsulLockKey == "" {
+		return nil, errors.New("field 'distributed.consul_lock_key' of main configuration file is empty")
 	}
 
 	rules, err := parseRules()

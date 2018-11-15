@@ -10,6 +10,7 @@ import (
 	// "time"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/mitchellh/mapstructure"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/config"
@@ -86,6 +87,7 @@ func Run() int {
 		handler, err := query.NewQueryHandler(&query.QueryHandlerConfig{
 			Name:         rule.Name,
 			Logger:       logger,
+			Distributed:  config.Distributed != nil,
 			AlertMethods: methods,
 			Client:       esClient,
 			ESUrl:        config.Server.ElasticSearchURL,
@@ -102,9 +104,69 @@ func Run() int {
 		queryHandlers = append(queryHandlers, handler)
 	}
 
-	wg.Add(len(queryHandlers) + 1)
+	if config.Distributed != nil {
+		client, err := api.NewClient(&api.Config{
+			Address: config.Distributed.ConsulAddr,
+		})
+		if err != nil {
+			logger.Error("error creating Consul API client", "error", err)
+			return 1
+		}
+		
+		lock, err := client.LockKey(config.Distributed.ConsulLockKey)
+		if err != nil {
+			logger.Error("error creating a Consul API lock", "error", err)
+			return 1
+		}
+
+		wg.Add(1)
+
+		go func(ctx context.Context) {
+			defer func() {
+				wg.Done()
+			}()
+
+			for {
+				lockCh, err := lock.Lock(ctx.Done())
+				if err != nil {
+					logger.Error("error attempting to acquire lock, exiting", "error", err)
+					close(shutdownCh)
+					return
+				}
+
+			UnlockedLoop:
+				for {
+					select {
+					case <-ctx.Done():
+						lock.Unlock()
+						return
+					default:
+						logger.Info("this process is now the leader")
+						for _, handler := range queryHandlers {
+							handler.HaveLockCh <- true
+						}
+					}
+
+					select {
+					case <-ctx.Done():
+						lock.Unlock()
+						return
+					case <-lockCh:
+						logger.Info("this process is no longer the leader")
+						for _, handler := range queryHandlers {
+							handler.HaveLockCh <- false
+						}
+						lock.Unlock()
+						break UnlockedLoop				
+					}
+				}
+			}
+		}(ctx)
+	}
 
 	outputCh := make(chan *alert.Alert, len(queryHandlers))
+
+	wg.Add(len(queryHandlers) + 1)
 
 	go ah.Run(ctx, outputCh, &wg)
 	for _, qh := range queryHandlers {
