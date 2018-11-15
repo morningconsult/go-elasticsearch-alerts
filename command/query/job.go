@@ -74,7 +74,7 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	}
 
 	return &QueryHandler{
-		HaveLockCh:   make(chan bool),
+		HaveLockCh:   make(chan bool, 1),
 		name:         config.Name,
 		distributed:  config.Distributed,
 		hostname:     hostname,
