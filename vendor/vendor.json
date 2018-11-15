@@ -3,10 +3,22 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "DUX4pOK9NKSAzC6RRXniLviyByA=",
+			"path": "github.com/armon/go-metrics",
+			"revision": "f0300d1749da6fa982027e449ec0c7a145510c3c",
+			"revisionTime": "2018-09-17T15:23:33Z"
+		},
+		{
 			"checksumSHA1": "h1d2lPZf6j2dW/mIqVnd1RdykDo=",
 			"path": "github.com/golang/snappy",
 			"revision": "2e65f85255dbc3072edf28d6b5b8efc472979f5a",
 			"revisionTime": "2018-05-18T05:39:59Z"
+		},
+		{
+			"checksumSHA1": "LQOVduohnld12Px2o0MfYDPI7oQ=",
+			"path": "github.com/hashicorp/consul/api",
+			"revision": "db936067d2691d76a04a870d0e315b5c9781109e",
+			"revisionTime": "2018-11-15T11:53:22Z"
 		},
 		{
 			"checksumSHA1": "ByRdQMv2yl16W6Tp9gUW1nNmpuI=",
@@ -27,22 +39,46 @@
 			"revisionTime": "2018-10-01T19:54:59Z"
 		},
 		{
+			"checksumSHA1": "mCCQqlVo0CPUr29LXH4Oe4Ww3JA=",
+			"path": "github.com/hashicorp/go-immutable-radix",
+			"revision": "27df80928bb34bb1b0d6d0e01b9e679902e7a6b5",
+			"revisionTime": "2018-08-30T03:32:45Z"
+		},
+		{
+			"checksumSHA1": "A1PcINvF3UiwHRKn8UcgARgvGRs=",
+			"path": "github.com/hashicorp/go-rootcerts",
+			"revision": "6bb64b370b90e7ef1fa532be9e591a81c3493e00",
+			"revisionTime": "2016-05-03T14:34:40Z"
+		},
+		{
 			"checksumSHA1": "Kjansj6ZDJrWKNS1BJpg+z7OBnI=",
 			"path": "github.com/hashicorp/go-uuid",
 			"revision": "de160f5c59f693fed329e73e291bb751fe4ea4dc",
 			"revisionTime": "2018-08-30T03:27:00Z"
 		},
 		{
+			"checksumSHA1": "NvkV52M5EFd0kT4U+9A2Eu/kKr8=",
+			"path": "github.com/hashicorp/golang-lru/simplelru",
+			"revision": "20f1fb78b0740ba8c3cb143a61e86ba5c8669768",
+			"revisionTime": "2018-08-30T03:29:55Z"
+		},
+		{
+			"checksumSHA1": "0PeWsO2aI+2PgVYlYlDPKfzCLEQ=",
+			"path": "github.com/hashicorp/serf/coordinate",
+			"revision": "75714e08b2cf6cc7409a3f5a49e20293528acf69",
+			"revisionTime": "2018-10-25T21:30:09Z"
+		},
+		{
 			"checksumSHA1": "t62AAua2AHm41SA3pdwGPedcdKY=",
 			"path": "github.com/hashicorp/vault/helper/compressutil",
-			"revision": "5f86c5c083f829ab873b575820d70f844b7ca287",
-			"revisionTime": "2018-11-13T19:27:14Z"
+			"revision": "3f2e2f4c5d42a1ce77b467521a3694872fcc007a",
+			"revisionTime": "2018-11-15T17:51:06Z"
 		},
 		{
 			"checksumSHA1": "POgkM3GrjRFw6H3sw95YNEs552A=",
 			"path": "github.com/hashicorp/vault/helper/jsonutil",
-			"revision": "5f86c5c083f829ab873b575820d70f844b7ca287",
-			"revisionTime": "2018-11-13T19:27:14Z"
+			"revision": "3f2e2f4c5d42a1ce77b467521a3694872fcc007a",
+			"revisionTime": "2018-11-15T17:51:06Z"
 		},
 		{
 			"checksumSHA1": "a58zUNtDH/gEd6F6KI3FqT2iEo0=",
