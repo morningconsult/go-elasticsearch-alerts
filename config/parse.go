@@ -44,11 +44,16 @@ type ServerConfig struct {
 	ElasticSearchStateIndex string `json:"state_index"`
 }
 
+type ESConfig struct {
+	Server *ServerConfig `json:"server"`
+	Client *ClientConfig `json:"client"`
+}
+
 type Config struct {
-	Distributed *DistributedConfig `json:"distributed"`
-	Server      *ServerConfig      `json:"server"`
-	Client      *ClientConfig      `json:"client"`
-	Rules       []*RuleConfig      `json:"-"`
+	ElasticSearch *ESConfig         `json:"elasticsearch"`
+	Distributed   bool              `json:"distributed"`
+	Consul        map[string]string `json:"consul"`
+	Rules         []*RuleConfig     `json:"-"`
 }
 
 func ParseConfig() (*Config, error) {
@@ -73,20 +78,30 @@ func ParseConfig() (*Config, error) {
 	}
 	file.Close()
 
-	if cfg.Server == nil {
-		return nil, errors.New("no 'server' section found in main configuration file")
+	if cfg.ElasticSearch == nil {
+		return nil, errors.New("no 'elasticsearch' field found in main configuration file")
 	}
 
-	if cfg.Server.ElasticSearchURL == "" {
-		return nil, errors.New("field 'server.url' of main configuration file is empty")
+	if cfg.ElasticSearch.Server == nil {
+		return nil, errors.New("no 'elasticsearch.server' field found in main configuration file")
 	}
 
-	if cfg.Distributed != nil && cfg.Distributed.ConsulAddr == "" {
-		return nil, errors.New("field 'distributed.consul_address' of main configuration file is empty")
+	if cfg.ElasticSearch.Server.ElasticSearchURL == "" {
+		return nil, errors.New("field 'elasticsearch.server.url' of main configuration file is empty")
 	}
 
-	if cfg.Distributed != nil && cfg.Distributed.ConsulLockKey == "" {
-		return nil, errors.New("field 'distributed.consul_lock_key' of main configuration file is empty")
+	if cfg.Distributed {
+		if cfg.Consul == nil || len(cfg.Consul) < 1 {
+			return nil, errors.New("field 'consul' of main configuration file is empty (required when 'distributed' is true)")
+		}
+
+		if _, ok := cfg.Consul["consul_http_addr"]; !ok {
+			return nil, errors.New("field 'consul.consul_http_addr' of main configuration file is empty (required when 'distributed' is true)")
+		}
+
+		if _, ok := cfg.Consul["consul_lock_key"]; !ok {
+			return nil, errors.New("field 'consul.consul_lock_key' of main configuration file is empty (required when 'distributed' is true)")
+		}
 	}
 
 	rules, err := parseRules()

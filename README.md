@@ -21,19 +21,26 @@ This example shows a sample main configuration file.
 
 ```json
 {
-  "server": {
-    "url": "https://my.elasticsearch.com",
-    "state_index": "go_elasticsearch_status"
+  "elasticsearch": {
+    "server": {
+      "url": "https://my.elasticsearch.com",
+      "state_index": "go_elasticsearch_status"
+    },
+    "client": {
+      "tls_enabled": true,
+      "ca_cert": "/tmp/cacert.pem",
+      "client_cert": "/tmp/client_cert.pem",
+      "client_key": "/tmp/client_key.pem"
+    }
   },
-  "client": {
-    "tls_enabled": true,
-    "ca_cert": "/tmp/cacert.pem",
-    "client_cert": "/tmp/client_cert.pem",
-    "client_key": "/tmp/client_key.pem"
-  },
-  "distributed": {
-    "consul_address": "http://127.0.0.1:8500",
-    "consul_lock_key": "go-elasticsearch-alerts/leader"
+  "distributed": true,
+  "consul": {
+    "consul_lock_key": "go-elasticsearch-alerts/leader",
+    "consul_http_address": "http://127.0.0.1:8500",
+    "consul_http_ssl": true,
+    "consul_cacert": "/tmp/cacert_consul.pem",
+    "consul_client_cert": "/tmp/client_cert_consul.pem",
+    "consul_client_key": "/tmp/client_key_consul.pem"
   }
 }
 ```

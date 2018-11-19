@@ -120,29 +120,13 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		wg.Done()
 	}()
 
-	exists, err := q.stateIndexExists(ctx)
+	maintainState, err := q.shouldMaintainState(ctx)
 	if err != nil {
-		q.logger.Error(fmt.Sprintf("[Rule: %q] error checking if index %q exists", q.name, q.stateURL), "error", err)
+		q.logger.Error(fmt.Sprintf("[Rule: %q] error checking and/or creating state index", q.name), "error", err)
 		select {
 		case <-ctx.Done():
 			return
 		default:
-		}
-		q.logger.Info("continuing without maintaining job state in ElasticSearch")
-		maintainState = false
-	} else if !exists {
-		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
-		if err := q.createStateIndex(ctx); err != nil {
-			q.logger.Error(fmt.Sprintf("[Rule: %q] error creating ElasticSearch state index %q", q.name, q.stateURL), "error", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-			q.logger.Info("continuing without maintaining job state in ElasticSearch")
-			maintainState = false
-		} else {
-			q.logger.Info(fmt.Sprintf("[Rule: %q] created new ElasticSearch index %q", q.name, q.stateURL))
 		}
 	}
 
@@ -160,6 +144,8 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		if t != nil {
 			next = *t
 		}
+	} else {
+		q.logger.Info(fmt.Sprintf("[Rule: %q] continuing without maintaining job state in ElasticSearch", q.name))
 	}
 
 	if *lockAcquired {
@@ -184,13 +170,13 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 					break
 				}
 
-				id, err := uuid.GenerateUUID()
-				if err != nil {
-					q.logger.Error(fmt.Sprintf("[Rule: %q] error creating new UUID", q.name), "error", err)
-					break
-				}
-
 				if records != nil && len(records) > 0 {
+					id, err := uuid.GenerateUUID()
+					if err != nil {
+						q.logger.Error(fmt.Sprintf("[Rule: %q] error creating new random UUID", q.name), "error", err)
+						break
+					}
+
 					a := &alert.Alert{
 						ID:       id,
 						RuleName: q.name,
@@ -209,6 +195,21 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 			}
 		}
 	}
+}
+
+func (q *QueryHandler) shouldMaintainState(ctx context.Context) (bool, error) {
+	exists, err := q.stateIndexExists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error checking if index %q exists: %v", q.stateURL, err)
+	}
+	if !exists {
+		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
+		if err := q.createStateIndex(ctx); err != nil {
+			return false, fmt.Errorf("error creating ElasticSearch state index %q: %v", q.stateURL, err)
+		}
+		q.logger.Info(fmt.Sprintf("[Rule: %q] created new ElasticSearch index %q", q.name, q.stateURL))
+	}
+	return true, nil
 }
 
 func (q *QueryHandler) stateIndexExists(ctx context.Context) (bool, error) {

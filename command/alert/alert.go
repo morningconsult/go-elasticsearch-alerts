@@ -75,7 +75,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 		case <-ctx.Done():
 			return
 		case alert := <-outputCh:
-			a.logger.Info(fmt.Sprintf("new query results received from rule %q", alert.RuleName))
+			a.logger.Info(fmt.Sprintf("[Alert Handler] new query results received from rule %q", alert.RuleName))
 			for i, method := range alert.Methods {
 				alertMethodID := fmt.Sprintf("%d|%s", i, alert.ID)
 				active.register(alertMethodID)
@@ -91,7 +91,8 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 			n, err := writeAlert()
 			if err != nil {
 				backoff := a.newBackoff()
-				a.logger.Error("error returned by alert function", "error", err, "remaining_retries", n, "backoff", backoff.String())
+				a.logger.Error("[Alert Handler] error returned by alert function", "error", err,
+					"remaining_retries", n, "backoff", backoff.String())
 				select {
 				case <-ctx.Done():
 					return

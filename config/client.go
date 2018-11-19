@@ -20,28 +20,28 @@ type ClientConfig struct {
 
 func (c *Config) NewESClient() (*http.Client, error) {
 	client := cleanhttp.DefaultClient()
-	if c.Client == nil || !c.Client.TLSEnabled {
+	if c.ElasticSearch.Client == nil || !c.ElasticSearch.Client.TLSEnabled {
 		return client, nil
 	}
 
-	if c.Client.CACert == "" {
+	if c.ElasticSearch.Client.CACert == "" {
 		return nil, fmt.Errorf("no path to CA certificate")
 	}
-	if c.Client.ClientCert == "" {
+	if c.ElasticSearch.Client.ClientCert == "" {
 		return nil, fmt.Errorf("no path to client certificate")
 	}
-	if c.Client.ClientKey == "" {
+	if c.ElasticSearch.Client.ClientKey == "" {
 		return nil, fmt.Errorf("no path to client key")
 	}
 
 	// Load client certificate
-	cert, err := tls.LoadX509KeyPair(c.Client.ClientCert, c.Client.ClientKey)
+	cert, err := tls.LoadX509KeyPair(c.ElasticSearch.Client.ClientCert, c.ElasticSearch.Client.ClientKey)
 	if err != nil {
 		return nil, fmt.Errorf("error loading X509 key pair: %v", err)
 	}
 
 	// Load CA certificate
-	caCert, err := ioutil.ReadFile(c.Client.CACert)
+	caCert, err := ioutil.ReadFile(c.ElasticSearch.Client.CACert)
 	if err != nil {
 		return nil, fmt.Errorf("error reading CA certificate file: %v", err)
 	}
@@ -51,7 +51,7 @@ func (c *Config) NewESClient() (*http.Client, error) {
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      caCertPool,
-		ServerName:   c.Client.ServerName,
+		ServerName:   c.ElasticSearch.Client.ServerName,
 	}
 	tlsConfig.BuildNameToCertificate()
 	client.Transport.(*http.Transport).TLSClientConfig = tlsConfig

@@ -5,6 +5,7 @@ import (
 	// "fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	// "time"
@@ -87,14 +88,14 @@ func Run() int {
 		handler, err := query.NewQueryHandler(&query.QueryHandlerConfig{
 			Name:         rule.Name,
 			Logger:       logger,
-			Distributed:  config.Distributed != nil,
+			Distributed:  config.Distributed,
 			AlertMethods: methods,
 			Client:       esClient,
-			ESUrl:        config.Server.ElasticSearchURL,
+			ESUrl:        config.ElasticSearch.Server.ElasticSearchURL,
 			QueryData:    rule.ElasticSearchBody,
 			QueryIndex:   rule.ElasticSearchIndex,
 			Schedule:     rule.CronSchedule,
-			StateIndex:   config.Server.ElasticSearchStateIndex,
+			StateIndex:   config.ElasticSearch.Server.ElasticSearchStateIndex,
 			Filters:      rule.Filters,
 		})
 		if err != nil {
@@ -104,16 +105,20 @@ func Run() int {
 		queryHandlers = append(queryHandlers, handler)
 	}
 
-	if config.Distributed != nil {
-		client, err := api.NewClient(&api.Config{
-			Address: config.Distributed.ConsulAddr,
-		})
+	if config.Distributed {
+		consulClient, err := newConsulClient(config.Consul)
 		if err != nil {
 			logger.Error("error creating Consul API client", "error", err)
 			return 1
 		}
-		
-		lock, err := client.LockKey(config.Distributed.ConsulLockKey)
+
+		k, ok := config.Consul["consul_lock_key"]
+		if !ok || k == "" {
+			logger.Error("no 'consul_lock_key' value found")
+			return 1
+		}
+
+		lock, err := consulClient.LockKey(k)
 		if err != nil {
 			logger.Error("error creating a Consul API lock", "error", err)
 			return 1
@@ -180,7 +185,7 @@ func Run() int {
 
 	select {
 	case <-shutdownCh:
-		logger.Info("SIGKILL received")
+		logger.Info("SIGKILL received. Cleaning up goroutines...")
 		cancel()
 		// Wait for goroutines to cleanup
 		<-outputCh
@@ -201,4 +206,31 @@ func makeShutdownCh() chan struct{} {
 		close(resultCh)
 	}()
 	return resultCh
+}
+
+func newConsulClient(config map[string]string) (*api.Client, error) {
+	consulEnvVars := []string{
+		api.HTTPAddrEnvName,
+		api.HTTPTokenEnvName,
+		api.HTTPSSLEnvName,
+		api.HTTPCAFile,
+		api.HTTPCAPath,
+		api.HTTPClientCert,
+		api.HTTPClientKey,
+		api.HTTPTLSServerName,
+		api.HTTPSSLVerifyEnvName,
+	}
+
+	for _, env := range consulEnvVars {
+		v, ok := config[env]
+		if !ok {
+			v, ok = config[strings.ToLower(env)]
+		}
+		if ok && v != "" && os.Getenv(env) == "" {
+			os.Setenv(env, v)
+			defer os.Unsetenv(env)
+		}
+	}
+
+	return api.NewClient(&api.Config{})
 }
