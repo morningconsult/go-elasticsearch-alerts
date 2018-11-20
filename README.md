@@ -57,7 +57,7 @@ This example shows a sample main configuration file.
 * `consul_http_address` (string: `""`) - The URL of your Consul server. This field is always required.
 * `consul_http_token` (string: `""`)**\*** - The API access token required when access control lists (ACLs) are enabled. This field is optional.
 * `consul_http_ssl` (bool: `false`)**\*** - A boolean value (default is false) that enables the HTTPS URI scheme and SSL connections to the HTTP API. This field is optional.
-* `consul_http_ssl_verify` (string: `""`) - A boolean value (default true) to specify SSL certificate verification; setting this value to false is not recommended for production use. This field is optional.
+* `consul_http_ssl_verify` (string: `""`)**\*** - A boolean value (default true) to specify SSL certificate verification; setting this value to false is not recommended for production use. This field is optional.
 * `consul_cacert` (string: `""`)**\*** - Path to a CA file to use for TLS when communicating with Consul. This field is optional.
 * `consul_capath` (string: `""`)**\*** - Path to a directory of CA certificates to use for TLS when communicating with Consul. This field is optional.
 * `consul_client_cert` (string: `""`)**\*** - Path to a client cert file to use for TLS when verify_incoming is enabled. This field is optional.
