@@ -3,6 +3,7 @@ package query
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -19,7 +20,33 @@ import (
 
 var SkipElasticSearchTests bool = false
 
-const ElasticSearchURL string = "http://127.0.0.1:9200"
+const (
+	ElasticSearchURL string = "http://127.0.0.1:9200"
+	ConsulURL string = "http://127.0.0.1:8500"
+)
+
+func TestNewQueryHandler_DefaultStateIndex(t *testing.T) {
+	qh, err := NewQueryHandler(&QueryHandlerConfig{
+		ESUrl:    ElasticSearchURL,
+		Schedule: "* * * * * *",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := fmt.Sprintf("%s/%s", ElasticSearchURL, defaultStateIndex)
+	if qh.stateURL != expected {
+		t.Errorf("QueryHandler has wrong stateURL value (got %q, expected %q)", qh.stateURL, expected)
+	}
+}
+
+func TestNewQueryHandler_CronParseError(t *testing.T) {
+	_, err := NewQueryHandler(&QueryHandlerConfig{
+		Schedule: "i am not a valid cron",
+	})
+	if err == nil {
+		t.Error("expected an error but didn't receive one")
+	}
+}
 
 func TestStateIndexExists(t *testing.T) {
 	if SkipElasticSearchTests {
@@ -226,70 +253,125 @@ func TestCreateStateIndex(t *testing.T) {
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestGetNextQuery(t *testing.T) {
 	if SkipElasticSearchTests {
 		t.Skipf("unable to connect to ElasticSearch at %q. Skipping test.", ElasticSearchURL)
 	}
 
-	id, err := uuid.GenerateUUID()
-	if err != nil {
-		t.Fatal(err)
-	}
+	hostname := "testing"
+	ruleName := "test_rule"
 
-	queryURL := ElasticSearchURL+"/"+id
 	client := cleanhttp.DefaultClient()
 
-	req, err := http.NewRequest("PUT", queryURL, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = client.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// write some data
-	payload := `{
-    "hello": "darkness",
-    "my": {
-        "old": "friend"
-    }
-}`
-	_, err = client.Post(queryURL+"/_doc", "application/json", bytes.NewBufferString(payload))
-    	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer func() {
-		req, err := http.NewRequest("DELETE", queryURL, nil)
+	randomUUID := func() string {
+		id, err := uuid.GenerateUUID()
 		if err != nil {
 			t.Fatal(err)
 		}
+		return id
+	}
+
+	changeIndexFunc := func(method, index string, body io.Reader) {
+		req, err := http.NewRequest(method, ElasticSearchURL+"/"+index, body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Add("Content-Type", "application/json")
+
 		_, err = client.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
-	}()
+	}
 
-	qh := &QueryHandler{
-		queryURL:  queryURL,
-		client:    client,
-		logger:    hclog.NewNullLogger(),
-		queryData: map[string]interface{}{
-			"query": map[string]interface{}{
-				"term": map[string]interface{}{
-					"old": "darkness",
-				},
-			},
+	stateIndex := randomUUID()
+
+	cases := []struct{
+		name     string
+		stateURL string
+		doc      string
+		err      bool
+	}{
+		{
+			"success",
+			ElasticSearchURL+"/"+stateIndex,
+			fmt.Sprintf(`{"next_query": %q, "hostname": %q, "rule_name": %q}`, time.Now().Format(time.RFC3339), hostname, ruleName),
+			false,
 		},
+		{
+			"url-parse-error",
+			"@#$#!@#$%$#@#$%",
+			"",
+			true,
+		},
+		{
+			"wrong-url",
+			fmt.Sprintf("http://%s.com", randomUUID()),
+			"",
+			true,
+		},
+		{
+			"non-string-timestamp",
+			ElasticSearchURL+"/"+stateIndex,
+			fmt.Sprintf(`{"next_query": 20, "hostname": %q, "rule_name": %q}`, hostname, ruleName),
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			changeIndexFunc("PUT", stateIndex, nil)
+			defer changeIndexFunc("DELETE", stateIndex, nil)
+			if tc.doc != "" {
+				resp, err := client.Post(tc.stateURL+"/_doc", "application/json", bytes.NewBufferString(tc.doc))
+				if err != nil {
+					t.Fatal(err)
+				}
+				resp.Body.Close()
+
+				time.Sleep(3 * time.Second)
+			}
+
+			qh := &QueryHandler{
+				name:     ruleName,
+				client:   cleanhttp.DefaultClient(),
+				logger:   hclog.NewNullLogger(),
+				stateURL: tc.stateURL,
+				hostname: hostname,
+			}
+
+			ctx := context.Background()
+			_, err := qh.getNextQuery(ctx)
+			if tc.err {
+				if err == nil {
+					t.Fatal("expected an error but didn't receive one")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestQueryError(t *testing.T) {
+	qh, err := NewQueryHandler(&QueryHandlerConfig{
+		Name:     "test_errors",
+		Client:   cleanhttp.DefaultClient(),
+		Logger:   hclog.NewNullLogger(),
+		Schedule: "@every 10s",
+		ESUrl:    "not a url!",
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	ctx := context.Background()
 	_, err = qh.query(ctx)
-	if err != nil {
-		t.Fatal(err)
+	if err == nil {
+		t.Fatal("expected an error but didn't receive one")
 	}
-	// TODO
 }
 
 func TestRun(t *testing.T) {
@@ -336,58 +418,113 @@ func TestRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	qh, err := NewQueryHandler(&QueryHandlerConfig{
-		Name:   "test_errors",
-		Logger: hclog.NewNullLogger(),
-		Client: client,
-		ESUrl:  ElasticSearchURL,
-		QueryData: map[string]interface{}{
-			"query": map[string]interface{}{
-				"term": map[string]interface{}{
-					"hello": "world",
-				},
-			},
+	cases := []struct{
+		name string
+		distributed bool
+	}{
+		{
+			"distributed",
+			true,
 		},
-		QueryIndex: queryIndex,
+		{
+			"non-distributed",
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			qh, err := NewQueryHandler(&QueryHandlerConfig{
+				Name:   "test_errors",
+				Logger: hclog.NewNullLogger(),
+				Client: client,
+				ESUrl:  ElasticSearchURL,
+				QueryData: map[string]interface{}{
+					"query": map[string]interface{}{
+						"term": map[string]interface{}{
+							"hello": "world",
+						},
+					},
+				},
+				Distributed: tc.distributed,
+				QueryIndex: queryIndex,
+				Schedule: "@every 10s",
+				StateIndex: stateIndex,
+				AlertMethods: []alert.AlertMethod{fileAM},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.distributed {
+				qh.HaveLockCh <- true
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Minute)
+			outputCh := make(chan *alert.Alert, 1)
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go qh.Run(ctx, outputCh, &wg)
+
+			select {
+			case <-ctx.Done():
+				t.Fatal("context timeout")
+			case a := <-outputCh:
+				cancel()
+				defer func() {
+					wg.Wait()
+				}()
+				if a.RuleName != qh.name {
+					t.Fatalf("bad alert rule name (expected: %q, got: %q)", qh.name, a.RuleName)
+				}
+				if len(a.Methods) != 1 {
+					t.Fatal("alert should have just one alert method (file)")
+				}
+				if _, ok := a.Methods[0].(*file.FileAlertMethod); !ok {
+					t.Fatalf("alert method should be of the FileAlertMethod type (got type: %T)", a.Methods[0])
+				}
+				if len(a.Records) != 1 {
+					t.Fatalf("expected only one alert.Record (got %d records)", len(a.Records))
+				}
+
+				expected := "{\n    \"hello\": \"world\",\n    \"this\": {\n        \"is\": \"a-test\"\n    }\n}"
+				if a.Records[0].Text != expected {
+					t.Fatalf("unexpected alert.Record[0].Text value (got %q, expected %q)", a.Records[0].Text, expected)
+				}
+			}
+		})
+	}
+}
+
+func TestCanceledContext(t *testing.T) {
+	qh, err := NewQueryHandler(&QueryHandlerConfig{
+		Name:     "test_errors",
+		Client:   cleanhttp.DefaultClient(),
+		Logger:   hclog.NewNullLogger(),
 		Schedule: "@every 10s",
-		StateIndex: stateIndex,
-		AlertMethods: []alert.AlertMethod{fileAM},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), 2 * time.Minute)
+	ctx, cancel := context.WithCancel(context.Background())
 	outputCh := make(chan *alert.Alert, 1)
+	doneCh := make(chan struct{})
+	cancel()
+
 	var wg sync.WaitGroup
+	wg.Add(1)
 	go qh.Run(ctx, outputCh, &wg)
+	
+	go func() {
+		wg.Wait()
+		doneCh <- struct{}{}
+	}()
 
 	select {
-	case <-ctx.Done():
-		t.Fatal("context timeout")
-	case a := <-outputCh:
-		if a.RuleName != qh.name {
-			t.Fatalf("bad alert rule name (expected: %q, got: %q)", qh.name, a.RuleName)
-		}
-		if len(a.Methods) != 1 {
-			t.Fatal("alert should have just one alert method (file)")
-		}
-		if _, ok := a.Methods[0].(*file.FileAlertMethod); !ok {
-			t.Fatalf("alert method should be of the FileAlertMethod type (got type: %T)", a.Methods[0])
-		}
-		if len(a.Records) != 1 {
-			t.Fatalf("expected only one alert.Record (got %d records)", len(a.Records))
-		}
-
-		expected := `{
-    "hello": "world",
-    "this": {
-        "is": "a-test"
-    }
-}`
-		if a.Records[0].Text != expected {
-			t.Fatalf("unexpected alert.Record[0].Text value (got %q, expected %q)", a.Records[0].Text, expected)
-		}
+	case <-doneCh:
+		return
+	case <-time.After(10 * time.Second):
+		t.Fatal("QueryHandler.Run() should immediately return when context canceled is passed to it")
 	}
 }
 

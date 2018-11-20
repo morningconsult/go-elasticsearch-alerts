@@ -44,6 +44,26 @@ This example shows a sample main configuration file.
   }
 }
 ```
+* `elasticsearch` ([ElasticSearch](#elasticsearch-parameters): `<nil>`) - Configures the ElasticSearch client and specifies server parameters. See the [ElasticSearch](#elasticsearch-parameters) section for more details. This field is required.
+* `distributed` (bool: `false`) - Whether this application should will be distributed across multiple processes. If this is set to `true`, the `consul` field is also required since this application uses the [Consul lock](https://www.consul.io/docs/commands/lock.html) for synchronization. This field is optional.
+* `consul` ([Consul](#consul-parameters): `<nil>`) - Configures the Consul client if this application is distributed. This field is only required when `distributed` is set to `true`.
+
+### `elasticsearch` parameters
+* `server` ([Server](#server-parameters): `<nil>`) - Specifies ElasticSearch server information. See the (Server)[#server-parameters] section for more information. This field is always required.
+* `client` ([Client](#client-parameters): `<nil>`) - Configures the HTTP client with which the process will communicate with Elasticsearch. See the (Client)[#client-parameters] section for more informiation. This field is always required.
+
+### `consul` parameters
+* `consul_lock_key` (string: `""`) - The name of the key to be assigned to the Consul lock. This field is always required.
+* `consul_http_address` (string: `""`) - The URL of your Consul server. This field is always required.
+* `consul_http_token` (string: `""`)\* - The API access token required when access control lists (ACLs) are enabled. This field is optional.
+* `consul_http_ssl` (bool: `false`)\* - A boolean value (default is false) that enables the HTTPS URI scheme and SSL connections to the HTTP API. This field is optional.
+* `consul_http_ssl_verify` (string: `""`) - A boolean value (default true) to specify SSL certificate verification; setting this value to false is not recommended for production use. This field is optional.
+* `consul_cacert` (string: `""`)\* - Path to a CA file to use for TLS when communicating with Consul. This field is optional.
+* `consul_capath` (string: `""`)\* - Path to a directory of CA certificates to use for TLS when communicating with Consul. This field is optional.
+* `consul_client_cert` (string: `""`)\* - Path to a client cert file to use for TLS when verify_incoming is enabled. This field is optional.
+* `consul_client_key` (string: `""`)\* - Path to a client key file to use for TLS when verify_incoming is enabled. This field is optional.
+* `consul_tls_server_name` (string: `""`)\* - The server name to use as the SNI host when connecting via TLS. This field is optional.
+\* This field can be specified using its corresponding [environment variable](https://www.consul.io/docs/commands/index.html#environment-variables) instead. If this field and its corresponding environment variable are both set, the environment variable takes precedence.
 
 ### `server` parameters
 

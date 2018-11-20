@@ -48,8 +48,6 @@ func Run() int {
 
 	var queryHandlers []*query.QueryHandler
 	for _, rule := range config.Rules {
-
-		// Build alert.AlertMethod array for this rule
 		var methods []alert.AlertMethod
 		for _, output := range rule.Outputs {
 			var method alert.AlertMethod
