@@ -20,8 +20,8 @@ import (
 var _ AlertMethod = (*fileAlertMethod)(nil)
 
 type OutputJSON struct {
-	RuleName   string          `json:"rule_name"`
-	ReceivedAt time.Time       `json:"received_at"`
+	RuleName   string    `json:"rule_name"`
+	ReceivedAt time.Time `json:"received_at"`
 	Records    []*Record `json:"results"`
 }
 
