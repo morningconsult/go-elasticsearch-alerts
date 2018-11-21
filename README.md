@@ -182,6 +182,24 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 The application will group the response to the ElasticSearch query by each element of the `filters` field and include each result of the filters as a separate record. For example, given the [rule file above](#example) let's assume that ElasticSearch returns the following in response to the query:
 ```json
 {
+  "hits": {
+    "hits": [
+      {
+        "_source": {
+          "some": {
+            "important": "information"
+          }
+        }
+      },
+      {
+        "_source": {
+          "more": {
+            "important": "info!"
+          }
+        }
+      }
+    ]
+  },
   "aggregations": {
     "service_name": {
       "buckets": [
@@ -223,7 +241,7 @@ The application will group the response to the ElasticSearch query by each eleme
 }
 ```
 
-Also given the filters `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets` and that the Slack output method is used, the application will make the following request to Slack (shown as a `cURL` request) after running the query and receiving the aforementioned data:
+Also given the filters `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets` and that the Slack output method is used, the application will make the following request to Slack (shown as a `cURL` request) after running the query and receiving the aforementioned data (note that if the response from ElasticSearch includes the array field `hits.hits`, the `_source` field of each element will be included in the output by default, regardless of the `filters`):
 
 ```shell
 $ curl https://slack.webhooks.foo/asdf \
@@ -275,6 +293,21 @@ $ curl https://slack.webhooks.foo/asdf \
           "short": true
         }
       ]
+    },
+    {
+      "fallback": "hits.hits._source",
+      "text": "{
+        \"some\": {
+          \"important\": \"information\"
+        }
+      }
+      ----------------------------------------
+      {
+        \"more\": {
+          \"important\": \"info!\"
+        }
+      }
+      "
     }
   ]
 }'

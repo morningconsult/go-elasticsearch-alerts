@@ -56,7 +56,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 	a.logger.Info("starting alert handler")
 
 	alertCh := make(chan func() (int, error), 8)
-	active := NewInventory()
+	active := newInventory()
 
 	alertFunc := func(ctx context.Context, alertID, rule string, method AlertMethod, records []*Record) func() (int, error) {
 		return func() (int, error) {

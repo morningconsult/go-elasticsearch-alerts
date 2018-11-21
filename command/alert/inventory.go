@@ -1,8 +1,6 @@
 package alert
 
-import (
-	"sync"
-)
+import "sync"
 
 const defaultNumAttempts int = 3
 
@@ -11,7 +9,7 @@ type inventory struct {
 	mutex  *sync.RWMutex
 }
 
-func NewInventory() *inventory {
+func newInventory() *inventory {
 	return &inventory{
 		alerts: make(map[string]int),
 		mutex:  new(sync.RWMutex),
