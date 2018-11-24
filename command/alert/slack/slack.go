@@ -42,11 +42,15 @@ type Payload struct {
 
 func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, error) {
 	if config.WebhookURL == "" {
-		return nil, fmt.Errorf("field 'output.config.webhook' must not be empty for the Slack output method")
+		return nil, fmt.Errorf("field 'output.config.webhook' must not be empty when using the Slack output method")
 	}
 
 	if config.Client == nil {
 		config.Client = cleanhttp.DefaultClient()
+	}
+
+	if config.Text == "" {
+		return nil, fmt.Errorf("field 'config.test' must not be empty when using the Slack output method")
 	}
 
 	return &SlackAlertMethod{
