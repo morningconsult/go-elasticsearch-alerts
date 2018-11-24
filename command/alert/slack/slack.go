@@ -33,7 +33,7 @@ type SlackAlertMethod struct {
 }
 
 type Payload struct {
-	Channel     string        `json:"channel"`
+	Channel     string        `json:"channel,omitempty"`
 	Username    string        `json:"username,omitempty"`
 	Text        string        `json:"text,omitempty"`
 	Emoji       string        `json:"icon_emoji,omitempty"`
