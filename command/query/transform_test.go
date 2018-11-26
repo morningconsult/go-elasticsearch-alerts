@@ -359,7 +359,7 @@ func TestTransform(t *testing.T) {
 			qh := &QueryHandler{
 				filters: tc.filters,
 			}
-			records, err := qh.transform(tc.input)
+			records, err := qh.Transform(tc.input)
 			if !tc.err && err != nil {
 				t.Fatal(err)
 			}

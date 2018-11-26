@@ -164,7 +164,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 					break
 				}
 
-				records, err := q.transform(data)
+				records, err := q.Transform(data)
 				if err != nil {
 					q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), "error", err)
 					break
@@ -265,7 +265,7 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 }
 
 func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
-	payload := fmt.Sprintf(`{"rule_name":%q,"next_query":%q,"hostname":%q}`, q.name, ts.Format(defaultTimestampFormat), q.hostname)
+	payload := fmt.Sprintf(`{"rule_name":%q,"next_query":%q,"hostname":%q}`, q.cleanedName(), ts.Format(defaultTimestampFormat), q.hostname)
 
 	resp, err := q.makeRequest(ctx, "POST", q.stateURL+"/_doc", []byte(payload))
 	if err != nil {
@@ -281,7 +281,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
 }
 
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
-	payload := fmt.Sprintf(`{"query":{"bool":{"should":[{"term":{"rule_name":{"value":%q}}},{"term":{"hostname":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.name, q.hostname)
+	payload := fmt.Sprintf(`{"query":{"bool":{"should":[{"term":{"rule_name":{"value":%q}}},{"term":{"hostname":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName(), q.hostname)
 
 	u, err := url.Parse(q.stateURL+"/_search")
 	if err != nil {
@@ -317,6 +317,10 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 		return nil, fmt.Errorf("error parsing time: %v", err)
 	}
 	return &t, nil
+}
+
+func (q *QueryHandler) cleanedName() string {
+	return strings.Replace(strings.ToLower(q.name), " ", "-", -1)
 }
 
 func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, payload []byte) (*http.Response, error) {

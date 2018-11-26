@@ -9,7 +9,7 @@ import (
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 )
 
-func (q *QueryHandler) transform(respData map[string]interface{}) ([]*alert.Record, error) {
+func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, error) {
 	var records []*alert.Record
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)

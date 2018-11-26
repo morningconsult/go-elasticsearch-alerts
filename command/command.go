@@ -19,6 +19,7 @@ import (
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/slack"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/email"
 )
 
 func Run() int {
@@ -75,6 +76,18 @@ func Run() int {
 				method, err = file.NewFileAlertMethod(fileConfig)
 				if err != nil {
 					logger.Error("error creating new file output method", "error", err)
+					return 1
+				}
+			case "email":
+				emailConfig := new(email.EmailAlertMethodConfig)
+				if err = mapstructure.Decode(output.Config, emailConfig); err != nil {
+					logger.Error("error decoding email output configuration", "error", err)
+					return 1
+				}
+
+				method, err = email.NewEmailAlertMethod(emailConfig)
+				if err != nil {
+					logger.Error("error creating new email output method", "error", err)
 					return 1
 				}
 			default:
