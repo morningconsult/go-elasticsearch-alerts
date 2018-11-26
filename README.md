@@ -317,9 +317,9 @@ Note: The last element of the `filter` value should be an array with both the `k
 
 ### `outputs` parameter
 
-The `outputs` parameter of the rule file specifies where the results of the queries should be written. Each rule file should have at least one output. Currently, two outputs are supported: [Slack](#slack-output-configuration-parameters) and [File](#file-output-configuration-parameters). The exact structure of this field will depend on the output type.
+The `outputs` parameter of the rule file specifies where the results of the queries should be written. Each rule file should have at least one output. Currently, three output types are supported: [Slack](#slack-output-configuration-parameters), [File](#file-output-configuration-parameters), and [Email](#email-output-configuration-parameters). The exact structure of this field will depend on the output type.
 
-* `type` (string: `""`) - The type of output. Currently, only `slack` and `file` are supported. This field is always required.
+* `type` (string: `""`) - The type of output. Currently, only `slack`, `file`, and `email` are supported. This field is always required.
 * `config` (JSON object: `<nil>`) - The configuration parameters of the output type. The parameters required in this section are specific to the output type. This field is always required.
 
 #### Slack Output Configuration Parameters
@@ -333,3 +333,11 @@ The `outputs` parameter of the rule file specifies where the results of the quer
 #### File Output Configuration Parameters
 
 * `file` (string: `""`) - The file to which alerts should be written. This field is required.
+
+#### Email Output Configuration Parameters
+
+* `address` (string: `""`) - The SMTP server address. This should be in `<host>:<port>` format (e.g. `smtp.gmail.com:587`). This field is required.
+* `username` (string: `""`) - The "from" email address. This email address will be used in authentication. This field is required.
+* `to` ([]string: `[]`) - The "to" addresses to which email alerts will be sent. At least one email address is required.
+* `auth_host` (string: `""`) - The host to which the SMTP client will authenticate (e.g. `smtp.gmail.com`). This field is required.
+* `password` (string: `""`) - The password with which the SMTP client will authenticate to the host. If you do not wish to specify the password in the configuration file, you can set the password using the `GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD` environment variable. This field is required (either in the configuration file or in the environment variable).
