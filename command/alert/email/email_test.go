@@ -106,7 +106,7 @@ func TestBuildMessage(t *testing.T) {
 			},
 		},
 		&alert.Record{
-			Title: "aggregations.hostname.buckets.program.buckets",
+			Title: "hits.hits._source",
 			Text:  "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
 		},
 	}
