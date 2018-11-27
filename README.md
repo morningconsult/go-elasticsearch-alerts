@@ -166,7 +166,7 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 
 ### Rule configuration file parameters
 
-* `name` (string: `""`) - The name of the rule. This should be unique and have no spaces. This field is required.
+* `name` (string: `""`) - The name of the rule (e.g. "Filebeat Errors"). This field is required.
 * `index` (string: `""`) - The index to be queried. This field is required.
 * `schedule` (string: `""`) - The schedule of when the query will be executed in [cron syntax](https://en.wikipedia.org/wiki/Cron).
 * `body` (JSON object: `<nil>`) - The body of the [search query](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html) request. This should be exactly what you would include in an ElasticSearch `_search` request to the index specified above. This value will dictate the layout of the data that your ElasticSearch instance sends to this application; therefore, the subsequent `filters` section is dictated by this section. It is recommended that you manually run this query and understand the structure of the response data before writing the `filters` section.

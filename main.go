@@ -14,10 +14,26 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
+
 	cmd "gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/version"
 )
 
+const banner = "Go ElasticSearch Alerts version %v, commit %v, built %v\n"
+
 func main() {
+	var versionFlag bool
+	flag.BoolVar(&versionFlag, "version", false, "print version and exit")
+	flag.Parse()
+
+	// Exit safely when version is used
+	if versionFlag {
+		fmt.Printf(banner, version.Version, version.Commit, version.Date)
+		os.Exit(0)
+	}
+
 	os.Exit(cmd.Run())
 }
