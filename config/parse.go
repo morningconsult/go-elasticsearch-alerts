@@ -14,13 +14,13 @@
 package config
 
 import (
-	"path/filepath"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/hashicorp/vault/helper/jsonutil"
+	"github.com/mitchellh/go-homedir"
 )
 
 const (

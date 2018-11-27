@@ -20,7 +20,7 @@ import (
 )
 
 func TestTransform(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name    string
 		input   map[string]interface{}
 		filters []string
@@ -34,7 +34,7 @@ func TestTransform(t *testing.T) {
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
-								"key":      "foo",
+								"key":       "foo",
 								"doc_count": 2,
 							},
 							map[string]interface{}{
@@ -48,7 +48,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -81,7 +81,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "bar",
@@ -99,7 +99,7 @@ func TestTransform(t *testing.T) {
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
-								"key":      "foo",
+								"key":       "foo",
 								"doc_count": 0,
 							},
 							map[string]interface{}{
@@ -113,7 +113,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "bar",
@@ -131,7 +131,7 @@ func TestTransform(t *testing.T) {
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
-								"key":      "foo",
+								"key":       "foo",
 								"doc_count": 5,
 								"program": map[string]interface{}{
 									"buckets": []interface{}{
@@ -149,7 +149,7 @@ func TestTransform(t *testing.T) {
 							map[string]interface{}{
 								"key":       "bar",
 								"doc_count": 3,
-								"program":  map[string]interface{}{
+								"program": map[string]interface{}{
 									"buckets": []interface{}{
 										map[string]interface{}{
 											"key":       "ayy",
@@ -169,7 +169,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets.program.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets.program.buckets",
+					Title: "aggregations.hostname.buckets.program.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo - bim",
@@ -199,7 +199,7 @@ func TestTransform(t *testing.T) {
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
-								"key":      "foo",
+								"key":       "foo",
 								"doc_count": 2,
 							},
 							map[string]interface{}{
@@ -218,7 +218,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -240,7 +240,7 @@ func TestTransform(t *testing.T) {
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
-								"key":      "foo",
+								"key":       "foo",
 								"doc_count": 2,
 							},
 							map[string]interface{}{
@@ -264,7 +264,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -286,7 +286,7 @@ func TestTransform(t *testing.T) {
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
-								"key":      "foo",
+								"key":       "foo",
 								"doc_count": 2,
 							},
 							map[string]interface{}{
@@ -313,7 +313,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -327,7 +327,7 @@ func TestTransform(t *testing.T) {
 				},
 				&alert.Record{
 					Title: "hits.hits._source",
-					Text: `{"ayy": "lmao"}`,
+					Text:  `{"ayy": "lmao"}`,
 				},
 			},
 			false,
@@ -354,7 +354,7 @@ func TestTransform(t *testing.T) {
 			[]*alert.Record{
 				&alert.Record{
 					Title: "hits.hits._source",
-					Text:  `{
+					Text: `{
     "ayy": "lmao"
 }
 ----------------------------------------
@@ -380,7 +380,7 @@ func TestTransform(t *testing.T) {
 				t.Fatal("expected an error but did not receive one")
 			}
 			for i, record := range tc.output {
-				if len(records) < i + 1 {
+				if len(records) < i+1 {
 					t.Fatal("received records do not match expected records")
 				}
 				if records[i].Title != record.Title {
@@ -388,15 +388,15 @@ func TestTransform(t *testing.T) {
 						records[i].Title, record.Title)
 				}
 				for j, field := range record.Fields {
-					if len(records[i].Fields) < j + 1 {
+					if len(records[i].Fields) < j+1 {
 						t.Fatal("received records.Fields does not match expected fields")
 					}
 					if records[i].Fields[j].Key != field.Key {
-						t.Fatalf("field %d of record %d has unexpected key (got %q, expected %q)", i, j, 
+						t.Fatalf("field %d of record %d has unexpected key (got %q, expected %q)", i, j,
 							records[i].Fields[j].Key, field.Key)
 					}
 					if records[i].Fields[j].Count != field.Count {
-						t.Fatalf("field %d of record %d has unexpected key (got %q, expected %q)", i, j, 
+						t.Fatalf("field %d of record %d has unexpected key (got %q, expected %q)", i, j,
 							records[i].Fields[j].Count, field.Count)
 					}
 				}

@@ -28,11 +28,11 @@ import (
 var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
 
 type SlackAlertMethodConfig struct {
-	WebhookURL string       `mapstructure:"webhook"`
-	Channel    string       `mapstructure:"channel"`
-	Username   string       `mapstructure:"username"`
-	Text       string       `mapstructure:"text"`
-	Emoji      string       `mapstructure:"emoji"`
+	WebhookURL string `mapstructure:"webhook"`
+	Channel    string `mapstructure:"channel"`
+	Username   string `mapstructure:"username"`
+	Text       string `mapstructure:"text"`
+	Emoji      string `mapstructure:"emoji"`
 	Client     *http.Client
 }
 

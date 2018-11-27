@@ -18,7 +18,7 @@ import (
 )
 
 func TestNewESClient(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name   string
 		config *Config
 		err    bool

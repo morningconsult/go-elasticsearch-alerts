@@ -16,22 +16,22 @@ package query
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"net/http"
-	"io"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/robfig/cron"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/jsonutil"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
+	"github.com/robfig/cron"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
 )
 
 const (
@@ -54,7 +54,7 @@ type QueryHandlerConfig struct {
 }
 
 type QueryHandler struct {
-	HaveLockCh   chan bool
+	HaveLockCh chan bool
 
 	name         string
 	distributed  bool
@@ -296,7 +296,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	payload := fmt.Sprintf(`{"query":{"bool":{"should":[{"term":{"rule_name":{"value":%q}}},{"term":{"hostname":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName(), q.hostname)
 
-	u, err := url.Parse(q.stateURL+"/_search")
+	u, err := url.Parse(q.stateURL + "/_search")
 	if err != nil {
 		return nil, fmt.Errorf("error parsing URL: %v", err)
 	}

@@ -19,7 +19,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name   string
 		json   map[string]interface{}
 		path   string
@@ -130,7 +130,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name   string
 		json   map[string]interface{}
 		path   string

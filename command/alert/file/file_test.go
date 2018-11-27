@@ -15,8 +15,8 @@ package file
 
 import (
 	"context"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -25,7 +25,7 @@ import (
 )
 
 func TestNewFileAlertMethod(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name     string
 		filename string
 		err      bool
@@ -69,7 +69,7 @@ func TestNewFileAlertMethod(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name     string
 		filename string
 		err      bool

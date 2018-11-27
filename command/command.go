@@ -21,16 +21,16 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/go-cleanhttp"
+	"github.com/hashicorp/go-hclog"
 	"github.com/mitchellh/mapstructure"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/config"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/query"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/slack"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/email"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/slack"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/query"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/config"
 )
 
 func Run() int {

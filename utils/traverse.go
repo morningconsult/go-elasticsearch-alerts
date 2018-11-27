@@ -15,8 +15,8 @@ package utils
 
 import (
 	"regexp"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 var re = regexp.MustCompile("\\[[0-9]*\\]$")
@@ -56,7 +56,7 @@ func get(indices []string, data interface{}) interface{} {
 	if !ok {
 		return nil
 	}
-	if len(list) < i + 1 {
+	if len(list) < i+1 {
 		return nil
 	}
 	return get(dequeue(indices), list[i])
@@ -78,7 +78,7 @@ func GetAll(json map[string]interface{}, path string) []interface{} {
 }
 
 func getall(i int, stack []string, elem interface{}, keychain string) interface{} {
-	if i > len(stack) - 1 {
+	if i > len(stack)-1 {
 		if list, ok := elem.([]interface{}); ok {
 			var mod []interface{}
 			for _, e := range list {
@@ -116,7 +116,7 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 				if kc == "" {
 					kc = k
 				} else {
-					kc = kc+" - "+k
+					kc = kc + " - " + k
 				}
 			}
 		}
@@ -145,7 +145,7 @@ func addkey(i interface{}, keychain string) interface{} {
 		return obj
 	}
 	if keychain != "" {
-		obj["key"] = keychain+" - "+key
+		obj["key"] = keychain + " - " + key
 	}
 	return obj
 }

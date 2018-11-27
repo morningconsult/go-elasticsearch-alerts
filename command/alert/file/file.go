@@ -21,8 +21,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/hashicorp/vault/helper/jsonutil"
+	"github.com/mitchellh/go-homedir"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 )
 

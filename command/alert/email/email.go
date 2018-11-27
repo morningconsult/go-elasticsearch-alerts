@@ -17,10 +17,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"net/smtp"
-	"strings"
 	"html/template"
+	"net/smtp"
+	"os"
+	"strings"
 
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 )
@@ -95,7 +95,7 @@ func (e *EmailAlertMethod) Write(ctx context.Context, rule string, records []*al
 
 func (e *EmailAlertMethod) buildMessage(rule string, records []*alert.Record) (string, error) {
 	alert := struct {
-		Name string
+		Name    string
 		Records []*alert.Record
 	}{
 		rule,
@@ -104,7 +104,7 @@ func (e *EmailAlertMethod) buildMessage(rule string, records []*alert.Record) (s
 
 	funcs := template.FuncMap{
 		"tabsAndLines": func(text string) template.HTML {
-			return template.HTML(strings.Replace(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>",  -1), " ", "&nbsp;", -1))
+			return template.HTML(strings.Replace(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1), " ", "&nbsp;", -1))
 		},
 	}
 

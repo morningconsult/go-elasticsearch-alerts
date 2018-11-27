@@ -18,14 +18,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/jsonutil"
 )
 
@@ -86,8 +86,8 @@ func TestRun(t *testing.T) {
 	var wg sync.WaitGroup
 	outputCh := make(chan *Alert, 1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
-	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 	ah := NewAlertHandler(&AlertHandlerConfig{
 		Logger: hclog.NewNullLogger(),
 	})
@@ -103,10 +103,10 @@ func TestRun(t *testing.T) {
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
 		Methods:  []AlertMethod{fm},
-		Records:  []*Record{
+		Records: []*Record{
 			&Record{
-				Title:  "test.rule.1",
-				Text:   "test text",
+				Title: "test.rule.1",
+				Text:  "test text",
 				Fields: []*Field{
 					&Field{
 						Key:   "hello",
@@ -167,8 +167,8 @@ func TestRunError(t *testing.T) {
 	var wg sync.WaitGroup
 	outputCh := make(chan *Alert, 1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
-	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
 	ah := NewAlertHandler(&AlertHandlerConfig{
 		Logger: hclog.Default(),
 	})
@@ -190,10 +190,10 @@ func TestRunError(t *testing.T) {
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
 		Methods:  []AlertMethod{fm},
-		Records:  []*Record{
+		Records: []*Record{
 			&Record{
-				Title:  "test.rule.1",
-				Text:   "test text",
+				Title: "test.rule.1",
+				Text:  "test text",
 				Fields: []*Field{
 					&Field{
 						Key:   "hello",
@@ -224,7 +224,7 @@ func TestRunError(t *testing.T) {
 	}()
 
 	time.Sleep(10 * time.Second)
-	
+
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		t.Fatal(err)

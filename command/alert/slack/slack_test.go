@@ -26,10 +26,10 @@ import (
 )
 
 func TestNewSlackAlertMethod(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name   string
 		config *SlackAlertMethodConfig
-		err     bool
+		err    bool
 	}{
 		{
 			"success",
@@ -91,7 +91,7 @@ func TestNewSlackAlertMethod(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name    string
 		status  int
 		records []*alert.Record
@@ -106,7 +106,7 @@ func TestWrite(t *testing.T) {
 					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 				&alert.Record{
-					Title:  "aggregations.hostname.buckets",
+					Title: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -156,7 +156,7 @@ func TestWrite(t *testing.T) {
 			ts := newMockSlackServer(tc.status)
 
 			defer ts.Close()
-	
+
 			var url string
 			if tc.name == "wrong-URL" {
 				id, err := uuid.GenerateUUID()

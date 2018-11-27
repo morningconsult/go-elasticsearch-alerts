@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
 )
 
 func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, error) {

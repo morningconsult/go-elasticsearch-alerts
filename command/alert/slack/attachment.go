@@ -14,8 +14,8 @@
 package slack
 
 const (
-	defaultAttachmentColor string = "#36a64f"
-	defaultAttachmentShort bool = true
+	defaultAttachmentColor  string = "#36a64f"
+	defaultAttachmentShort  bool   = true
 	defaultAttachmentFooter string = "#data"
 )
 

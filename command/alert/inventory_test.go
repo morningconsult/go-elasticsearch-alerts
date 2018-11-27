@@ -42,7 +42,7 @@ func TestInventory(t *testing.T) {
 	}
 
 	active.decrement(id)
-	if d, ok := active.alerts[id]; !ok || d != (remaining - 1) {
+	if d, ok := active.alerts[id]; !ok || d != (remaining-1) {
 		t.Fatalf("inventory.deregister() did not decremeint count by 1")
 	}
 	active.deregister(id)

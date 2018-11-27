@@ -24,9 +24,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-cleanhttp"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-uuid"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
 	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
 )
@@ -35,7 +35,7 @@ var SkipElasticSearchTests bool = false
 
 const (
 	ElasticSearchURL string = "http://127.0.0.1:9200"
-	ConsulURL string = "http://127.0.0.1:8500"
+	ConsulURL        string = "http://127.0.0.1:8500"
 )
 
 func TestNewQueryHandler_DefaultStateIndex(t *testing.T) {
@@ -71,7 +71,7 @@ func TestStateIndexExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stateIndex := ElasticSearchURL+"/"+id
+	stateIndex := ElasticSearchURL + "/" + id
 	client := cleanhttp.DefaultClient()
 
 	delIndexFunc := func() {
@@ -101,7 +101,7 @@ func TestStateIndexExists(t *testing.T) {
 		logger:   hclog.NewNullLogger(),
 	}
 
-	cases := []struct{
+	cases := []struct {
 		name   string
 		exists bool
 		err    bool
@@ -122,7 +122,7 @@ func TestStateIndexExists(t *testing.T) {
 			false,
 		},
 	}
-	
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			delIndexFunc()
@@ -136,7 +136,7 @@ func TestStateIndexExists(t *testing.T) {
 					t.Fatal(err)
 				}
 				currentURL := qh.stateURL
-				qh.stateURL = "http://"+id+".com"
+				qh.stateURL = "http://" + id + ".com"
 				defer func() {
 					qh.stateURL = currentURL
 				}()
@@ -172,7 +172,7 @@ func TestCreateStateIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stateIndex := ElasticSearchURL+"/"+id
+	stateIndex := ElasticSearchURL + "/" + id
 	client := cleanhttp.DefaultClient()
 
 	delIndexFunc := func() {
@@ -202,7 +202,7 @@ func TestCreateStateIndex(t *testing.T) {
 		logger:   hclog.NewNullLogger(),
 	}
 
-	cases := []struct{
+	cases := []struct {
 		name   string
 		exists bool
 		err    bool
@@ -237,7 +237,7 @@ func TestCreateStateIndex(t *testing.T) {
 					t.Fatal(err)
 				}
 				currentURL := qh.stateURL
-				qh.stateURL = "http://"+id+".com"
+				qh.stateURL = "http://" + id + ".com"
 				defer func() {
 					qh.stateURL = currentURL
 				}()
@@ -299,7 +299,7 @@ func TestGetNextQuery(t *testing.T) {
 
 	stateIndex := randomUUID()
 
-	cases := []struct{
+	cases := []struct {
 		name     string
 		stateURL string
 		doc      string
@@ -307,7 +307,7 @@ func TestGetNextQuery(t *testing.T) {
 	}{
 		{
 			"success",
-			ElasticSearchURL+"/"+stateIndex,
+			ElasticSearchURL + "/" + stateIndex,
 			fmt.Sprintf(`{"next_query": %q, "hostname": %q, "rule_name": %q}`, time.Now().Format(time.RFC3339), hostname, ruleName),
 			false,
 		},
@@ -325,7 +325,7 @@ func TestGetNextQuery(t *testing.T) {
 		},
 		{
 			"non-string-timestamp",
-			ElasticSearchURL+"/"+stateIndex,
+			ElasticSearchURL + "/" + stateIndex,
 			fmt.Sprintf(`{"next_query": 20, "hostname": %q, "rule_name": %q}`, hostname, ruleName),
 			true,
 		},
@@ -431,8 +431,8 @@ func TestRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cases := []struct{
-		name string
+	cases := []struct {
+		name        string
 		distributed bool
 	}{
 		{
@@ -459,10 +459,10 @@ func TestRun(t *testing.T) {
 						},
 					},
 				},
-				Distributed: tc.distributed,
-				QueryIndex: queryIndex,
-				Schedule: "@every 10s",
-				StateIndex: stateIndex,
+				Distributed:  tc.distributed,
+				QueryIndex:   queryIndex,
+				Schedule:     "@every 10s",
+				StateIndex:   stateIndex,
 				AlertMethods: []alert.AlertMethod{fileAM},
 			})
 			if err != nil {
@@ -472,7 +472,7 @@ func TestRun(t *testing.T) {
 				qh.HaveLockCh <- true
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2 * time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 			outputCh := make(chan *alert.Alert, 1)
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -527,7 +527,7 @@ func TestCanceledContext(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go qh.Run(ctx, outputCh, &wg)
-	
+
 	go func() {
 		wg.Wait()
 		doneCh <- struct{}{}

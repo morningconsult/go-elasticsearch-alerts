@@ -14,9 +14,9 @@
 package config
 
 import (
-	"path/filepath"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -24,7 +24,7 @@ import (
 )
 
 func TestParseConfig_MainConfig(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name string
 		path string
 		data interface{}
@@ -138,7 +138,6 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			},
 			true,
 		},
-
 	}
 
 	for _, tc := range cases {
@@ -174,7 +173,7 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			v, ok := cfg.Consul["consul_http_addr"]
 			if !ok {
 				t.Fatal("config.Consul does not have key \"consul_http_addr\"")
-			} 
+			}
 			if v != "http://127.0.0.1:8500" {
 				t.Fatalf("config.Consul[\"consul_http_addr\"] unexpected value (got %q, expected \"http://127.0.0.1:8500\")", v)
 			}
@@ -196,11 +195,11 @@ func TestParseConfig_Rules(t *testing.T) {
 		data     interface{}
 	}
 
-	cases := []struct{
-		name string
-		path string
+	cases := []struct {
+		name  string
+		path  string
 		files []*ruleFile
-		err  bool
+		err   bool
 	}{
 		{
 			"homedir-error",
@@ -245,9 +244,9 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test",
-						"body": `{"ayy": "lmao"}`,
-						"index": "test-*",
+						"name":     "test",
+						"body":     `{"ayy": "lmao"}`,
+						"index":    "test-*",
 						"schedule": "* * * * * *",
 						"outputs": []interface{}{
 							map[string]interface{}{
@@ -321,7 +320,7 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
+						"name":  "test-rule",
 						"index": "testindex",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -342,8 +341,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
-						"index": "testindex",
+						"name":     "test-rule",
+						"index":    "testindex",
 						"schedule": "@every 1m",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -364,8 +363,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
-						"index": "testindex",
+						"name":     "test-rule",
+						"index":    "testindex",
 						"schedule": "@every 1m",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -387,8 +386,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
-						"index": "testindex",
+						"name":     "test-rule",
+						"index":    "testindex",
 						"schedule": "@every 1m",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -414,8 +413,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
-						"index": "testindex",
+						"name":     "test-rule",
+						"index":    "testindex",
 						"schedule": "@every 1m",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -441,8 +440,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
-						"index": "testindex",
+						"name":     "test-rule",
+						"index":    "testindex",
 						"schedule": "@every 1m",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -471,8 +470,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-1.json",
 					map[string]interface{}{
-						"name": "test-rule",
-						"index": "testindex",
+						"name":     "test-rule",
+						"index":    "testindex",
 						"schedule": "@every 1m",
 						"body": map[string]interface{}{
 							"query": map[string]interface{}{
@@ -494,8 +493,8 @@ func TestParseConfig_Rules(t *testing.T) {
 				&ruleFile{
 					"testrule-2.json",
 					map[string]interface{}{
-						"name": "test-rule-2",
-						"index": "testindex",
+						"name":     "test-rule-2",
+						"index":    "testindex",
 						"schedule": "@every 2m",
 						"filters": []string{
 							"aggregations.hostname.buckets",

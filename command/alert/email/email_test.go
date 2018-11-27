@@ -21,17 +21,17 @@ import (
 )
 
 func TestNewEmailAlertMethod(t *testing.T) {
-	cases := []struct{
-		name string
+	cases := []struct {
+		name   string
 		config *EmailAlertMethodConfig
-		err bool
+		err    bool
 	}{
 		{
 			"success",
 			&EmailAlertMethodConfig{
 				Address: "smtp.gmail.com:587",
 				From:    "test@gmail.com",
-				To:      []string{
+				To: []string{
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
 				},
@@ -45,7 +45,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 			&EmailAlertMethodConfig{
 				Address: "smtp.gmail.com:587",
 				From:    "test@gmail.com",
-				To:      []string{
+				To: []string{
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
 				},
@@ -83,8 +83,8 @@ func TestNewEmailAlertMethod(t *testing.T) {
 func TestBuildMessage(t *testing.T) {
 	records := []*alert.Record{
 		&alert.Record{
-			Title:  "aggregations.hostname.buckets",
-			Text:   "",
+			Title: "aggregations.hostname.buckets",
+			Text:  "",
 			Fields: []*alert.Field{
 				&alert.Field{
 					Key:   "foo",
@@ -97,8 +97,8 @@ func TestBuildMessage(t *testing.T) {
 			},
 		},
 		&alert.Record{
-			Title:  "aggregations.hostname.buckets.program.buckets",
-			Text:   "",
+			Title: "aggregations.hostname.buckets.program.buckets",
+			Text:  "",
 			Fields: []*alert.Field{
 				&alert.Field{
 					Key:   "foo - bim",
