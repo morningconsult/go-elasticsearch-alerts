@@ -18,6 +18,8 @@ REPO=gitlab.morningconsult.com/mci/go-elasticsearch-alerts
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
 LOCAL_BINARY=bin/local/$(BINARY_NAME)
+GOPATH := $(shell pwd)
+GOBIN := $(GOPATH)/bin
 
 all: build
 
@@ -43,10 +45,10 @@ test:
 
 git_chglog_check:
 	if [ -z "$(shell which git-chglog)" ]; then \
-		go get -u -v github.com/git-chglog/git-chglog/cmd/git-chglog && git-chglog --version; \
+		GOPATH=$(GOPATH) PATH=$$PATH:$(GOBIN) go get -u -v github.com/git-chglog/git-chglog/cmd/git-chglog && GOPATH=$(GOPATH) PATH=$$PATH:$(GOBIN) git-chglog --version; \
 	fi
 .PHONY: git_chglog_check
 
 changelog: git_chglog_check
-	git-chglog --output CHANGELOG.md
+	GOPATH=$(GOPATH) PATH=$$PATH:$(GOBIN) git-chglog --output CHANGELOG.md
 .PHONY: changelog

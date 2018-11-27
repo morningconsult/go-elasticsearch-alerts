@@ -1,6 +1,9 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- go fmt
+
 
 <a name="0.0.1"></a>
 ## 0.0.1 - 2018-11-27
