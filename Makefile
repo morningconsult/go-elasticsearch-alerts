@@ -17,9 +17,9 @@ FLY := $(shell which fly)
 REPO=gitlab.morningconsult.com/mci/go-elasticsearch-alerts
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
-LOCAL_BINARY=bin/local/$(BINARY_NAME)
-GOPATH := $(shell pwd)
-GOBIN := $(GOPATH)/bin
+LOCAL_BINARY=bin/$(BINARY_NAME)
+# GOPATH := $(shell pwd)
+# GOBIN := $(GOPATH)/bin
 
 all: build
 
@@ -36,7 +36,7 @@ build: $(LOCAL_BINARY)
 
 $(LOCAL_BINARY): $(SOURCES)
 	@echo "==> Starting binary build..."
-	@sh -c "'./scripts/build-binary.sh' './bin/local' '$(shell git describe --tags --abbrev=0)' '$(shell git rev-parse --short HEAD)' '$(REPO)'"
+	@sh -c "'./scripts/build-binary.sh' '$(shell git describe --tags --abbrev=0)' '$(shell git rev-parse --short HEAD)' '$(REPO)'"
 	@echo "==> Done. Binary can be found at $(LOCAL_BINARY)"
 
 test:
@@ -45,10 +45,36 @@ test:
 
 git_chglog_check:
 	if [ -z "$(shell which git-chglog)" ]; then \
-		GOPATH=$(GOPATH) PATH=$$PATH:$(GOBIN) go get -u -v github.com/git-chglog/git-chglog/cmd/git-chglog && GOPATH=$(GOPATH) PATH=$$PATH:$(GOBIN) git-chglog --version; \
+		GOPATH=$(shell pwd) PATH=$$PATH:$(shell pwd)/bin go get -u -v github.com/git-chglog/git-chglog/cmd/git-chglog && GOPATH=$(shell pwd) PATH=$$PATH:$(shell pwd)/bin git-chglog --version; \
 	fi
 .PHONY: git_chglog_check
 
 changelog: git_chglog_check
-	GOPATH=$(GOPATH) PATH=$$PATH:$(GOBIN) git-chglog --output CHANGELOG.md
+	GOPATH=$(shell pwd) PATH=$$PATH:$(shell pwd)/bin git-chglog --output CHANGELOG.md
 .PHONY: changelog
+
+#=============================================================================
+# Release and Deployment tasks
+
+CONCOURSE_PIPELINE := go-elasticsearch-alerts
+
+check_fly:
+	if [ -z "$(FLY)" ]; then \
+		sudo mkdir -p /usr/local/bin; \
+		sudo wget -q -O /usr/local/bin/fly "https://ci.morningconsultintelligence.com/api/v1/cli?arch=amd64&platform=linux"; \
+		sudo chmod +x /usr/local/bin/fly; \
+		/usr/local/bin/fly --version; \
+	fi
+.PHONY: check_fly
+
+
+set_pipeline: check_fly
+	$(FLY) --target mci-ci-oss set-pipeline \
+		--config ci/pipeline.yml \
+		--pipeline $(CONCOURSE_PIPELINE) \
+		--non-interactive \
+		-v github-repo="$$(git config remote.origin.url)" \
+
+	$(FLY) --target mci-ci-oss unpause-pipeline \
+		--pipeline $(CONCOURSE_PIPELINE)
+.PHONY: set_pipeline

@@ -11,18 +11,27 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-FROM golang:1.11
+FROM golang:1.11-alpine3.8
 
-WORKDIR /go/src/gitlab.morningconsult.com/mci/go-elasticsearch-alerts
+RUN set -e; \
+  apk add -qU --no-cache git make; \
+  rm -f /var/cache/apk/*;
 
 ARG TARGET_GOOS
 ARG TARGET_GOARCH
 
-COPY . .
-
 ENV GOOS $TARGET_GOOS
 ENV GOARCH $TARGET_GOARCH
 
+ARG BINARY=go-elasticsearch-alerts
+ARG PROJECT=gitlab.morningconsult.com/mci/$BINARY
+
+WORKDIR /go/src/$PROJECT
+
+COPY . .
+
 RUN make
 
-ENTRYPOINT "/bin/bash"
+RUN cp $GOPATH/src/$PROJECT/bin/$BINARY /usr/local/bin
+
+CMD ["go-elasticsearch-alerts"]

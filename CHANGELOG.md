@@ -1,6 +1,9 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Ci
+- added some CI files
+
 
 <a name="v0.0.2"></a>
 ## [v0.0.2] - 2018-11-27
