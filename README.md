@@ -135,7 +135,7 @@ The rule configuration files are used to configure what ElasticSearch queries wi
 }
 ```
 
-In the example above, the application would execute the following query (show as a `cURL` request) to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and send the results to a Slack and write them to local disk.
+In the example above, the application would execute the following query (illustrated by the `cURL` request below) to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and send the results to Slack and write them to local disk.
 
 ```shell
 $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
