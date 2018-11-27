@@ -18,8 +18,6 @@ REPO=gitlab.morningconsult.com/mci/go-elasticsearch-alerts
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
 LOCAL_BINARY=bin/$(BINARY_NAME)
-# GOPATH := $(shell pwd)
-# GOBIN := $(GOPATH)/bin
 
 all: build
 

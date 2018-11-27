@@ -173,6 +173,7 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 * `filters` (\[\]string: `<nil>`) - How the response to this query should be grouped. More information on this field is provided in the [filters](#filters) section. This field is optional. If no filters are provided, only elements of the `hits.hits._source` field of the response will be recorded.
 * `outputs` (\[\][Output](#outputs-parameter): `<nil>`) - Specifies the outputs to which the results of the query should be written. See the [Output](#output-parameter) section for more details. At least one output must be specified.
 
+
 ### Filters
 
 The application will group the response to the ElasticSearch query by each element of the `filters` field and include each result of the filters as a separate record. For example, given the [rule file above](#example) let's assume that ElasticSearch returns the following in response to the query:
