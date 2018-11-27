@@ -78,10 +78,6 @@ This example shows a sample main configuration file.
 * `client_key` (string: `""`) - Path to an unencrypted, PEM-encoded private key on disk which corresponds to the matching client certificate.
 * `server_name` (string: `""`) - Name to use as the SNI host when connecting via TLS.
 
-### `distributed` parameters
-* `consul_address` (string: `""`) - The URL of your Consul server.
-* `consul_lock_key` (string: `""`) - They name of the key that Consul should use to create the lock.
-
 ### Rule Configuration Files
 
 The rule configuration files are used to configure what ElasticSearch queries will be run, how often they will be run, how the data will be transformed, and how the transformed data will be output. These files should be JSON format. The application will look for the rule files at `/etc/go-elasticsearch-alerts/rules` by default, but if you wish to keep them elsewhere you can specify this directory using the `GO_ELASTICSEARCH_ALERTS_RULES_DIR` environment variable.
@@ -337,7 +333,7 @@ The `outputs` parameter of the rule file specifies where the results of the quer
 #### Email Output Configuration Parameters
 
 * `address` (string: `""`) - The SMTP server address. This should be in `<host>:<port>` format (e.g. `smtp.gmail.com:587`). This field is required.
-* `username` (string: `""`) - The "from" email address. This email address will be used in authentication. This field is required.
+* `from` (string: `""`) - The "from" email address. This email address will be used in authentication. This field is required.
 * `to` ([]string: `[]`) - The "to" addresses to which email alerts will be sent. At least one email address is required.
 * `auth_host` (string: `""`) - The host to which the SMTP client will authenticate (e.g. `smtp.gmail.com`). This field is required.
 * `password` (string: `""`) - The password with which the SMTP client will authenticate to the host. If you do not wish to specify the password in the configuration file, you can set the password using the `GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD` environment variable. This field is required (either in the configuration file or in the environment variable).

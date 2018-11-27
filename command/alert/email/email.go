@@ -18,7 +18,7 @@ var _ alert.AlertMethod = (*EmailAlertMethod)(nil)
 
 type EmailAlertMethodConfig struct {
 	Address  string   `mapstructure:"address"`
-	From     string   `mapstructure:"username"`
+	From     string   `mapstructure:"from"`
 	To       []string `mapstructure:"to"`
 	AuthHost string   `mapstructure:"auth_host"`
 	Password string   `mapstructure:"password"`
