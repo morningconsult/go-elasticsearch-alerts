@@ -1,0 +1,17 @@
+---
+# ====================================
+#
+#            RESOURCE TYPES
+#
+# ====================================
+resource_types:
+- name: slack-alert
+  type: docker-image
+  source:
+    repository: arbourd/concourse-slack-alert-resource
+    channel: '#build'
+
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
