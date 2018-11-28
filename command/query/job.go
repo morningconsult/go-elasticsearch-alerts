@@ -30,8 +30,8 @@ import (
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/robfig/cron"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/utils"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
 const (

@@ -23,7 +23,7 @@ import (
 
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/mitchellh/go-homedir"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 // Ensure FileAlertMethod adheres to the alert.AlertMethod interface

@@ -15,7 +15,7 @@
 set -e
 
 TOOL="go-elasticsearch-alerts"
-REPO="gitlab.morningconsult.com/mci/${TOOL}"
+REPO="github.com/morningconsult/${TOOL}"
 BIN_DIR="bin"
 DOCKERFILE="Dockerfile-buildonly"
 
@@ -29,7 +29,7 @@ RUN set -e; \
   apk add -qU --no-cache git make; \
   rm -f /var/cache/apk/*;
 
-WORKDIR /go/src/gitlab.morningconsult.com/mci/go-elasticsearch-alerts
+WORKDIR /go/src/${REPO}
 
 ARG TARGET_GOOS
 ARG TARGET_GOARCH

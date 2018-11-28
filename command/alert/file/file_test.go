@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/vault/helper/jsonutil"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 func TestNewFileAlertMethod(t *testing.T) {

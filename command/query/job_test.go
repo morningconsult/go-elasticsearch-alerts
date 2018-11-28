@@ -27,8 +27,8 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 )
 
 var SkipElasticSearchTests bool = false

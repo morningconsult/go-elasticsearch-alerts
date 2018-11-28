@@ -14,7 +14,7 @@
 
 FLY := $(shell which fly)
 
-REPO=gitlab.morningconsult.com/mci/go-elasticsearch-alerts
+REPO=github.com/morningconsult/go-elasticsearch-alerts
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
 LOCAL_BINARY=bin/$(BINARY_NAME)

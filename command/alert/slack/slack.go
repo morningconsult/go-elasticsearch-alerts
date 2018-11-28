@@ -21,7 +21,7 @@ import (
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/helper/jsonutil"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 // Ensure SlackAlertMethod adheres to the alert.AlertMethod interface

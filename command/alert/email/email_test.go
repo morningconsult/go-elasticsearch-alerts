@@ -17,7 +17,7 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 func TestNewEmailAlertMethod(t *testing.T) {

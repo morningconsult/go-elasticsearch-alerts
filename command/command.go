@@ -25,12 +25,12 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-hclog"
 	"github.com/mitchellh/mapstructure"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/email"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/slack"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/query"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/config"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/email"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/slack"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
 func Run() int {

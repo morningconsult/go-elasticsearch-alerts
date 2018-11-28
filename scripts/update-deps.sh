@@ -13,7 +13,7 @@
 # permissions and limitations under the License.
 
 # ORIGIN=$(pwd)
-ORG="gitlab.morningconsult.com/mci"
+ORG="github.com/morningconsult"
 TOOL="go-elasticsearch-alerts"
 
 ## Make a temporary directory
@@ -28,7 +28,7 @@ cd $TEMPDIR
 mkdir -p "src/${ORG}"
 cd "src/${ORG}"
 echo "Fetching ${TOOL}..."
-git clone git@gitlab.morningconsult.com:mci/${TOOL}
+git clone git@github.com:morningconsult/${TOOL}
 cd ${TOOL}
 
 ## Clean out earlier vendoring

@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 const EnvEmailAuthPassword = "GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD"

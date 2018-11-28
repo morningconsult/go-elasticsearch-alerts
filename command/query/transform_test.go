@@ -16,7 +16,7 @@ package query
 import (
 	"testing"
 
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 func TestTransform(t *testing.T) {

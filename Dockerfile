@@ -24,7 +24,7 @@ ENV GOOS $TARGET_GOOS
 ENV GOARCH $TARGET_GOARCH
 
 ARG BINARY=go-elasticsearch-alerts
-ARG PROJECT=gitlab.morningconsult.com/mci/$BINARY
+ARG PROJECT=github.com/morningconsult/$BINARY
 
 WORKDIR /go/src/$PROJECT
 
