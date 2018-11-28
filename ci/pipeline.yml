@@ -1,0 +1,131 @@
+---
+# ====================================
+#
+#            RESOURCE TYPES
+#
+# ====================================
+resource_types:
+- name: slack-alert
+  type: docker-image
+  source:
+    repository: arbourd/concourse-slack-alert-resource
+    channel: '#build'
+
+- name: merge-request
+  type: docker-image
+  source:
+    aws_secret_access_key: ((aws-secret-access-key))
+    aws_access_key_id: ((aws-access-key-id))
+    repository: ((docker-repository))/morningconsult/gitlab-merge-request-resource
+
+
+# ====================================
+#
+#            RESOURCES
+#
+# ====================================
+resources:
+- name: go-elasticsearch-alerts-gitlab
+  type: git
+  source:
+    uri: ((gitlab-repo))
+    branch: master
+    private_key: ((gitlab-private-key))
+
+- name: go-elasticsearch-alerts-github
+  type: git
+  source:
+    private_key: ((github-private-key))
+    access_token: ((github-access-token))
+    uri: ((github-repo))
+    branch: master
+
+- name: test-merge-request
+  type: merge-request
+  source:
+    private_key: ((github-private-key))
+    private_token: ((gitlab-access-token))
+    uri: ((gitlab-repo))
+
+- name: new-release
+  type: git
+  source:
+    private_key: ((github-private-key))
+    access_token: ((github-access-token))
+    uri: ((github-repo))
+    branch: master
+    tag_filter: 'v[0-9]*'
+
+- name: golang
+  type: docker-image
+  source:
+    repository: golang
+    tag: 1.11-alpine3.8
+
+- name: slack
+  type: slack-alert
+  source:
+    url: ((slack-webhook))
+    channel: '#build'
+
+# ====================================
+#
+#            JOBS
+#
+# ====================================
+jobs:
+- name: test-pr
+  build_logs_to_retain: 30
+  serial: true
+  plan:
+  - get: test-merge-request
+    trigger: true
+  - put: test-merge-request
+    params:
+      repository: test-merge-request
+      status: running
+  - get: golang
+  - task: test-pr
+    image: golang
+    file: test-merge-request/ci/tasks/test-merge-request.yml
+    on_success:
+      put: test-merge-request
+      params:
+        repository: test-merge-request
+        status: success
+        context: $BUILD_JOB_NAME
+        comment: test-merge-request/ci/pr_test_success
+    on_failure:
+      put: test-merge-request
+      params:
+        repository: test-merge-request
+        status: failed
+        context: $BUILD_JOB_NAME
+        comment: test-merge-request/ci/pr_test_failure
+
+- name: github-mirror
+  serial: true
+  plan:
+  - get: go-elasticsearch-alerts-gitlab
+    trigger: true
+  - put: go-elasticsearch-alerts-github
+    params: {repository: go-elasticsearch-alerts-gitlab}
+
+- name: build-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: new-release
+      trigger: true
+    - get: golang
+  - task: test-and-build
+    image: golang
+    file: new-release/ci/tasks/build-release.yml
+    params:
+      GITHUB_TOKEN: ((github-access-token))
+    on_failure:
+      put: slack
+      params: {alert_type: failed}
+    on_abort:
+      put: slack
+      params: {alert_type: aborted}
