@@ -17,32 +17,9 @@ set -e
 TOOL="go-elasticsearch-alerts"
 REPO="github.com/morningconsult/${TOOL}"
 BIN_DIR="bin"
-DOCKERFILE="Dockerfile-buildonly"
 
 ROOT=$( cd "$( dirname "${0}" )/.." && pwd )
 cd "${ROOT}"
-
-cat <<EOF > $DOCKERFILE
-FROM golang:1.11-alpine3.8
-
-RUN set -e; \
-  apk add -qU --no-cache git make; \
-  rm -f /var/cache/apk/*;
-
-WORKDIR /go/src/${REPO}
-
-ARG TARGET_GOOS
-ARG TARGET_GOARCH
-
-COPY . .
-
-ENV GOOS \$TARGET_GOOS
-ENV GOARCH \$TARGET_GOARCH
-
-RUN make
-
-ENTRYPOINT "/bin/sh"
-EOF
 
 mkdir -p "${ROOT}/bin"
 
@@ -52,7 +29,6 @@ IMAGE=$( docker build \
   --quiet \
   --build-arg TARGET_GOARCH=${TARGET_GOARCH} \
   --build-arg TARGET_GOOS=${TARGET_GOOS} \
-  --file "${DOCKERFILE}" \
   . \
 )
 
@@ -63,7 +39,5 @@ CONTAINER_ID=$( docker run --rm --detach --tty ${IMAGE} )
 docker cp "${CONTAINER_ID}:/go/src/${REPO}/${BIN_DIR}/${TOOL}" "${ROOT}/${BIN_DIR}"
 
 docker kill "${CONTAINER_ID}" > /dev/null
-
-rm "${DOCKERFILE}"
 
 echo "==> Done. The binary can be found at: ${ROOT}/${BIN_DIR}/${TOOL}"

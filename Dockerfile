@@ -32,6 +32,4 @@ COPY . .
 
 RUN make
 
-RUN cp $GOPATH/src/$PROJECT/bin/$BINARY /usr/local/bin
-
-CMD ["go-elasticsearch-alerts"]
+ENTRYPOINT "/bin/sh"
