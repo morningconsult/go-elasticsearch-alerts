@@ -71,7 +71,8 @@ set_pipeline: check_fly
 		--config ci/pipeline.yml \
 		--pipeline $(CONCOURSE_PIPELINE) \
 		--non-interactive \
-		-v github-repo="$$(git config remote.origin.url)" \
+		-v gitlab-repo="$$(git config remote.origin.url)" \
+		-v docker-repository="$(ECR_REGISTRY)"
 
 	$(FLY) --target mci-ci-oss unpause-pipeline \
 		--pipeline $(CONCOURSE_PIPELINE)

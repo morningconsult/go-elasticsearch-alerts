@@ -1,0 +1,14 @@
+---
+platform: linux
+inputs:
+  - name: test-merge-request
+params:
+  VAULT_ADDR:
+  VAULT_TOKEN:
+  VAULT_CLIENT_CA:
+  VAULT_CLIENT_CERT:
+  VAULT_CLIENT_KEY:
+  git_private_key:
+run:
+  path: ci/run-tests.sh
+  dir: test-merge-request
