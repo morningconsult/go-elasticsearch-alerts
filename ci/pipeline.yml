@@ -89,13 +89,6 @@ jobs:
   - task: test-pr
     image: golang
     file: test-merge-request/ci/tasks/test-merge-request.yml
-    params:
-      VAULT_ADDR: ((vault-addr))
-      VAULT_TOKEN: ((vault-token))
-      VAULT_CLIENT_CA: ((vault-client-ca))
-      VAULT_CLIENT_CERT: ((vault-client-cert))
-      VAULT_CLIENT_KEY: ((vault-client-key))
-      git_private_key: ((github-private-key))
     on_success:
       put: test-merge-request
       params:
