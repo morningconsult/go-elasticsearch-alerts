@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"os"
 
-	cmd "gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command"
-	"gitlab.morningconsult.com/mci/go-elasticsearch-alerts/version"
+	cmd "github.com/morningconsult/go-elasticsearch-alerts/command"
+	"github.com/morningconsult/go-elasticsearch-alerts/version"
 )
 
 const banner = "Go ElasticSearch Alerts version %v, commit %v, built %v\n"
