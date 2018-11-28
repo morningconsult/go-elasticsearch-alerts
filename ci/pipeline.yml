@@ -25,20 +25,20 @@ resource_types:
 #
 # ====================================
 resources:
-# - name: go-elasticsearch-alerts-gitlab
-#   type: git
-#   source:
-#     uri: ((gitlab-repo))
-#     branch: master
-#     private_key: ((gitlab-private-key))
+- name: go-elasticsearch-alerts-gitlab
+  type: git
+  source:
+    uri: ((gitlab-repo))
+    branch: master
+    private_key: ((gitlab-private-key))
 
-# - name: go-elasticsearch-alerts-github
-#   type: git
-#   source:
-#     private_key: ((github-private-key))
-#     access_token: ((github-token))
-#     uri: ((github-repo))
-#     branch: master
+- name: go-elasticsearch-alerts-github
+  type: git
+  source:
+    private_key: ((github-private-key))
+    access_token: ((github-token))
+    uri: ((github-repo))
+    branch: master
 
 - name: test-merge-request
   type: merge-request
@@ -62,11 +62,11 @@ resources:
     repository: golang
     tag: 1.11-alpine3.8
 
-# - name: slack
-#   type: slack-alert
-#   source:
-#     url: ((slack-webhook))
-#     channel: '#build'
+- name: slack
+  type: slack-alert
+  source:
+    url: ((slack-webhook))
+    channel: '#build'
 
 # ====================================
 #
@@ -102,6 +102,14 @@ jobs:
         status: failed
         context: $BUILD_JOB_NAME
         comment: test-merge-request/ci/pr_test_failure
+
+- name: github-mirror
+  serial: true
+  plan:
+  - get: go-elasticsearch-alerts-gitlab
+    trigger: true
+  - put: go-elasticsearch-alerts-github
+    
 
 - name: build-release
   serial: true
