@@ -30,8 +30,8 @@ const EnvEmailAuthPassword = "GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD"
 var _ alert.AlertMethod = (*EmailAlertMethod)(nil)
 
 type EmailAlertMethodConfig struct {
-	Host  string   `mapstructure:"host"`
-	Port  int `mapstructure:"port"`
+	Host     string   `mapstructure:"host"`
+	Port     int      `mapstructure:"port"`
 	From     string   `mapstructure:"from"`
 	To       []string `mapstructure:"to"`
 	Password string   `mapstructure:"password"`
@@ -68,8 +68,8 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 	}
 
 	return &EmailAlertMethod{
-		host:  config.Host,
-		port: config.Port,
+		host:     config.Host,
+		port:     config.Port,
 		from:     config.From,
 		to:       config.To,
 		password: config.Password,
@@ -77,8 +77,8 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 }
 
 type EmailAlertMethod struct {
-	host  string
-	port int
+	host     string
+	port     int
 	from     string
 	password string
 	to       []string

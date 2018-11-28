@@ -31,7 +31,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 			&EmailAlertMethodConfig{
 				Host: "smtp.gmail.com",
 				Port: 587,
-				From:    "test@gmail.com",
+				From: "test@gmail.com",
 				To: []string{
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
@@ -45,7 +45,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 			&EmailAlertMethodConfig{
 				Host: "smtp.gmail.com",
 				Port: 587,
-				From:    "test@gmail.com",
+				From: "test@gmail.com",
 				To: []string{
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",

@@ -67,7 +67,7 @@ func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Rec
 
 // errorAlertMethod is a mock alert.AlertMethod used to simulate an
 // even where AlertMethod.Write() return an error
-type errorAlertMethod struct {}
+type errorAlertMethod struct{}
 
 func (e *errorAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
 	return fmt.Errorf("test error")
