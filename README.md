@@ -49,7 +49,7 @@ This example shows a sample main configuration file.
 * `consul` ([Consul](#consul-parameters): `<nil>`) - Configures the Consul client if this application is distributed. This field is only required when `distributed` is set to `true`.
 
 ### `elasticsearch` parameters
-* `server` ([Server](#server-parameters): `<nil>`) - Specifies ElasticSearch server information. See the (Server)[#server-parameters] section for more information. This field is always required.
+* `server` ([Server](#server-parameters): `<nil>`) - Specifies ElasticSearch server information. See the [Server](#server-parameters) section for more information. This field is always required.
 * `client` ([Client](#client-parameters): `<nil>`) - Configures the HTTP client with which the process will communicate with Elasticsearch. See the (Client)[#client-parameters] section for more informiation. This field is always required.
 
 ### `consul` parameters
