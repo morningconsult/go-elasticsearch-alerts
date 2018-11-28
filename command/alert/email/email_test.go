@@ -29,13 +29,13 @@ func TestNewEmailAlertMethod(t *testing.T) {
 		{
 			"success",
 			&EmailAlertMethodConfig{
-				Address: "smtp.gmail.com:587",
+				Host: "smtp.gmail.com",
+				Port: 587,
 				From:    "test@gmail.com",
 				To: []string{
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
 				},
-				AuthHost: "smtp.gmail.com",
 				Password: "password",
 			},
 			false,
@@ -43,13 +43,13 @@ func TestNewEmailAlertMethod(t *testing.T) {
 		{
 			"password-set-in-env",
 			&EmailAlertMethodConfig{
-				Address: "smtp.gmail.com:587",
+				Host: "smtp.gmail.com",
+				Port: 587,
 				From:    "test@gmail.com",
 				To: []string{
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
 				},
-				AuthHost: "smtp.gmail.com",
 			},
 			false,
 		},

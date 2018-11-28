@@ -30,17 +30,21 @@ const EnvEmailAuthPassword = "GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD"
 var _ alert.AlertMethod = (*EmailAlertMethod)(nil)
 
 type EmailAlertMethodConfig struct {
-	Address  string   `mapstructure:"address"`
+	Host  string   `mapstructure:"host"`
+	Port  int `mapstructure:"port"`
 	From     string   `mapstructure:"from"`
 	To       []string `mapstructure:"to"`
-	AuthHost string   `mapstructure:"auth_host"`
 	Password string   `mapstructure:"password"`
 }
 
 func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, error) {
 	errors := []string{}
-	if config.Address == "" {
-		errors = append(errors, "no SMTP host provided (must be in <host>:<port> format)")
+	if config.Host == "" {
+		errors = append(errors, "no SMTP host provided")
+	}
+
+	if config.Port == 0 {
+		errors = append(errors, "no SMTP port provided")
 	}
 
 	if config.From == "" {
@@ -49,10 +53,6 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 
 	if len(config.To) < 1 {
 		errors = append(errors, "no recipient address(es) provided")
-	}
-
-	if config.AuthHost == "" {
-		errors = append(errors, "no authentication host provided")
 	}
 
 	if p := os.Getenv(EnvEmailAuthPassword); p != "" {
@@ -68,20 +68,20 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 	}
 
 	return &EmailAlertMethod{
-		address:  config.Address,
+		host:  config.Host,
+		port: config.Port,
 		from:     config.From,
 		to:       config.To,
-		authHost: config.AuthHost,
 		password: config.Password,
 	}, nil
 }
 
 type EmailAlertMethod struct {
-	address  string
+	host  string
+	port int
 	from     string
 	password string
 	to       []string
-	authHost string
 }
 
 func (e *EmailAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
@@ -89,8 +89,8 @@ func (e *EmailAlertMethod) Write(ctx context.Context, rule string, records []*al
 	if err != nil {
 		return fmt.Errorf("error creating email message: %v", err)
 	}
-	auth := smtp.PlainAuth("", e.from, e.password, e.authHost)
-	return smtp.SendMail(e.address, auth, e.from, e.to, []byte(body))
+	auth := smtp.PlainAuth("", e.from, e.password, e.host)
+	return smtp.SendMail(fmt.Sprintf("%s:%d", e.host, e.port), auth, e.from, e.to, []byte(body))
 }
 
 func (e *EmailAlertMethod) buildMessage(rule string, records []*alert.Record) (string, error) {
