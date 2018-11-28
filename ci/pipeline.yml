@@ -47,14 +47,14 @@ resources:
     private_token: ((gitlab-access-token))
     uri: ((gitlab-repo))
 
-# - name: new-release
-#   type: git
-#   source:
-#     private_key: ((github-private-key))
-#     access_token: ((github-token))
-#     uri: ((github-repo))
-#     branch: master
-#     tag_filter: 'v[0-9]*'
+- name: new-release
+  type: git
+  source:
+    private_key: ((github-private-key))
+    access_token: ((github-access-token))
+    uri: ((github-repo))
+    branch: master
+    tag_filter: 'v[0-9]*'
 
 - name: golang
   type: docker-image
@@ -77,7 +77,6 @@ jobs:
 - name: test-pr
   build_logs_to_retain: 30
   serial: true
-  serial_groups: [tests]
   plan:
   - get: test-merge-request
     trigger: true
@@ -104,21 +103,21 @@ jobs:
         context: $BUILD_JOB_NAME
         comment: test-merge-request/ci/pr_test_failure
 
-# - name: build-release
-#   serial: true
-#   plan:
-#   - aggregate:
-#     - get: new-release
-#       trigger: true
-#     - get: golang
-#   - task: test-and-build
-#     image: golang
-#     file: new-release/ci/tasks/build-release.yml
-#     params:
-#       GITHUB_TOKEN: ((github-token))
-#     on_failure:
-#       put: slack
-#       params: {alert_type: failed}
-#     on_abort:
-#       put: slack
-#       params: {alert_type: aborted}
+- name: build-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: new-release
+      trigger: true
+    - get: golang
+  - task: test-and-build
+    image: golang
+    file: new-release/ci/tasks/build-release.yml
+    params:
+      GITHUB_TOKEN: ((github-access-token))
+    on_failure:
+      put: slack
+      params: {alert_type: failed}
+    on_abort:
+      put: slack
+      params: {alert_type: aborted}
