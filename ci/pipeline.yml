@@ -62,11 +62,11 @@ resources:
     repository: golang
     tag: 1.11-alpine3.8
 
-- name: slack
-  type: slack-alert
-  source:
-    url: ((slack-webhook))
-    channel: '#build'
+# - name: slack
+#   type: slack-alert
+#   source:
+#     url: ((slack-webhook))
+#     channel: '#build'
 
 # ====================================
 #
