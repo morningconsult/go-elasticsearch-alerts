@@ -65,6 +65,14 @@ func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Rec
 	return write(outfile, data)
 }
 
+// errorAlertMethod is a mock alert.AlertMethod used to simulate an
+// even where AlertMethod.Write() return an error
+type errorAlertMethod struct {}
+
+func (f *errorAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
+	return fmt.Errorf("test error")
+}
+
 func write(writer io.Writer, data []byte) error {
 	start := 0
 	for {
@@ -173,23 +181,12 @@ func TestRunError(t *testing.T) {
 		Logger: hclog.Default(),
 	})
 
-	filename := filepath.Join("testdata", "testfile.log")
-	// Alert handler won't be able to open this file for writing
-	logfile, err := os.OpenFile(filename, os.O_CREATE, 0400)
-	if err != nil {
-		t.Fatal(err)
-	}
-	logfile.Close()
-	defer os.Remove(filename)
-
-	fm := &fileAlertMethod{
-		outputFilepath: filename,
-	}
+	em := errorAlertMethod{}
 
 	a := &Alert{
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
-		Methods:  []AlertMethod{fm},
+		Methods:  []AlertMethod{em},
 		Records: []*Record{
 			&Record{
 				Title: "test.rule.1",
