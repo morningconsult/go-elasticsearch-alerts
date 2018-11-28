@@ -31,4 +31,4 @@ cp -r * "${GOPATH}/src/${PROJECT}"
 cd "${GOPATH}/src/${PROJECT}"
 
 # Run tests
-make test
+CGO_ENABLED=0 make test
