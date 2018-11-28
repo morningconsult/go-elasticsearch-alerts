@@ -29,7 +29,7 @@ resources:
   type: git
   source:
     uri: ((gitlab-repo))
-    branch: v0.0.1
+    branch: master
     private_key: ((gitlab-private-key))
 
 - name: go-elasticsearch-alerts-github
@@ -38,7 +38,7 @@ resources:
     private_key: ((github-private-key))
     access_token: ((github-access-token))
     uri: ((github-repo))
-    branch: v0.0.1
+    branch: master
 
 - name: test-merge-request
   type: merge-request
