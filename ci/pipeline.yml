@@ -109,7 +109,7 @@ jobs:
   - get: go-elasticsearch-alerts-gitlab
     trigger: true
   - put: go-elasticsearch-alerts-github
-    
+    params: {repository: go-elasticsearch-alerts-gitlab}
 
 - name: build-release
   serial: true
