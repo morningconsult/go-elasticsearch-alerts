@@ -89,7 +89,7 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 	for _, record := range records {
 		config := &AttachmentConfig{
 			Fallback: rule,
-			Title:    record.Title,
+			Pretext:  record.Title,
 			Text:     record.Text,
 		}
 		if config.Text != "" {
