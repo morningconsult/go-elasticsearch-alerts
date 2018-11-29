@@ -87,17 +87,27 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 	}
 
 	for _, record := range records {
-		att := NewAttachment(&AttachmentConfig{
+		config := &AttachmentConfig{
 			Fallback: rule,
-			Pretext:  record.Title,
+			Title:    record.Title,
 			Text:     record.Text,
-		})
+		}
+		if config.Text != "" {
+			config.Text = "```"+config.Text+"```"
+			config.Color = "#ff0000"
+		}
+
+		att := NewAttachment(config)
 
 		for _, field := range record.Fields {
+			short := false
+			if len(field.Key) <= 35 {
+				short = true
+			}
 			f := &Field{
 				Title: field.Key,
 				Value: fmt.Sprintf("%d", field.Count),
-				Short: true,
+				Short: short,
 			}
 			att.Fields = append(att.Fields, f)
 		}

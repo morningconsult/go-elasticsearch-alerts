@@ -36,6 +36,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
 				},
+				Username: "test@gmail.com",
 				Password: "password",
 			},
 			false,
@@ -50,6 +51,21 @@ func TestNewEmailAlertMethod(t *testing.T) {
 					"test_recipient_1@gmail.com",
 					"test_recipient_2@gmail.com",
 				},
+				Username: "test@gmail.com",
+			},
+			false,
+		},
+		{
+			"username-set-in-env",
+			&EmailAlertMethodConfig{
+				Host: "smtp.gmail.com",
+				Port: 587,
+				From: "test@gmail.com",
+				To: []string{
+					"test_recipient_1@gmail.com",
+					"test_recipient_2@gmail.com",
+				},
+				Password: "test",
 			},
 			false,
 		},
@@ -62,9 +78,14 @@ func TestNewEmailAlertMethod(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.name == "password-set-in-env" {
+			switch tc.name {
+			case "password-set-in-env":
 				os.Setenv(EnvEmailAuthPassword, "random-password")
 				defer os.Unsetenv(EnvEmailAuthPassword)
+			case "username-set-in-env":
+				os.Setenv(EnvEmailAuthUsername, "test@gmail.com")
+				defer os.Unsetenv(EnvEmailAuthUsername)
+			default:
 			}
 			_, err := NewEmailAlertMethod(tc.config)
 			if tc.err {

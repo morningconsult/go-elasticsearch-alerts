@@ -365,6 +365,7 @@ The `outputs` parameter of the rule file specifies where the results of the quer
 
 * `host` (string: `""`) - The SMTP server host (e.g. `smtp.gmail.com`). This field is required.
 * `port` (int: `0`) - The SMTP server port (e.g. `587` for Gmail). This field is required
-* `from` (string: `""`) - The "from" email address. This email address will be used in authentication. This field is required.
+* `from` (string: `""`) - The "from" email address. This field is required.
 * `to` ([]string: `[]`) - The "to" addresses to which email alerts will be sent. At least one email address is required.
+* `username` (string: `""`) - The username with which the SMTP client will authenticate to the host. If you do not wish to specify the username in the configuration file, you can set the password using the `GO_ELASTICSEARCH_ALERTS_SMTP_USERNAME` environment variable. This field is required (either in the configuration file or in the environment variable).
 * `password` (string: `""`) - The password with which the SMTP client will authenticate to the host. If you do not wish to specify the password in the configuration file, you can set the password using the `GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD` environment variable. This field is required (either in the configuration file or in the environment variable).

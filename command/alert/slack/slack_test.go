@@ -48,13 +48,6 @@ func TestNewSlackAlertMethod(t *testing.T) {
 			},
 			true,
 		},
-		{
-			"no-text",
-			&SlackAlertMethodConfig{
-				WebhookURL: "https://example.com",
-			},
-			true,
-		},
 	}
 
 	for _, tc := range cases {

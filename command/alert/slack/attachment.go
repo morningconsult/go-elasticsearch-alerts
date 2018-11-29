@@ -28,6 +28,7 @@ type Field struct {
 type AttachmentConfig struct {
 	Fallback string
 	Color    string
+	Title    string
 	Pretext  string
 	Fields   []*Field
 	Text     string
@@ -37,6 +38,7 @@ type AttachmentConfig struct {
 type Attachment struct {
 	Fallback string   `json:"fallback"`
 	Color    string   `json:"color,omitempty"`
+	Title    string   `json:"title,omitempty"`
 	Pretext  string   `json:"pretext,omitempty"`
 	Fields   []*Field `json:"fields,omitempty"`
 	Text     string   `json:"text,omitempty"`
@@ -55,6 +57,7 @@ func NewAttachment(config *AttachmentConfig) *Attachment {
 	return &Attachment{
 		Fallback: config.Fallback,
 		Color:    config.Color,
+		Title:    config.Title,
 		Pretext:  config.Pretext,
 		Fields:   config.Fields,
 		Text:     config.Text,
