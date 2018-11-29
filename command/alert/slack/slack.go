@@ -62,10 +62,6 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, err
 		config.Client = cleanhttp.DefaultClient()
 	}
 
-	if config.Text == "" {
-		return nil, fmt.Errorf("field 'config.test' must not be empty when using the Slack output method")
-	}
-
 	return &SlackAlertMethod{
 		channel:    config.Channel,
 		webhookURL: config.WebhookURL,

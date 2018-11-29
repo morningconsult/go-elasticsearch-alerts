@@ -278,7 +278,7 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 }
 
 func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
-	payload := fmt.Sprintf(`{"rule_name":%q,"next_query":%q,"hostname":%q}`, q.cleanedName(), ts.Format(defaultTimestampFormat), q.hostname)
+	payload := fmt.Sprintf(`{"@timestamp":%q,"rule_name":%q,"next_query":%q,"hostname":%q}`, time.Now().Format(time.RFC3339), q.cleanedName(), ts.Format(defaultTimestampFormat), q.hostname)
 
 	resp, err := q.makeRequest(ctx, "POST", q.stateURL+"/_doc", []byte(payload))
 	if err != nil {
