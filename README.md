@@ -50,8 +50,7 @@ This example shows a sample main configuration file.
 {
   "elasticsearch": {
     "server": {
-      "url": "https://my.elasticsearch.com",
-      "state_index": "go_elasticsearch_status"
+      "url": "https://my.elasticsearch.com"
     },
     "client": {
       "tls_enabled": true,
@@ -99,7 +98,6 @@ Note: All values should be strings. For example, even if the value is technicall
 ### `server` parameters
 
 * `url` (string: `""`) - The URL of your ElasticSearch instance. This field is always required.
-* `state_index` (string: `"go_elasticsearch_alerts_state"`) - The ElasticSearch index where the records of when each rule is schedule to run next is stored. If this index does not already exist, the application will attempt to create it at runtime. This is used to ensure that if the process is killed at any point it can lookup the next scheduled run when started again. This field is optional. If not specified, the default will be `go_elasticsearch_alerts_state`.
 
 ### `client` parameters
 

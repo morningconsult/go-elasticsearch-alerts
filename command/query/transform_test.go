@@ -25,6 +25,7 @@ func TestTransform(t *testing.T) {
 		input   map[string]interface{}
 		filters []string
 		output  []*alert.Record
+		hits    int
 		err     bool
 	}{
 		{
@@ -61,6 +62,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			0,
 			false,
 		},
 		{
@@ -90,6 +92,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			0,
 			false,
 		},
 		{
@@ -122,6 +125,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			0,
 			false,
 		},
 		{
@@ -190,6 +194,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			0,
 			false,
 		},
 		{
@@ -231,6 +236,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			0,
 			false,
 		},
 		{
@@ -277,6 +283,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
+			0,
 			false,
 		},
 		{
@@ -330,6 +337,7 @@ func TestTransform(t *testing.T) {
 					Text:  `{"ayy": "lmao"}`,
 				},
 			},
+			1,
 			false,
 		},
 		{
@@ -363,6 +371,7 @@ func TestTransform(t *testing.T) {
 }`,
 				},
 			},
+			2,
 			false,
 		},
 	}
@@ -372,7 +381,10 @@ func TestTransform(t *testing.T) {
 			qh := &QueryHandler{
 				filters: tc.filters,
 			}
-			records, err := qh.Transform(tc.input)
+			records, hits, err := qh.Transform(tc.input)
+			if tc.hits != hits {
+				t.Fatalf("Got %d hits, expected %d", hits, tc.hits)
+			}
 			if !tc.err && err != nil {
 				t.Fatal(err)
 			}

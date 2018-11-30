@@ -22,7 +22,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
-func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, error) {
+func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, int, error) {
 	var records []*alert.Record
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
@@ -43,7 +43,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 
 			field := new(alert.Field)
 			if err := mapstructure.Decode(obj, field); err != nil {
-				return nil, err
+				return nil, -1, err
 			}
 
 			if field.Key == "" || field.Count < 1 {
@@ -62,12 +62,12 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 	// Make one record per hits.hits
 	hitsRaw := utils.Get(respData, "hits.hits")
 	if hitsRaw == nil {
-		return records, nil
+		return records, 0, nil
 	}
 
 	hits, ok := hitsRaw.([]interface{})
 	if !ok {
-		return records, nil
+		return records, 0, nil
 	}
 
 	var hitsArr []string
@@ -84,7 +84,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 
 		data, err := json.MarshalIndent(source, "", "    ")
 		if err != nil {
-			return nil, err
+			return nil, -1, err
 		}
 		hitsArr = append(hitsArr, string(data))
 	}
@@ -96,5 +96,5 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 		}
 		records = append(records, record)
 	}
-	return records, nil
+	return records, len(hitsArr), nil
 }
