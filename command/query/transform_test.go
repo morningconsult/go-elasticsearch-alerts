@@ -382,8 +382,8 @@ func TestTransform(t *testing.T) {
 				filters: tc.filters,
 			}
 			records, hits, err := qh.Transform(tc.input)
-			if tc.hits != hits {
-				t.Fatalf("Got %d hits, expected %d", hits, tc.hits)
+			if tc.hits != len(hits) {
+				t.Fatalf("Got %d hits, expected %d", len(hits), tc.hits)
 			}
 			if !tc.err && err != nil {
 				t.Fatal(err)

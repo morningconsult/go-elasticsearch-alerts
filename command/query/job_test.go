@@ -602,7 +602,7 @@ func TestSetNextQuery(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = qh.setNextQuery(context.Background(), time.Now().Add(1 * time.Hour), 1)
+			err = qh.setNextQuery(context.Background(), time.Now().Add(1 * time.Hour), nil)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")

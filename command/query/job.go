@@ -197,7 +197,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	}
 
 	for {
-		hits := -1
+		hits := []map[string]interface{}{}
 		select {
 		case <-ctx.Done():
 			return
@@ -209,12 +209,12 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 					break
 				}
 
-				records, n, err := q.Transform(data)
+				records, tmp, err := q.Transform(data)
 				if err != nil {
 					q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), "error", err)
 					break
 				}
-				hits = n
+				hits = tmp
 
 				if records != nil && len(records) > 0 {
 					id, err := uuid.GenerateUUID()
@@ -244,7 +244,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 }
 
 func (q *QueryHandler) putTemplate(ctx context.Context) error {
-	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":3,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.templateName())
+	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":5,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.templateName())
 
 	resp, err := q.makeRequest(ctx, "PUT", fmt.Sprintf("%s/_template/%s", q.esURL, q.templateName()), []byte(payload))
 	if err != nil {
@@ -294,8 +294,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("received non-200 response status (status: %q). Response body:\n%s",
-			resp.Status, q.readErrRespBody(resp))
+		return nil, fmt.Errorf("received non-200 response status (status: %q).", resp.Status)
 	}
 
 	var data = make(map[string]interface{})
@@ -320,10 +319,29 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	return &t, nil
 }
 
-func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits int) error {
-	payload := fmt.Sprintf(`{"@timestamp":%q,"rule_name":%q,"next_query":%q,"hostname":%q,"hits_count":%d}`, time.Now().Format(time.RFC3339), q.cleanedName(), ts.Format(defaultTimestampFormat), q.hostname, hits)
+func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []map[string]interface{}) error {
+	status := struct {
+		Time  string `json:"@timestamp"`
+		Name  string `json:"rule_name"`
+		Next  string `json:"next_query"`
+		Host  string `json:"hostname"`
+		NHits int    `json:"hits_count"`
+		Hits  []map[string]interface{} `json:"hits,omitempty"`
+	}{
+		Time:  time.Now().Format(defaultTimestampFormat),
+		Name:  q.cleanedName(),
+		Next:  ts.Format(defaultTimestampFormat),
+		Host:  q.hostname,
+		NHits: len(hits),
+		Hits:  hits,
+	}
 
-	resp, err := q.makeRequest(ctx, "POST", q.stateIndexURL()+"/_doc", []byte(payload))
+	payload, err := jsonutil.EncodeJSON(status)
+	if err != nil {
+		return fmt.Errorf("error JSON-encoding data: %v", err)
+	}
+
+	resp, err := q.makeRequest(ctx, "POST", q.stateIndexURL()+"/_doc", payload)
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}

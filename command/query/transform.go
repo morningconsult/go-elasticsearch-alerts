@@ -22,7 +22,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
-func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, int, error) {
+func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, []map[string]interface{}, error) {
 	var records []*alert.Record
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
@@ -43,7 +43,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 
 			field := new(alert.Field)
 			if err := mapstructure.Decode(obj, field); err != nil {
-				return nil, -1, err
+				return nil, nil, err
 			}
 
 			if field.Key == "" || field.Count < 1 {
@@ -62,15 +62,16 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 	// Make one record per hits.hits
 	hitsRaw := utils.Get(respData, "hits.hits")
 	if hitsRaw == nil {
-		return records, 0, nil
+		return records, nil, nil
 	}
 
 	hits, ok := hitsRaw.([]interface{})
 	if !ok {
-		return records, 0, nil
+		return records, nil, nil
 	}
 
-	var hitsArr []string
+	var stringifiedHits []string
+	var hitsArr []map[string]interface{}
 	for _, hit := range hits {
 		obj, ok := hit.(map[string]interface{})
 		if !ok {
@@ -82,19 +83,21 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 			continue
 		}
 
+		hitsArr = append(hitsArr, obj)
+
 		data, err := json.MarshalIndent(source, "", "    ")
 		if err != nil {
-			return nil, -1, err
+			return nil, nil, err
 		}
-		hitsArr = append(hitsArr, string(data))
+		stringifiedHits = append(stringifiedHits, string(data))
 	}
 
-	if len(hitsArr) > 0 {
+	if len(stringifiedHits) > 0 {
 		record := &alert.Record{
 			Title: "hits.hits._source",
-			Text:  strings.Join(hitsArr, "\n----------------------------------------\n"),
+			Text:  strings.Join(stringifiedHits, "\n----------------------------------------\n"),
 		}
 		records = append(records, record)
 	}
-	return records, len(hitsArr), nil
+	return records, hitsArr, nil
 }
