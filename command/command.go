@@ -117,7 +117,6 @@ func Run() int {
 			QueryData:    rule.ElasticSearchBody,
 			QueryIndex:   rule.ElasticSearchIndex,
 			Schedule:     rule.CronSchedule,
-			StateIndex:   config.ElasticSearch.Server.ElasticSearchStateIndex,
 			Filters:      rule.Filters,
 		})
 		if err != nil {

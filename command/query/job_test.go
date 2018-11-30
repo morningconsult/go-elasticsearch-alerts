@@ -14,19 +14,22 @@
 package query
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"sync"
+	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
+	// "net/url"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 )
@@ -38,213 +41,214 @@ const (
 	ConsulURL        string = "http://127.0.0.1:8500"
 )
 
-func TestNewQueryHandler_DefaultStateIndex(t *testing.T) {
-	qh, err := NewQueryHandler(&QueryHandlerConfig{
-		ESUrl:    ElasticSearchURL,
-		Schedule: "* * * * * *",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	expected := fmt.Sprintf("%s/%s", ElasticSearchURL, defaultStateIndex)
-	if qh.stateURL != expected {
-		t.Errorf("QueryHandler has wrong stateURL value (got %q, expected %q)", qh.stateURL, expected)
-	}
-}
-
-func TestNewQueryHandler_CronParseError(t *testing.T) {
-	_, err := NewQueryHandler(&QueryHandlerConfig{
-		Schedule: "i am not a valid cron",
-	})
-	if err == nil {
-		t.Error("expected an error but didn't receive one")
-	}
-}
-
-func TestStateIndexExists(t *testing.T) {
-	if SkipElasticSearchTests {
-		t.Skipf("unable to connect to ElasticSearch at %s. Skipping test.", ElasticSearchURL)
-	}
-
-	id, err := uuid.GenerateUUID()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	stateIndex := ElasticSearchURL + "/" + id
-	client := cleanhttp.DefaultClient()
-
-	delIndexFunc := func() {
-		req, err := http.NewRequest("DELETE", stateIndex, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	createIndexFunc := func() {
-		req, err := http.NewRequest("PUT", stateIndex, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	qh := &QueryHandler{
-		stateURL: stateIndex,
-		client:   client,
-		logger:   hclog.NewNullLogger(),
-	}
-
+func TestNewQueryHandler(t *testing.T) {
 	cases := []struct {
 		name   string
-		exists bool
+		config *QueryHandlerConfig
 		err    bool
+		errMsg string
 	}{
 		{
-			"does-not-exist",
+			"success",
+			&QueryHandlerConfig{
+				Name:         "Test Errors",
+				ESUrl:        ElasticSearchURL,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"ayy": "lmao",
+				},
+				Schedule:     "@every 10m",
+			},
 			false,
-			false,
+			"",
 		},
 		{
-			"bad-url",
-			false,
+			"no-name",
+			&QueryHandlerConfig{
+				ESUrl:        ElasticSearchURL,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"ayy": "lmao",
+				},
+				Schedule:     "@every 10m",
+			},
 			true,
+			"no rule name provided",
 		},
 		{
-			"exists",
+			"no-es-url",
+			&QueryHandlerConfig{
+				Name:         "Test Errors",
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"ayy": "lmao",
+				},
+				Schedule:     "@every 10m",
+			},
 			true,
-			false,
+			"no ElasticSearch URL provided",
+		},
+		{
+			"no-query-index",
+			&QueryHandlerConfig{
+				Name:         "Test Errors",
+				ESUrl:        ElasticSearchURL,
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"ayy": "lmao",
+				},
+				Schedule:     "@every 10m",
+			},
+			true,
+			"no ElasticSearch index provided",
+		},
+		{
+			"no-alert-methods",
+			&QueryHandlerConfig{
+				Name:         "Test Errors",
+				ESUrl:        ElasticSearchURL,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{},
+				QueryData:    map[string]interface{}{
+					"ayy": "lmao",
+				},
+				Schedule:     "@every 10m",
+			},
+			true,
+			"at least one alert method must be specified",
+		},
+		{
+			"cron-parse-error",
+			&QueryHandlerConfig{
+				Name:         "Test Errors",
+				ESUrl:        ElasticSearchURL,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"ayy": "lmao",
+				},
+				Schedule:     "blah",
+			},
+			true,
+			"error parsing cron schedule: Expected 5 to 6 fields, found 1: blah",
 		},
 	}
-
+	
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			delIndexFunc()
-			if tc.name == "exists" {
-				createIndexFunc()
-				defer delIndexFunc()
-			}
-			if tc.name == "bad-url" {
-				id, err := uuid.GenerateUUID()
-				if err != nil {
-					t.Fatal(err)
-				}
-				currentURL := qh.stateURL
-				qh.stateURL = "http://" + id + ".com"
-				defer func() {
-					qh.stateURL = currentURL
-				}()
-			}
-
-			ctx := context.Background()
-			exists, err := qh.stateIndexExists(ctx)
+			_, err := NewQueryHandler(tc.config)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
 				}
+				if err.Error() != tc.errMsg {
+					t.Fatalf("Expected error:\n\t%q\nGot:\n\t%q\n", tc.errMsg, err.Error())
+				}
 				return
 			}
-
 			if err != nil {
 				t.Fatal(err)
-			}
-
-			if exists != tc.exists {
-				t.Fatalf("returned unexpected value (got %t, expected %t)", exists, tc.exists)
 			}
 		})
 	}
 }
 
-func TestCreateStateIndex(t *testing.T) {
-	if SkipElasticSearchTests {
-		t.Skipf("unable to connect to ElasticSearch at %q. Skipping test.", ElasticSearchURL)
-	}
-
-	id, err := uuid.GenerateUUID()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	stateIndex := ElasticSearchURL + "/" + id
-	client := cleanhttp.DefaultClient()
-
-	delIndexFunc := func() {
-		req, err := http.NewRequest("DELETE", stateIndex, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	createIndexFunc := func() {
-		req, err := http.NewRequest("PUT", stateIndex, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	qh := &QueryHandler{
-		stateURL: stateIndex,
-		client:   client,
-		logger:   hclog.NewNullLogger(),
-	}
-
+func TestPutTemplate(t *testing.T) {
 	cases := []struct {
 		name   string
-		exists bool
+		status int
+		data   interface{}
 		err    bool
 	}{
 		{
-			"creates",
-			false,
-			false,
-		},
-		{
 			"bad-url",
-			false,
+			200,
+			"lol",
 			true,
 		},
 		{
-			"already-exists",
+			"non-200-response",
+			500,
+			"",
 			true,
+		},
+		{
+			"non-json-response",
+			200,
+			"not a json!!",
 			true,
+		},
+		{
+			"no-acknowledged-field",
+			200,
+			map[string]interface{}{
+				"ayy": "lmao",
+			},
+			true,
+		},
+		{
+			"non-bool-acknowledged-field",
+			200,
+			map[string]interface{}{
+				"acknowledged": "true",
+			},
+			true,
+		},
+		{
+			"success",
+			200,
+			map[string]interface{}{
+				"acknowledged": true,
+			},
+			false,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			delIndexFunc()
-			if tc.name == "already-exists" {
-				createIndexFunc()
-				defer delIndexFunc()
-			}
-			if tc.name == "bad-url" {
-				id, err := uuid.GenerateUUID()
-				if err != nil {
-					t.Fatal(err)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case "PUT","POST":
+					if tc.status - 200 > 3 {
+						http.Error(w, http.StatusText(tc.status), tc.status)
+						return
+					}
+					w.WriteHeader(tc.status)
+					var data []byte
+					var err error
+					switch v := tc.data.(type) {
+					case map[string]interface{}:
+						data, err = jsonutil.EncodeJSON(v)
+						if err != nil {
+							t.Fatal(err)
+						}
+					case string:
+						data = []byte(v)
+					case []byte:
+						data = v
+					default:
+						t.Fatalf("unsupported data type: %T", v)
+					}
+					w.Write(data)
+				default:
+					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
-				currentURL := qh.stateURL
-				qh.stateURL = "http://" + id + ".com"
-				defer func() {
-					qh.stateURL = currentURL
-				}()
+			}))
+			defer ts.Close()
+
+			u := ts.URL
+			if tc.name == "bad-url" {
+				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
+			}
+			qh := &QueryHandler{
+				client: cleanhttp.DefaultClient(),
+				esURL:  u,
 			}
 
-			ctx := context.Background()
-			err = qh.createStateIndex(ctx)
+			err := qh.putTemplate(context.Background())
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -253,183 +257,227 @@ func TestCreateStateIndex(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatal(err)
-			}
-
-			resp, err := client.Get(qh.stateURL)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if resp.StatusCode != 200 {
-				t.Fatalf("ElasticSearch index %q should have been created, but wasn't", qh.stateURL)
 			}
 		})
 	}
 }
 
 func TestGetNextQuery(t *testing.T) {
-	if SkipElasticSearchTests {
-		t.Skipf("unable to connect to ElasticSearch at %q. Skipping test.", ElasticSearchURL)
-	}
-
-	hostname := "testing"
-	ruleName := "test_rule"
-
-	client := cleanhttp.DefaultClient()
-
-	randomUUID := func() string {
-		id, err := uuid.GenerateUUID()
-		if err != nil {
-			t.Fatal(err)
-		}
-		return id
-	}
-
-	changeIndexFunc := func(method, index string, body io.Reader) {
-		req, err := http.NewRequest(method, ElasticSearchURL+"/"+index, body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Add("Content-Type", "application/json")
-
-		_, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	stateIndex := randomUUID()
-
+	expected := time.Now().Add(2 * time.Hour).Format(time.RFC3339)
 	cases := []struct {
-		name     string
-		stateURL string
-		doc      string
-		err      bool
+		name   string
+		status int
+		data   interface{}
+		err    bool
 	}{
 		{
+			"bad-url",
+			200,
+			"lol",
+			true,
+		},
+		{
+			"non-200-response",
+			500,
+			"",
+			true,
+		},
+		{
+			"non-json-response",
+			200,
+			"not a json!!",
+			true,
+		},
+		{
+			"no-hits-field",
+			200,
+			map[string]interface{}{
+				"ayy": "lmao",
+			},
+			true,
+		},
+		{
+			"non-string-next-query-field",
+			200,
+			map[string]interface{}{
+				"hits": map[string]interface{}{
+					"hits": []interface{}{
+						map[string]interface{}{
+							"_source": map[string]interface{}{
+								"next_query": map[string]interface{}{
+									"ayy": "lmao",
+								},
+							},
+						},
+					},
+				},
+			},
+			true,
+		},
+		{
+			"non-timestamp-next-query-field",
+			200,
+			map[string]interface{}{
+				"hits": map[string]interface{}{
+					"hits": []interface{}{
+						map[string]interface{}{
+							"_source": map[string]interface{}{
+								"next_query": "not a timestamp!!!",
+							},
+						},
+					},
+				},
+			},
+			true,
+		},
+		{
 			"success",
-			ElasticSearchURL + "/" + stateIndex,
-			fmt.Sprintf(`{"next_query": %q, "hostname": %q, "rule_name": %q}`, time.Now().Format(time.RFC3339), hostname, ruleName),
+			200,
+			map[string]interface{}{
+				"hits": map[string]interface{}{
+					"hits": []interface{}{
+						map[string]interface{}{
+							"_source": map[string]interface{}{
+								"next_query": expected,
+							},
+						},
+					},
+				},
+			},
 			false,
-		},
-		{
-			"url-parse-error",
-			"@#$#!@#$%$#@#$%",
-			"",
-			true,
-		},
-		{
-			"wrong-url",
-			fmt.Sprintf("http://%s.com", randomUUID()),
-			"",
-			true,
-		},
-		{
-			"non-string-timestamp",
-			ElasticSearchURL + "/" + stateIndex,
-			fmt.Sprintf(`{"next_query": 20, "hostname": %q, "rule_name": %q}`, hostname, ruleName),
-			true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			changeIndexFunc("PUT", stateIndex, nil)
-			defer changeIndexFunc("DELETE", stateIndex, nil)
-			if tc.doc != "" {
-				resp, err := client.Post(tc.stateURL+"/_doc", "application/json", bytes.NewBufferString(tc.doc))
-				if err != nil {
-					t.Fatal(err)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case "GET":
+					if tc.status - 200 > 3 {
+						http.Error(w, http.StatusText(tc.status), tc.status)
+						return
+					}
+					w.WriteHeader(tc.status)
+					var data []byte
+					var err error
+					switch v := tc.data.(type) {
+					case map[string]interface{}:
+						data, err = jsonutil.EncodeJSON(v)
+						if err != nil {
+							t.Fatal(err)
+						}
+					case string:
+						data = []byte(v)
+					case []byte:
+						data = v
+					default:
+						t.Fatalf("unsupported data type: %T", v)
+					}
+					w.Write(data)
+				default:
+					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
-				resp.Body.Close()
+			}))
+			defer ts.Close()
 
-				time.Sleep(3 * time.Second)
+			u := ts.URL
+			if tc.name == "bad-url" {
+				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
+			}
+			qh, err := NewQueryHandler(&QueryHandlerConfig{
+				Name:         "Test Errors",
+				ESUrl:        u,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"hello": "world",
+				},
+				Schedule:     "@every 10m",
+			})
+			if err != nil {
+				t.Fatal(err)
 			}
 
-			qh := &QueryHandler{
-				name:     ruleName,
-				client:   cleanhttp.DefaultClient(),
-				logger:   hclog.NewNullLogger(),
-				stateURL: tc.stateURL,
-				hostname: hostname,
-			}
-
-			ctx := context.Background()
-			_, err := qh.getNextQuery(ctx)
+			timestamp, err := qh.getNextQuery(context.Background())
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
 				}
+				// t.Log(err.Error())
 				return
 			}
 			if err != nil {
 				t.Fatal(err)
 			}
+			if timestamp.Format(time.RFC3339) != expected {
+				t.Fatalf("Got timestamp %q, expected %q", timestamp.Format(time.RFC3339), expected)
+			}
 		})
 	}
 }
 
-func TestQueryError(t *testing.T) {
-	qh, err := NewQueryHandler(&QueryHandlerConfig{
-		Name:     "test_errors",
-		Client:   cleanhttp.DefaultClient(),
-		Logger:   hclog.NewNullLogger(),
-		Schedule: "@every 10s",
-		ESUrl:    "not a url!",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctx := context.Background()
-	_, err = qh.query(ctx)
-	if err == nil {
-		t.Fatal("expected an error but didn't receive one")
-	}
-}
-
 func TestRun(t *testing.T) {
-	if SkipElasticSearchTests {
-		t.Skipf("unable to connect to ElasticSearch at %q. Skipping test.", ElasticSearchURL)
+	queryIndex := randomUUID(t)
+	expected := map[string]interface{}{
+		"hits": map[string]interface{}{
+			"hits": []interface{}{
+				map[string]interface{}{
+					"_source": map[string]interface{}{
+						"hello": "world",
+					},
+				},
+			},
+		},
 	}
 
-	client := cleanhttp.DefaultClient()
-
-	randomUUID := func() string {
-		id, err := uuid.GenerateUUID()
-		if err != nil {
-			t.Fatal(err)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocks successful response to QueryHandler.putTemplate()
+		if r.URL.Path == fmt.Sprintf("/_template/%s-%s", defaultStateIndexAlias, templateVersion) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write([]byte(`{"acknowledged": true}`))
+			return
 		}
-		return id
-	}
 
-	changeIndexFunc := func(method, index string, body io.Reader) {
-		req, err := http.NewRequest(method, ElasticSearchURL+"/"+index, body)
-		if err != nil {
-			t.Fatal(err)
+		// Mocks successful response to QueryHandler.getNextQuery()
+		if r.URL.Path == fmt.Sprintf("/%s-%s/_search", defaultStateIndexAlias, templateVersion) {
+			payload := fmt.Sprintf(`{"hits":{"hits":[{"_source":{"next_query":%q}}]}}`, time.Now().Add(-1 * time.Hour).Format(time.RFC3339))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write([]byte(payload))
+			return
 		}
-		req.Header.Add("Content-Type", "application/json")
 
-		_, err = client.Do(req)
-		if err != nil {
-			t.Fatal(err)
+		// Mocks successful response to QueryHandler.setNextQuery()
+		if r.URL.Path == fmt.Sprintf("/<%s-status-%s-{now/d}>/_doc", defaultStateIndexAlias, templateVersion) {
+			w.WriteHeader(201)
+			w.Write([]byte("ok"))
+			return
 		}
-	}
 
-	queryIndex := randomUUID()
-	stateIndex := randomUUID()
+		// Mocks successful response to QueryHandler.query()
+		if r.URL.Path == fmt.Sprintf("/%s/_search", queryIndex) {
+			data, err := jsonutil.EncodeJSON(expected)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(data)
+			return
+		}
 
-	changeIndexFunc("PUT", queryIndex, nil)
-	payload := bytes.NewBufferString(`{"hello": "world", "this": {"is": "a-test"}}`)
-	changeIndexFunc("POST", queryIndex+"/_doc", payload)
-	defer changeIndexFunc("DELETE", queryIndex, nil)
-	defer changeIndexFunc("DELETE", stateIndex, nil)
+	}))
+	defer ts.Close()
 
+	filename := filepath.Join("testdata", "testfile.log")
 	fileAM, err := file.NewFileAlertMethod(&file.FileAlertMethodConfig{
-		OutputFilepath: "/tmp/testfile.log",
+		OutputFilepath: filename,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer os.Remove(filename)
 
 	cases := []struct {
 		name        string
@@ -448,10 +496,11 @@ func TestRun(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			qh, err := NewQueryHandler(&QueryHandlerConfig{
-				Name:   "test_errors",
-				Logger: hclog.NewNullLogger(),
-				Client: client,
-				ESUrl:  ElasticSearchURL,
+				Name:         "Test Errors",
+				Logger:       hclog.NewNullLogger(),
+				ESUrl:        ts.URL,
+				QueryIndex:   queryIndex,
+				AlertMethods: []alert.AlertMethod{fileAM},
 				QueryData: map[string]interface{}{
 					"query": map[string]interface{}{
 						"term": map[string]interface{}{
@@ -459,11 +508,9 @@ func TestRun(t *testing.T) {
 						},
 					},
 				},
+
 				Distributed:  tc.distributed,
-				QueryIndex:   queryIndex,
 				Schedule:     "@every 10s",
-				StateIndex:   stateIndex,
-				AlertMethods: []alert.AlertMethod{fileAM},
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -472,7 +519,7 @@ func TestRun(t *testing.T) {
 				qh.HaveLockCh <- true
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			outputCh := make(chan *alert.Alert, 1)
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -499,7 +546,7 @@ func TestRun(t *testing.T) {
 					t.Fatalf("expected only one alert.Record (got %d records)", len(a.Records))
 				}
 
-				expected := "{\n    \"hello\": \"world\",\n    \"this\": {\n        \"is\": \"a-test\"\n    }\n}"
+				expected := "{\n    \"hello\": \"world\"\n}"
 				if a.Records[0].Text != expected {
 					t.Fatalf("unexpected alert.Record[0].Text value (got %q, expected %q)", a.Records[0].Text, expected)
 				}
@@ -508,12 +555,218 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestSetNextQuery(t *testing.T) {
+	cases := []struct {
+		name   string
+		status int
+		err    bool
+	}{
+		{
+			"success",
+			201,
+			false,
+		},
+		{
+			"non-200-response",
+			500,
+			true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case "POST", "PUT":
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(tc.status)
+					w.Write([]byte(`{"acknowledged": true}`))
+				default:
+					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+				}
+			}))
+			defer ts.Close()
+
+			qh, err := NewQueryHandler(&QueryHandlerConfig{
+				Name:         "Test Errors",
+				Logger:       hclog.NewNullLogger(),
+				ESUrl:        ts.URL,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData: map[string]interface{}{
+					"query": "test",
+				},
+				Schedule:     "@every 10s",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = qh.setNextQuery(context.Background(), time.Now().Add(1 * time.Hour), 1)
+			if tc.err {
+				if err == nil {
+					t.Fatal("expected an error but didn't receive one")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestQuery(t *testing.T) {
+	expected := map[string]interface{}{"some": "data"}
+	cases := []struct {
+		name   string
+		status int
+		data   interface{}
+		err    bool
+	}{
+		{
+			"bad-url",
+			200,
+			"lol",
+			true,
+		},
+		{
+			"non-200-response",
+			500,
+			"",
+			true,
+		},
+		{
+			"non-json-response",
+			200,
+			"not a json!!",
+			true,
+		},
+		{
+			"success",
+			200,
+			expected,
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case "GET":
+					if tc.status - 200 > 3 {
+						http.Error(w, http.StatusText(tc.status), tc.status)
+						return
+					}
+					w.WriteHeader(tc.status)
+					var data []byte
+					var err error
+					switch v := tc.data.(type) {
+					case map[string]interface{}:
+						data, err = jsonutil.EncodeJSON(v)
+						if err != nil {
+							t.Fatal(err)
+						}
+					case string:
+						data = []byte(v)
+					case []byte:
+						data = v
+					default:
+						t.Fatalf("unsupported data type: %T", v)
+					}
+					w.Write(data)
+				default:
+					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+				}
+			}))
+			defer ts.Close()
+
+			u := ts.URL
+			if tc.name == "bad-url" {
+				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
+			}
+			qh, err := NewQueryHandler(&QueryHandlerConfig{
+				Name:         "Test Errors",
+				ESUrl:        u,
+				QueryIndex:   "test-*",
+				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				QueryData:    map[string]interface{}{
+					"hello": "world",
+				},
+				Schedule:     "@every 10m",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			data, err := qh.query(context.Background())
+			if tc.err {
+				if err == nil {
+					t.Fatal("expected an error but didn't receive one")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(data, tc.data) {
+				t.Fatalf("unexpected data received. Expected:\n\t%+v\nGot:\n\t%+v\n", tc.data, data)
+			}
+		})
+	}
+}
+
+func TestNewRequestErrors(t *testing.T) {
+	cases := []struct {
+		name    string
+		method  string
+		payload []byte
+		err     bool
+	}{
+		{
+			"bad-method-with-data",
+			"ASDFASDF ASD",
+			[]byte("some data"),
+			true,
+		},
+		{
+			"bad-method-without-data",
+			"ASDFADS FASD ",
+			nil,
+			true,
+		},
+
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			qh := &QueryHandler{}
+			_, err := qh.newRequest(context.Background(), tc.method, "http://example.com", tc.payload)
+			if tc.err {
+				if err == nil {
+					t.Fatal("expected an error but didn't receive one")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 func TestCanceledContext(t *testing.T) {
 	qh, err := NewQueryHandler(&QueryHandlerConfig{
-		Name:     "test_errors",
-		Client:   cleanhttp.DefaultClient(),
-		Logger:   hclog.NewNullLogger(),
-		Schedule: "@every 10s",
+		Name:         "Test Errors",
+		Logger:       hclog.NewNullLogger(),
+		ESUrl:        "http://example.com",
+		QueryIndex:   "test-*",
+		AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+		QueryData:    map[string]interface{}{
+			"hello": "world",
+		},
+		Schedule:     "@every 10m",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -541,15 +794,10 @@ func TestCanceledContext(t *testing.T) {
 	}
 }
 
-func TestMain(m *testing.M) {
-	client := cleanhttp.DefaultClient()
-	resp, err := client.Get(ElasticSearchURL)
+func randomUUID(t *testing.T) string {
+	id, err := uuid.GenerateUUID()
 	if err != nil {
-		SkipElasticSearchTests = true
-	} else {
-		if resp.StatusCode != 200 {
-			SkipElasticSearchTests = true
-		}
+		t.Fatal(err)
 	}
-	os.Exit(m.Run())
+	return id
 }

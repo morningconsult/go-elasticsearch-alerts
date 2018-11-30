@@ -17,8 +17,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -28,6 +29,7 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
@@ -35,7 +37,8 @@ import (
 )
 
 const (
-	defaultStateIndex      string = "go_elasticsearch_alerts_state"
+	templateVersion string = "0.0.1"
+	defaultStateIndexAlias string = "go-es-alerts"
 	defaultTimestampFormat string = time.RFC3339
 )
 
@@ -49,7 +52,6 @@ type QueryHandlerConfig struct {
 	QueryData    map[string]interface{}
 	QueryIndex   string
 	Schedule     string
-	StateIndex   string
 	Filters      []string
 }
 
@@ -62,28 +64,54 @@ type QueryHandler struct {
 	logger       hclog.Logger
 	alertMethods []alert.AlertMethod
 	client       *http.Client
-	queryURL     string
+	esURL        string
+	queryIndex   string
+	// queryURL     string
 	queryData    map[string]interface{}
-	stateURL     string
+	// stateURL     string
 	schedule     cron.Schedule
 	filters      []string
 }
 
 func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
+	if config.Name == "" {
+		return nil, errors.New("no rule name provided")
+	}
+
+	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
+
+	if config.ESUrl == "" {
+		return nil, errors.New("no ElasticSearch URL provided")
+	}
+
+	if config.QueryIndex == "" {
+		return nil, errors.New("no ElasticSearch index provided")
+	}
+
+	if len(config.AlertMethods) < 1 {
+		return nil, errors.New("at least one alert method must be specified")
+	}
+
+	if config.QueryData == nil || len(config.QueryData) < 1 {
+		return nil, errors.New("no query body provided")
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, fmt.Errorf("error getting hostname: %v", err)
+	}
+
 	schedule, err := cron.Parse(config.Schedule)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing cron schedule: %v", err)
 	}
 
-	if config.StateIndex == "" {
-		config.StateIndex = defaultStateIndex
+	if config.Logger == nil {
+		config.Logger = hclog.Default()
 	}
 
-	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
-
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, fmt.Errorf("error getting hostname: %v", err)
+	if config.Client == nil {
+		config.Client = cleanhttp.DefaultClient()
 	}
 
 	return &QueryHandler{
@@ -94,9 +122,9 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		logger:       config.Logger,
 		alertMethods: config.AlertMethods,
 		client:       config.Client,
-		queryURL:     fmt.Sprintf("%s/%s", config.ESUrl, config.QueryIndex),
+		esURL:        config.ESUrl,
+		queryIndex:   config.QueryIndex,
 		queryData:    config.QueryData,
-		stateURL:     fmt.Sprintf("%s/%s", config.ESUrl, config.StateIndex),
 		schedule:     schedule,
 		filters:      config.Filters,
 	}, nil
@@ -133,15 +161,17 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		wg.Done()
 	}()
 
-	maintainState, err := q.shouldMaintainState(ctx)
+	err := q.putTemplate(ctx)
 	if err != nil {
-		q.logger.Error(fmt.Sprintf("[Rule: %q] error checking and/or creating state index", q.name), "error", err)
+		q.logger.Error(fmt.Sprintf("[Rule: %q] error creating template %q", q.name, q.templateName()), "error", err)
 		select {
 		case <-ctx.Done():
 			return
 		default:
+			maintainState = false
 		}
 	}
+	q.logger.Info(fmt.Sprintf("[Rule: %q] successfully created template %q", q.name, q.templateName()))
 
 	if maintainState {
 		t, err := q.getNextQuery(ctx)
@@ -166,6 +196,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	}
 
 	for {
+		hits := -1
 		select {
 		case <-ctx.Done():
 			return
@@ -173,15 +204,16 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 			if *lockAcquired {
 				data, err := q.query(ctx)
 				if err != nil {
-					q.logger.Error(fmt.Sprintf("[Rule: %q] error making HTTP request to ElasticSearch", q.name), "error", err)
+					q.logger.Error(fmt.Sprintf("[Rule: %q] error querying ElasticSearch", q.name), "error", err)
 					break
 				}
 
-				records, err := q.Transform(data)
+				records, n, err := q.Transform(data)
 				if err != nil {
 					q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), "error", err)
 					break
 				}
+				hits = n
 
 				if records != nil && len(records) > 0 {
 					id, err := uuid.GenerateUUID()
@@ -203,92 +235,42 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		now = time.Now()
 		next = q.schedule.Next(now)
 		if maintainState {
-			if err := q.setNextQuery(ctx, next); err != nil {
+			if err := q.setNextQuery(ctx, next, hits); err != nil {
 				q.logger.Error(fmt.Sprintf("[Rule: %q] error creating next query document in ElasticSearch", q.name), "error", err)
 			}
 		}
 	}
 }
 
-func (q *QueryHandler) shouldMaintainState(ctx context.Context) (bool, error) {
-	exists, err := q.stateIndexExists(ctx)
-	if err != nil {
-		return false, fmt.Errorf("error checking if index %q exists: %v", q.stateURL, err)
-	}
-	if !exists {
-		q.logger.Info(fmt.Sprintf("[Rule: %q] ElasticSearch index %q does not exist. Attempting to create it.", q.name, q.stateURL))
-		if err := q.createStateIndex(ctx); err != nil {
-			return false, fmt.Errorf("error creating ElasticSearch state index %q: %v", q.stateURL, err)
-		}
-		q.logger.Info(fmt.Sprintf("[Rule: %q] created new ElasticSearch index %q", q.name, q.stateURL))
-	}
-	return true, nil
-}
+func (q *QueryHandler) putTemplate(ctx context.Context) error {
+	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":3,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.templateName())
 
-func (q *QueryHandler) stateIndexExists(ctx context.Context) (bool, error) {
-	resp, err := q.makeRequest(ctx, "GET", q.stateURL, nil)
-	if err != nil {
-		return false, fmt.Errorf("error making HTTP request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		if resp.StatusCode == 404 {
-			return false, nil
-		}
-		return false, fmt.Errorf("error looking up ElasticSearch index %q (received status: %q). Response body:\n%s",
-			q.stateURL, resp.Status, q.readErrRespBody(resp.Body))
-	}
-	return true, nil
-}
-
-func (q *QueryHandler) createStateIndex(ctx context.Context) error {
-	payload := `{"settings":{"index":{"number_of_shards":3,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"}}}}}`
-
-	resp, err := q.makeRequest(ctx, "PUT", q.stateURL, []byte(payload))
+	resp, err := q.makeRequest(ctx, "PUT", fmt.Sprintf("%s/_template/%s", q.esURL, q.templateName()), []byte(payload))
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("error creating ElasticSearch index %q (received status: %q). Response body:\n%s",
-			q.stateURL, resp.Status, q.readErrRespBody(resp.Body))
-	}
-	return nil
-}
-
-func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
-	queryData, err := jsonutil.EncodeJSON(q.queryData)
-	if err != nil {
-		return nil, fmt.Errorf("error JSON-encoding ElasticSearch query body: %v", err)
+		return fmt.Errorf("received non-200 response status (status: %q). Response body:\n%s",
+			resp.Status, q.readErrRespBody(resp))
 	}
 
-	resp, err := q.makeRequest(ctx, "GET", q.queryURL+"/_search", queryData)
-	if err != nil {
-		return nil, fmt.Errorf("error making HTTP request: %v", err)
+	var data map[string]interface{}
+	if err = jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
+		return fmt.Errorf("error JSON-decoding response body: %v", err)
 	}
-	defer resp.Body.Close()
 
-	var data = make(map[string]interface{})
-	if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
-		return nil, err
+	ackRaw, ok := data["acknowledged"]
+	if !ok {
+		return errors.New("JSON response has no 'acknowledged' field")
 	}
-	return data, nil
-}
-
-func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
-	payload := fmt.Sprintf(`{"@timestamp":%q,"rule_name":%q,"next_query":%q,"hostname":%q}`, time.Now().Format(time.RFC3339), q.cleanedName(), ts.Format(defaultTimestampFormat), q.hostname)
-
-	resp, err := q.makeRequest(ctx, "POST", q.stateURL+"/_doc", []byte(payload))
-	if err != nil {
-		return fmt.Errorf("error making HTTP request: %v", err)
+	ack, ok := ackRaw.(bool)
+	if !ok {
+		return errors.New("value of 'acknowledged' field of JSON response cannot be cast to boolean")
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 201 {
-		return fmt.Errorf("failed to create new document (received status: %q). Response body:\n%s",
-			resp.Status, q.readErrRespBody(resp.Body))
+	if !ack {
+		return errors.New("ElasticSearch did not acknowledge creation of new template")
 	}
 	return nil
 }
@@ -296,7 +278,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time) error {
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	payload := fmt.Sprintf(`{"query":{"bool":{"should":[{"term":{"rule_name":{"value":%q}}},{"term":{"hostname":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName(), q.hostname)
 
-	u, err := url.Parse(q.stateURL + "/_search")
+	u, err := url.Parse(q.stateAliasURL() + "/_search")
 	if err != nil {
 		return nil, fmt.Errorf("error parsing URL: %v", err)
 	}
@@ -310,6 +292,11 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("received non-200 response status (status: %q). Response body:\n%s",
+			resp.Status, q.readErrRespBody(resp))
+	}
+
 	var data = make(map[string]interface{})
 	if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
 		return nil, fmt.Errorf("error JSON-decoding HTTP response: %v", err)
@@ -317,7 +304,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 
 	nextRaw := utils.Get(data, "hits.hits[0]._source.next_query")
 	if nextRaw == nil {
-		return nil, fmt.Errorf("no 'next_query' timestamp found")
+		return nil, fmt.Errorf("field 'next_query' not found")
 	}
 
 	nextString, ok := nextRaw.(string)
@@ -330,6 +317,46 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 		return nil, fmt.Errorf("error parsing time: %v", err)
 	}
 	return &t, nil
+}
+
+func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits int) error {
+	payload := fmt.Sprintf(`{"@timestamp":%q,"rule_name":%q,"next_query":%q,"hostname":%q,"hits_count":%d}`, time.Now().Format(time.RFC3339), q.cleanedName(), ts.Format(defaultTimestampFormat), q.hostname, hits)
+
+	resp, err := q.makeRequest(ctx, "POST", q.stateIndexURL()+"/_doc", []byte(payload))
+	if err != nil {
+		return fmt.Errorf("error making HTTP request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
+		return fmt.Errorf("failed to create new document (received status: %q). Response body:\n%s",
+			resp.Status, q.readErrRespBody(resp))
+	}
+	return nil
+}
+
+func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
+	queryData, err := jsonutil.EncodeJSON(q.queryData)
+	if err != nil {
+		return nil, fmt.Errorf("error JSON-encoding ElasticSearch query body: %v", err)
+	}
+
+	resp, err := q.makeRequest(ctx, "GET", fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), queryData)
+	if err != nil {
+		return nil, fmt.Errorf("error making HTTP request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("received non-200 response status (status: %q). Response body:\n%s",
+			resp.Status, q.readErrRespBody(resp))
+	}
+
+	var data = make(map[string]interface{})
+	if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (q *QueryHandler) cleanedName() string {
@@ -364,15 +391,37 @@ func (q *QueryHandler) newRequest(ctx context.Context, method, url string, paylo
 	return req, nil
 }
 
-func (q *QueryHandler) readErrRespBody(body io.Reader) string {
-	var data map[string]interface{}
-	if err := jsonutil.DecodeJSONFromReader(body, &data); err != nil {
-		return ""
-	}
+func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
+	switch resp.Header.Get("Content-Type") {
+	case "application/json":
+		var data map[string]interface{}
+		if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
+			return ""
+		}
 
-	buf, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		return ""
+		buf, err := json.MarshalIndent(data, "", "    ")
+		if err != nil {
+			return ""
+		}
+		return string(buf)
+	default:
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return ""
+		}
+		return string(data)
 	}
-	return string(buf)
+	return ""
+}
+
+func (q *QueryHandler) stateAliasURL() string {
+	return fmt.Sprintf("%s/%s", q.esURL, q.templateName())
+}
+
+func (q *QueryHandler) stateIndexURL() string {
+	return fmt.Sprintf("%s/%s", q.esURL, url.PathEscape(fmt.Sprintf("<%s-status-%s-{now/d}>", defaultStateIndexAlias, templateVersion)))
+}
+
+func (q *QueryHandler) templateName() string {
+	return fmt.Sprintf("%s-%s", defaultStateIndexAlias, templateVersion)
 }

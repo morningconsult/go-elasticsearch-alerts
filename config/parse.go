@@ -52,7 +52,6 @@ type DistributedConfig struct {
 
 type ServerConfig struct {
 	ElasticSearchURL        string `json:"url"`
-	ElasticSearchStateIndex string `json:"state_index"`
 }
 
 type ESConfig struct {
