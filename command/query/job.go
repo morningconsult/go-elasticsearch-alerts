@@ -168,10 +168,13 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		case <-ctx.Done():
 			return
 		default:
+			q.logger.Info(fmt.Sprintf("[Rule: %q] continuing without maintaining job state in ElasticSearch", q.name))
 			maintainState = false
 		}
+	} else {
+		q.logger.Info(fmt.Sprintf("[Rule: %q] successfully created template %q", q.name, q.templateName()))
 	}
-	q.logger.Info(fmt.Sprintf("[Rule: %q] successfully created template %q", q.name, q.templateName()))
+	
 
 	if maintainState {
 		t, err := q.getNextQuery(ctx)
@@ -187,8 +190,6 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		if t != nil {
 			next = *t
 		}
-	} else {
-		q.logger.Info(fmt.Sprintf("[Rule: %q] continuing without maintaining job state in ElasticSearch", q.name))
 	}
 
 	if *lockAcquired {
