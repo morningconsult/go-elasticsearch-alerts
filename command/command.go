@@ -47,13 +47,6 @@ func Run() int {
 		return 1
 	}
 
-	esClient, err := config.NewESClient()
-	if err != nil {
-		logger.Error("error creating new HTTP client", "error", err)
-		return 1
-	}
-	apiClient := cleanhttp.DefaultClient()
-
 	ah := alert.NewAlertHandler(&alert.AlertHandlerConfig{
 		Logger: logger,
 	})
