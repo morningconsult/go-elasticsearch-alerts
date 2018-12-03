@@ -30,6 +30,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/jsonutil"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 )
@@ -248,7 +249,7 @@ func TestPutTemplate(t *testing.T) {
 				esURL:  u,
 			}
 
-			err := qh.putTemplate(context.Background())
+			err := qh.PutTemplate(context.Background())
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -479,79 +480,59 @@ func TestRun(t *testing.T) {
 	}
 	defer os.Remove(filename)
 
-	cases := []struct {
-		name        string
-		distributed bool
-	}{
-		{
-			"distributed",
-			true,
+	qh, err := NewQueryHandler(&QueryHandlerConfig{
+		Name:         "Test Errors",
+		Logger:       hclog.NewNullLogger(),
+		ESUrl:        ts.URL,
+		QueryIndex:   queryIndex,
+		AlertMethods: []alert.AlertMethod{fileAM},
+		QueryData: map[string]interface{}{
+			"query": map[string]interface{}{
+				"term": map[string]interface{}{
+					"hello": "world",
+				},
+			},
 		},
-		{
-			"non-distributed",
-			false,
-		},
+		Schedule:     "@every 10s",
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			qh, err := NewQueryHandler(&QueryHandlerConfig{
-				Name:         "Test Errors",
-				Logger:       hclog.NewNullLogger(),
-				ESUrl:        ts.URL,
-				QueryIndex:   queryIndex,
-				AlertMethods: []alert.AlertMethod{fileAM},
-				QueryData: map[string]interface{}{
-					"query": map[string]interface{}{
-						"term": map[string]interface{}{
-							"hello": "world",
-						},
-					},
-				},
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	outputCh := make(chan *alert.Alert, 1)
+	lock := lock.NewLock()
+	lock.Set(true)
+	wg.Add(1)
 
-				Distributed:  tc.distributed,
-				Schedule:     "@every 10s",
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			if tc.distributed {
-				qh.HaveLockCh <- true
-			}
+	go qh.Run(ctx, outputCh, &wg, lock)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-			outputCh := make(chan *alert.Alert, 1)
-			var wg sync.WaitGroup
-			wg.Add(1)
-			go qh.Run(ctx, outputCh, &wg)
+	select {
+	case <-ctx.Done():
+		t.Fatal("context timeout")
+	case a := <-outputCh:
+		cancel()
+		defer func() {
+			wg.Wait()
+		}()
+		if a.RuleName != qh.name {
+			t.Fatalf("bad alert rule name (expected: %q, got: %q)", qh.name, a.RuleName)
+		}
+		if len(a.Methods) != 1 {
+			t.Fatal("alert should have just one alert method (file)")
+		}
+		if _, ok := a.Methods[0].(*file.FileAlertMethod); !ok {
+			t.Fatalf("alert method should be of the FileAlertMethod type (got type: %T)", a.Methods[0])
+		}
+		if len(a.Records) != 1 {
+			t.Fatalf("expected only one alert.Record (got %d records)", len(a.Records))
+		}
 
-			select {
-			case <-ctx.Done():
-				t.Fatal("context timeout")
-			case a := <-outputCh:
-				cancel()
-				defer func() {
-					wg.Wait()
-				}()
-				if a.RuleName != qh.name {
-					t.Fatalf("bad alert rule name (expected: %q, got: %q)", qh.name, a.RuleName)
-				}
-				if len(a.Methods) != 1 {
-					t.Fatal("alert should have just one alert method (file)")
-				}
-				if _, ok := a.Methods[0].(*file.FileAlertMethod); !ok {
-					t.Fatalf("alert method should be of the FileAlertMethod type (got type: %T)", a.Methods[0])
-				}
-				if len(a.Records) != 1 {
-					t.Fatalf("expected only one alert.Record (got %d records)", len(a.Records))
-				}
-
-				expected := "{\n    \"hello\": \"world\"\n}"
-				if a.Records[0].Text != expected {
-					t.Fatalf("unexpected alert.Record[0].Text value (got %q, expected %q)", a.Records[0].Text, expected)
-				}
-			}
-		})
+		expected := "{\n    \"hello\": \"world\"\n}"
+		if a.Records[0].Text != expected {
+			t.Fatalf("unexpected alert.Record[0].Text value (got %q, expected %q)", a.Records[0].Text, expected)
+		}
 	}
 }
 
@@ -779,7 +760,9 @@ func TestCanceledContext(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go qh.Run(ctx, outputCh, &wg)
+	lock := lock.NewLock()
+	lock.Set(true)
+	go qh.Run(ctx, outputCh, &wg, lock)
 
 	go func() {
 		wg.Wait()

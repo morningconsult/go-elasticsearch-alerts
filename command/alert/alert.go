@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -52,18 +51,22 @@ type AlertHandlerConfig struct {
 type AlertHandler struct {
 	logger hclog.Logger
 	rand   *rand.Rand
+	StopCh chan struct{}
+	DoneCh chan struct{}
 }
 
 func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
 	return &AlertHandler{
 		logger: config.Logger,
 		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))),
+		StopCh: make(chan struct{}),
+		DoneCh: make(chan struct{}),
 	}
 }
 
-func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync.WaitGroup) {
+func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
 	defer func() {
-		wg.Done()
+		close(a.DoneCh)
 	}()
 
 	a.logger.Info("starting alert handler")
@@ -86,6 +89,8 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert, wg *sync
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-a.StopCh:
 			return
 		case alert := <-outputCh:
 			a.logger.Info(fmt.Sprintf("[Alert Handler] new query results received from rule %q", alert.RuleName))
