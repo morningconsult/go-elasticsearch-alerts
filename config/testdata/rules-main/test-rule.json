@@ -1,0 +1,32 @@
+{
+  "name": "Test Rule",
+  "index": "test-*",
+  "schedule": "@every 10m",
+  "body": {
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "term": {
+              "rule_name": {
+                "value": "test_rule"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "filters": [],
+  "outputs": [
+    {
+      "type": "email",
+      "config": {
+        "to": "you@test.com",
+        "from": "me@test.com",
+        "host": "smtp.test.com",
+        "port": 587
+      }
+    }
+  ]
+}

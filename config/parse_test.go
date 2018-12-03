@@ -145,6 +145,11 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			os.Setenv(envConfigFile, tc.path)
 			defer os.Unsetenv(envConfigFile)
 
+			if tc.name == "success" {
+				os.Setenv(envRulesDir, "testdata/rules-main")
+				defer os.Unsetenv(envRulesDir)
+			}
+
 			if tc.name != "homedir-error" && tc.name != "file-doesnt-exist" {
 				writeJSONToFile(t, tc.path, tc.data)
 				defer os.Remove(tc.path)
