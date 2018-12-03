@@ -137,11 +137,11 @@ func TestRun(t *testing.T) {
 
 	wg.Add(1)
 
-	go ah.Run(ctx, outputCh, &wg)
+	go ah.Run(ctx, outputCh)
 
 	defer func() {
 		cancel()
-		wg.Wait()
+		<-ah.DoneCh
 	}()
 	for {
 		select {
@@ -213,11 +213,11 @@ func TestRunError(t *testing.T) {
 
 	wg.Add(1)
 
-	go ah.Run(ctx, outputCh, &wg)
+	go ah.Run(ctx, outputCh)
 
 	defer func() {
 		cancel()
-		wg.Wait()
+		<-ah.DoneCh
 	}()
 
 	time.Sleep(10 * time.Second)

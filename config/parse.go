@@ -114,16 +114,20 @@ func ParseConfig() (*Config, error) {
 		}
 	}
 
-	rules, err := parseRules()
+	rules, err := ParseRules()
 	if err != nil {
 		return nil, err
+	}
+
+	if len(rules) < 1 {
+		return nil, errors.New("at least one rule must be specified")
 	}
 
 	cfg.Rules = rules
 	return cfg, nil
 }
 
-func parseRules() ([]*RuleConfig, error) {
+func ParseRules() ([]*RuleConfig, error) {
 	rulesDir := defaultRulesDir
 	if v := os.Getenv(envRulesDir); v != "" {
 		d, err := homedir.Expand(v)

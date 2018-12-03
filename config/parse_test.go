@@ -145,6 +145,11 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			os.Setenv(envConfigFile, tc.path)
 			defer os.Unsetenv(envConfigFile)
 
+			if tc.name == "success" {
+				os.Setenv(envRulesDir, "testdata/rules-main")
+				defer os.Unsetenv(envRulesDir)
+			}
+
 			if tc.name != "homedir-error" && tc.name != "file-doesnt-exist" {
 				writeJSONToFile(t, tc.path, tc.data)
 				defer os.Remove(tc.path)
@@ -533,7 +538,7 @@ func TestParseConfig_Rules(t *testing.T) {
 				defer os.Remove(fname)
 			}
 
-			rules, err := parseRules()
+			rules, err := ParseRules()
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -546,7 +551,7 @@ func TestParseConfig_Rules(t *testing.T) {
 			}
 
 			if len(rules) != len(tc.files) {
-				t.Fatalf("parseRules() should have created one *RuleConfig per rule file (got %d, expected %d)",
+				t.Fatalf("ParseRules() should have created one *RuleConfig per rule file (got %d, expected %d)",
 					len(rules), len(tc.files))
 			}
 
