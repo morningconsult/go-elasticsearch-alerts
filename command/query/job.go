@@ -241,7 +241,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 }
 
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
-	payload := fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"rule_name":{"value":%q}}},{"term":{"hostname":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName(), q.hostname)
+	payload := fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"rule_name":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName())
 
 	u, err := url.Parse(q.StateAliasURL() + "/_search")
 	if err != nil {
