@@ -93,8 +93,9 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 			Text:     record.Text,
 		}
 		if config.Text != "" {
-			config.Text = "```"+config.Text+"```"
+			config.Text = "```\n"+config.Text+"\n```"
 			config.Color = "#ff0000"
+			config.MarkdownIn = []string{"text"}
 		}
 
 		att := NewAttachment(config)
