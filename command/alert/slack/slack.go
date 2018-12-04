@@ -24,6 +24,8 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
+const defaultTextLimit = 50
+
 // Ensure SlackAlertMethod adheres to the alert.AlertMethod interface
 var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
 
@@ -33,6 +35,7 @@ type SlackAlertMethodConfig struct {
 	Username   string `mapstructure:"username"`
 	Text       string `mapstructure:"text"`
 	Emoji      string `mapstructure:"emoji"`
+	TextLimit  int    `mapstructure:"text_limit"`
 	Client     *http.Client
 }
 
@@ -43,6 +46,7 @@ type SlackAlertMethod struct {
 	username   string
 	text       string
 	emoji      string
+	textLimit  int
 }
 
 type Payload struct {
@@ -62,12 +66,17 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, err
 		config.Client = cleanhttp.DefaultClient()
 	}
 
+	if config.TextLimit == 0 {
+		config.TextLimit = defaultTextLimit
+	}
+
 	return &SlackAlertMethod{
 		channel:    config.Channel,
 		webhookURL: config.WebhookURL,
 		client:     config.Client,
 		text:       config.Text,
 		emoji:      config.Emoji,
+		textLimit:  config.TextLimit,
 	}, nil
 }
 
@@ -85,6 +94,8 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 		Text:     s.text,
 		Emoji:    s.emoji,
 	}
+
+	records = s.preprocess(records)
 
 	for _, record := range records {
 		config := &AttachmentConfig{
@@ -137,4 +148,31 @@ func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
 	}
 
 	return err
+}
+
+func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
+	var output []*alert.Record
+	for _, record := range records {
+		n := len(record.Text)/s.textLimit
+		if n < 1 {
+			output = append(output, record)
+			continue
+		}
+		var i int
+		for i = 0; i < n; i++ {
+			chopped := fmt.Sprintf("(part %d of %d)\n\n%s\n\n(continued)", i+1, n+1, record.Text[s.textLimit*i:s.textLimit*(i+1)])
+			record := &alert.Record{
+				Title: fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
+				Text:  chopped,
+			}
+			output = append(output, record)
+		}
+		chopped := fmt.Sprintf("(part %d of %d)\n\n%s", i+1, n+1, record.Text[s.textLimit*i:])
+		record := &alert.Record{
+			Title: fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
+			Text:  chopped,
+		}
+		output = append(output, record)
+	}
+	return output
 }

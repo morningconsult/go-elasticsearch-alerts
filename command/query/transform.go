@@ -14,6 +14,7 @@
 package query
 
 import (
+	// "bytes"
 	"encoding/json"
 	"strings"
 
@@ -21,6 +22,8 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
+
+const hitsDelimiter = "\n----------------------------------------\n"
 
 func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, []map[string]interface{}, error) {
 	var records []*alert.Record
@@ -59,33 +62,23 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 		records = append(records, record)
 	}
 
-	// Make one record per hits.hits
-	hitsRaw := utils.Get(respData, "hits.hits")
-	if hitsRaw == nil {
-		return records, nil, nil
-	}
-
-	hits, ok := hitsRaw.([]interface{})
-	if !ok {
+	// Get the body field
+	body := utils.GetAll(respData, q.bodyField)
+	if body == nil {
 		return records, nil, nil
 	}
 
 	var stringifiedHits []string
-	var hitsArr []map[string]interface{}
-	for _, hit := range hits {
-		obj, ok := hit.(map[string]interface{})
+	var hits []map[string]interface{}
+	for _, elem := range body {
+		hit, ok := elem.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		source, ok := obj["_source"].(map[string]interface{})
-		if !ok {
-			continue
-		}
+		hits = append(hits, hit)
 
-		hitsArr = append(hitsArr, obj)
-
-		data, err := json.MarshalIndent(source, "", "    ")
+		data, err := json.MarshalIndent(hit, "", "    ")
 		if err != nil {
 			return nil, nil, err
 		}
@@ -94,10 +87,10 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 
 	if len(stringifiedHits) > 0 {
 		record := &alert.Record{
-			Title: "hits.hits._source",
-			Text:  strings.Join(stringifiedHits, "\n----------------------------------------\n"),
+			Title: q.bodyField,
+			Text:  strings.Join(stringifiedHits, hitsDelimiter),
 		}
 		records = append(records, record)
 	}
-	return records, hitsArr, nil
+	return records, hits, nil
 }

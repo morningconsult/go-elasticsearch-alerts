@@ -39,6 +39,7 @@ type RuleConfig struct {
 	Name                 string                 `json:"name"`
 	ElasticSearchIndex   string                 `json:"index"`
 	CronSchedule         string                 `json:"schedule"`
+	BodyField            string                 `json:"body_field"`
 	ElasticSearchBodyRaw interface{}            `json:"body"`
 	ElasticSearchBody    map[string]interface{} `json:"-"`
 	Filters              []string               `json:"filters"`

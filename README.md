@@ -140,6 +140,7 @@ The rule configuration files are used to configure what ElasticSearch queries wi
     "size": 20,
     "_source": "system.syslog"
   },
+  "body_field": "hits.hits._source",
   "filters": [
     "aggregations.service_name.buckets",
     "aggregations.service_name.buckets.program.buckets"
@@ -200,6 +201,7 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 * `schedule` (string: `""`) - The schedule of when the query will be executed in [cron syntax](https://en.wikipedia.org/wiki/Cron). This application uses [this cron scheduler](https://godoc.org/github.com/robfig/cron#hdr-CRON_Expression_Format) so please refer to it for more information on the exact syntax of the cron schedule.
 * `body` (JSON object: `<nil>`) - The body of the [search query](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html) request. This should be exactly what you would include in an ElasticSearch `_search` request to the index specified above. This value will dictate the layout of the data that your ElasticSearch instance sends to this application; therefore, the subsequent `filters` section is dictated by this section. It is recommended that you manually run this query and understand the structure of the response data before writing the `filters` section.
 * `filters` (\[\]string: `[]`) - How the response to this query should be grouped. More information on this field is provided in the [filters](#filters) section. This field is optional. If no filters are provided, only elements of the `hits.hits._source` field of the response will be recorded.
+* `body_field` (string: `"hits.hits._source"`) - The field of the JSON response to collected and sent to outputs. If not specified, the application will group by the field `hits.hits._source` by default.
 * `outputs` (\[\][Output](#outputs-parameter): `[]`) - Specifies the outputs to which the results of the query should be written. See the [Output](#output-parameter) section for more details. At least one output must be specified.
 
 ### Filters
@@ -266,7 +268,7 @@ The application will group the response to the ElasticSearch query by each eleme
 }
 ```
 
-Also given the filters `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets` and that the Slack output method is used, the application will make the following request to Slack (shown as a `cURL` request) after running the query and receiving the aforementioned data (note that if the response from ElasticSearch includes the array field `hits.hits`, the `_source` field of each element will be included in the output by default, regardless of the `filters`):
+Also given the filters `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets` and that the Slack output method is used, the application will make the following request to Slack (shown as a `cURL` request) after running the query and receiving the aforementioned data:
 
 ```shell
 $ curl https://slack.webhooks.foo/asdf \

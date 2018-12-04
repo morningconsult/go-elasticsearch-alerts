@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/go-hclog"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 func Run() int {
@@ -34,46 +35,52 @@ func Run() int {
 	shutdownCh := makeShutdownCh()
 	reloadCh := makeReloadCh(ctx)
 
-	config, err := config.ParseConfig()
+	cfg, err := config.ParseConfig()
 	if err != nil {
-		logger.Error("error loading config file", "error", err)
+		logger.Error("Error loading config file", "error", err)
 		return 1
 	}
 
-	esClient, err := config.NewESClient()
+	esClient, err := cfg.NewESClient()
 	if err != nil {
-		logger.Error("error creating new ElasticSearch HTTP client", "error", err)
+		logger.Error("Error creating new ElasticSearch HTTP client", "error", err)
+		return 1
+	}
+
+	qhs, err := buildQueryHandlers(cfg.Rules, cfg.ElasticSearch.Server.ElasticSearchURL, esClient, logger)
+	if err != nil {
+		logger.Error("Error creating query handlers from rules", "error", err)
 		return 1
 	}
 
 	controller, err := newController(&controllerConfig{
-		logger:              logger,
-		rules:               config.Rules,
-		elasticSearchURL:    config.ElasticSearch.Server.ElasticSearchURL,
-		elasticSearchClient: esClient,
+		queryHandlers: qhs,
+		alertHandler:  alert.NewAlertHandler(&alert.AlertHandlerConfig{
+			Logger: logger,
+		}),
 	})
 	if err != nil {
-		logger.Error("error creating new controller", "error", err)
+		logger.Error("Error creating new controller", "error", err)
 		return 1
 	}
 
 	syncDoneCh := make(chan struct{})
-	if config.Distributed {
-		consulClient, err := newConsulClient(config.Consul)
+	if cfg.Distributed {
+		consulClient, err := newConsulClient(cfg.Consul)
 		if err != nil {
-			logger.Error("error creating Consul API client", "error", err)
+			logger.Error("Error creating Consul API client", "error", err)
 			return 1
 		}
 
-		k, ok := config.Consul["consul_lock_key"]
+		k, ok := cfg.Consul["consul_lock_key"]
 		if !ok || k == "" {
-			logger.Error("no 'consul_lock_key' value found")
+			logger.Error("No 'consul_lock_key' value found")
 			return 1
 		}
 
 		lock, err := consulClient.LockKey(k)
 		if err != nil {
-			logger.Error("error creating a Consul API lock", "error", err)
+			logger.Error("Error creating a Consul API lock", "error", err)
 			return 1
 		}
 
@@ -85,7 +92,7 @@ func Run() int {
 			for {
 				lockCh, err := lock.Lock(ctx.Done())
 				if err != nil {
-					logger.Error("error attempting to acquire lock, exiting", "error", err)
+					logger.Error("Error attempting to acquire lock, exiting", "error", err)
 					close(shutdownCh)
 					return
 				}
@@ -97,7 +104,7 @@ func Run() int {
 						lock.Unlock()
 						return
 					default:
-						logger.Info("this process is now the leader")
+						logger.Info("This process is now the leader")
 						controller.distLock.Set(true)
 					}
 
@@ -106,7 +113,7 @@ func Run() int {
 						lock.Unlock()
 						return
 					case <-lockCh:
-						logger.Info("this process is no longer the leader")
+						logger.Info("This process is no longer the leader")
 						controller.distLock.Set(false)
 						lock.Unlock()
 						break UnlockedLoop
@@ -122,12 +129,12 @@ func Run() int {
 	qh := controller.queryHandlers[0]
 	err = qh.PutTemplate(ctx)
 	if err != nil {
-		logger.Error(fmt.Sprintf("error creating template %q", qh.StateAliasURL()), "error", err)
+		logger.Error(fmt.Sprintf("Error creating template %q", qh.StateAliasURL()), "error", err)
 	} else {
-		logger.Info(fmt.Sprintf("successfully created template %q", qh.StateAliasURL()))
+		logger.Info(fmt.Sprintf("Successfully created template %q", qh.StateAliasURL()))
 	}
 
-	controller.run(ctx)
+	go controller.run(ctx)
 
 	defer func() {
 		<-syncDoneCh
@@ -143,11 +150,20 @@ func Run() int {
 			return 0
 		case <-reloadCh:
 			logger.Info("SIGHUP received. Updating rules.")
-			if err = controller.reload(ctx); err != nil {
-				logger.Error("error updating handlers. Exiting", "error", err)
+
+			rules, err := config.ParseRules()
+			if err != nil {
+				logger.Error("Error parsing rules. Exiting", "error", err)
 				cancel()
 				return 1
 			}
+			qhs, err := buildQueryHandlers(rules, cfg.ElasticSearch.Server.ElasticSearchURL, esClient, logger)
+			if err != nil {
+				logger.Error("Error creating query handlers from rules. Exiting", "error", err)
+				cancel()
+				return 1
+			}
+			controller.updateHandlersCh <- qhs
 		}
 	}
 	return 0

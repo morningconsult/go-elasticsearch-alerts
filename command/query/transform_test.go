@@ -334,7 +334,7 @@ func TestTransform(t *testing.T) {
 				},
 				&alert.Record{
 					Title: "hits.hits._source",
-					Text:  `{"ayy": "lmao"}`,
+					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
 			1,
@@ -379,7 +379,8 @@ func TestTransform(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{
-				filters: tc.filters,
+				filters:   tc.filters,
+				bodyField: defaultBodyField,
 			}
 			records, hits, err := qh.Transform(tc.input)
 			if tc.hits != len(hits) {
