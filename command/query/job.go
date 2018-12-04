@@ -41,6 +41,7 @@ const (
 	templateVersion string = "0.0.1"
 	defaultStateIndexAlias string = "go-es-alerts"
 	defaultTimestampFormat string = time.RFC3339
+	defaultBodyField  string = "hits.hits._source"
 )
 
 type QueryHandlerConfig struct {
@@ -52,6 +53,7 @@ type QueryHandlerConfig struct {
 	QueryData    map[string]interface{}
 	QueryIndex   string
 	Schedule     string
+	BodyField    string
 	Filters      []string
 }
 
@@ -67,6 +69,7 @@ type QueryHandler struct {
 	queryIndex   string
 	queryData    map[string]interface{}
 	schedule     cron.Schedule
+	bodyField    string
 	filters      []string
 }
 
@@ -111,6 +114,10 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		config.Client = cleanhttp.DefaultClient()
 	}
 
+	if config.BodyField == "" {
+		config.BodyField = defaultBodyField
+	}
+
 	return &QueryHandler{
 		StopCh:       make(chan struct{}),
 
@@ -123,6 +130,7 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		queryIndex:   config.QueryIndex,
 		queryData:    config.QueryData,
 		schedule:     schedule,
+		bodyField:    config.BodyField,
 		filters:      config.Filters,
 	}, nil
 }
