@@ -42,6 +42,10 @@ type EmailAlertMethodConfig struct {
 }
 
 func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, error) {
+	if config == nil {
+		config = &EmailAlertMethodConfig{}
+	}
+
 	errors := []string{}
 	if config.Host == "" {
 		errors = append(errors, "no SMTP host provided")
@@ -120,7 +124,7 @@ func (e *EmailAlertMethod) buildMessage(rule string, records []*alert.Record) (s
 	}
 
 	tpl := `Content-Type: text/html
-Subject: Go ElasticSearch Alerts: {{ .Name }}
+Subject: Go Elasticsearch Alerts: {{ .Name }}
 
 <!DOCTYPE html>
 <html>

@@ -13,9 +13,7 @@
 
 package config
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestNewESClient(t *testing.T) {
 	cases := []struct {
@@ -26,7 +24,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"tls-disabled",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: false,
 					},
@@ -37,7 +35,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"no-ca-cert",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: true,
 					},
@@ -48,7 +46,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"no-client-cert",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: true,
 						CACert:     "testdata/certs/cacert.pem",
@@ -60,7 +58,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"no-client-key",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: true,
 						CACert:     "testdata/certs/cacert.pem",
@@ -73,7 +71,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"error-loading-pair",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: true,
 						CACert:     "testdata/certs/cacert.pem",
@@ -87,7 +85,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"error-reading-ca-cert",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: true,
 						CACert:     "testdata/certs/i-dont-exist.pem",
@@ -101,7 +99,7 @@ func TestNewESClient(t *testing.T) {
 		{
 			"success",
 			&Config{
-				ElasticSearch: &ESConfig{
+				Elasticsearch: &ESConfig{
 					Client: &ClientConfig{
 						TLSEnabled: true,
 						CACert:     "testdata/certs/cacert.pem",

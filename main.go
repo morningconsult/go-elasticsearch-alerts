@@ -22,7 +22,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/version"
 )
 
-const banner = "Go ElasticSearch Alerts version %v, commit %v, built %v\n"
+const banner = "Go Elasticsearch Alerts version %v, commit %v, built %v\n"
 
 func main() {
 	var versionFlag bool

@@ -18,13 +18,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	// "time"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
-const defaultTextLimit = 7500
+const defaultTextLimit = 6000
 
 // Ensure SlackAlertMethod adheres to the alert.AlertMethod interface
 var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
@@ -58,6 +59,10 @@ type Payload struct {
 }
 
 func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, error) {
+	if config == nil {
+		config = &SlackAlertMethodConfig{}
+	}
+
 	if config.WebhookURL == "" {
 		return nil, fmt.Errorf("field 'output.config.webhook' must not be empty when using the Slack output method")
 	}
@@ -99,12 +104,12 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 
 	for _, record := range records {
 		config := &AttachmentConfig{
-			Fallback: rule,
-			Pretext:  record.Title,
-			Text:     record.Text,
+			Title:      rule,
+			Text:       record.Title,
+			MarkdownIn: []string{"text"},
 		}
-		if config.Text != "" {
-			config.Text = "```\n"+config.Text+"\n```"
+		if record.BodyField {
+			config.Text = config.Text+"\n```\n"+record.Text+"\n```"
 			config.Color = "#ff0000"
 			config.MarkdownIn = []string{"text"}
 		}
@@ -150,6 +155,8 @@ func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
 	return err
 }
 
+// preprocess breaks attachments with text greater than s.textLimit
+// into multiple attachments in order to prevent trucation
 func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
 	var output []*alert.Record
 	for _, record := range records {
@@ -162,15 +169,17 @@ func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
 		for i = 0; i < n; i++ {
 			chopped := fmt.Sprintf("(part %d of %d)\n\n%s\n\n(continued)", i+1, n+1, record.Text[s.textLimit*i:s.textLimit*(i+1)])
 			record := &alert.Record{
-				Title: fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
-				Text:  chopped,
+				Title:     fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
+				Text:      chopped,
+				BodyField: record.BodyField,
 			}
 			output = append(output, record)
 		}
 		chopped := fmt.Sprintf("(part %d of %d)\n\n%s", i+1, n+1, record.Text[s.textLimit*i:])
 		record := &alert.Record{
-			Title: fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
-			Text:  chopped,
+			Title:     fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
+			Text:      chopped,
+			BodyField: record.BodyField,
 		}
 		output = append(output, record)
 	}

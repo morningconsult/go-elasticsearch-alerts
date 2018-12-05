@@ -44,6 +44,10 @@ type FileAlertMethod struct {
 }
 
 func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error) {
+	if config == nil {
+		config = &FileAlertMethodConfig{}
+	}
+
 	if config.OutputFilepath == "" {
 		return nil, errors.New("no file path provided")
 	}

@@ -43,11 +43,11 @@ func Run() int {
 
 	esClient, err := cfg.NewESClient()
 	if err != nil {
-		logger.Error("Error creating new ElasticSearch HTTP client", "error", err)
+		logger.Error("Error creating new Elasticsearch HTTP client", "error", err)
 		return 1
 	}
 
-	qhs, err := buildQueryHandlers(cfg.Rules, cfg.ElasticSearch.Server.ElasticSearchURL, esClient, logger)
+	qhs, err := buildQueryHandlers(cfg.Rules, cfg.Elasticsearch.Server.ElasticsearchURL, esClient, logger)
 	if err != nil {
 		logger.Error("Error creating query handlers from rules", "error", err)
 		return 1
@@ -150,14 +150,13 @@ func Run() int {
 			return 0
 		case <-reloadCh:
 			logger.Info("SIGHUP received. Updating rules.")
-
 			rules, err := config.ParseRules()
 			if err != nil {
 				logger.Error("Error parsing rules. Exiting", "error", err)
 				cancel()
 				return 1
 			}
-			qhs, err := buildQueryHandlers(rules, cfg.ElasticSearch.Server.ElasticSearchURL, esClient, logger)
+			qhs, err := buildQueryHandlers(rules, cfg.Elasticsearch.Server.ElasticsearchURL, esClient, logger)
 			if err != nil {
 				logger.Error("Error creating query handlers from rules. Exiting", "error", err)
 				cancel()
@@ -226,6 +225,5 @@ func newConsulClient(config map[string]string) (*api.Client, error) {
 			defer os.Unsetenv(env)
 		}
 	}
-
 	return api.NewClient(&api.Config{})
 }

@@ -1,6 +1,8 @@
 # go-elasticsearch-alerts
 
-Elasticsearch Alerting Daemon
+[![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/docker-credential-vault-login)
+
+A daemon for generating alerts on Elasticsearch data in real-time.
 
 ## Installation
 
@@ -30,13 +32,13 @@ The binary will be output to `bin` in the local directory.
 
 # Setup
 
-This application requires several configuration files: a [main configuration file](#main-configuration-file) and one or more [rule configuration files](#rule-configuration-files). The main configuration file is used to configure general behavior of the application. The rule files are used to specify what queries are executed, when they are executed, and where the results shall be sent.
+This application requires several configuration files: a [main configuration file](#main-configuration-file) and one or more [rule configuration files](#rule-configuration-files). The main configuration file is used to configure general behavior of the application. The rule files are used to define your alerts (e.g. what queries are executed, when they are executed, where the results shall be sent, etc.).
 
 ## Main Configuration File
 
 The main configuration file is used to specify:
-* Information pertaining to your ElasticSearch instance;
-* How the application will interact with your ElasticSearch instance;
+* Information pertaining to your Elasticsearch instance;
+* How the application will interact with your Elasticsearch instance;
 * Whether it is to be run in a distributed fashion; and
 * If distributed, how the application will communicate with your Consul instance (used for synchronization).
 
@@ -70,46 +72,46 @@ This example shows a sample main configuration file.
   }
 }
 ```
-* `elasticsearch` ([ElasticSearch](#elasticsearch-parameters): `<nil>`) - Configures the ElasticSearch client and specifies server parameters. See the [ElasticSearch](#elasticsearch-parameters) section for more details. This field is required.
-* `distributed` (bool: `false`) - Whether this application should will be distributed across multiple processes. If this is set to `true`, the `consul` field is also required since this application uses the [Consul lock](https://www.consul.io/docs/commands/lock.html) for synchronization. This field is optional.
+* `elasticsearch` ([Elasticsearch](#elasticsearch-parameters): `<nil>`) - Configures the Elasticsearch client and specifies server parameters. See the [Elasticsearch](#elasticsearch-parameters) section for more details. This field is required.
+* `distributed` (bool: `false`) - Whether this application should will be distributed across multiple processes. If this is set to `true`, the `consul` field is also required since this application uses the [Consul lock](https://www.consul.io/docs/commands/lock.html) for synchronization between nodes. This field is optional.
 * `consul` ([Consul](#consul-parameters): `<nil>`) - Configures the Consul client if this application is distributed. This field is only required when `distributed` is set to `true`.
 
 ### `elasticsearch` parameters
 
-* `server` ([Server](#server-parameters): `<nil>`) - Specifies ElasticSearch server information. See the [Server](#server-parameters) section for more information. This field is always required.
+* `server` ([Server](#server-parameters): `<nil>`) - Specifies Elasticsearch server information. See the [Server](#server-parameters) section for more information. This field is always required.
 * `client` ([Client](#client-parameters): `<nil>`) - Configures the HTTP client with which the process will communicate with Elasticsearch. See the [Client](#client-parameters) section for more informiation. This field is always required.
 
 ### `consul` parameters
 Note: All values should be strings. For example, even if the value is technically a Boolean value such as `true`, you should provide a string (e.g. `"true"`)
 
 * `consul_lock_key` (string: `""`) - The name of the key to be assigned to the Consul lock. This field is always required.
-* `consul_http_address` (string: `""`) - The URL of your Consul server. This field is always required.
+* `consul_http_addr` (string: `""`) - The URL of your Consul server. This field is always required.
 * `consul_http_token` (string: `""`) - The API access token required when access control lists (ACLs) are enabled. This field is optional.**\***
 * `consul_http_ssl` (string: `"false"`) - A boolean value (default is false) that enables the HTTPS URI scheme and SSL connections to the HTTP API. This field is optional.**\***
 * `consul_http_ssl_verify` (string: `""`) - A boolean value (default true) to specify SSL certificate verification; setting this value to false is not recommended for production use. This field is optional.**\***
 * `consul_cacert` (string: `""`) - Path to a CA file to use for TLS when communicating with Consul. This field is optional.**\***
 * `consul_capath` (string: `""`) - Path to a directory of CA certificates to use for TLS when communicating with Consul. This field is optional.**\***
-* `consul_client_cert` (string: `""`) - Path to a client cert file to use for TLS when verify_incoming is enabled. This field is optional.**\***
-* `consul_client_key` (string: `""`) - Path to a client key file to use for TLS when verify_incoming is enabled. This field is optional.**\***
+* `consul_client_cert` (string: `""`) - Path to a client cert file to use for TLS when `verify_incoming` is enabled. This field is optional.**\***
+* `consul_client_key` (string: `""`) - Path to a client key file to use for TLS when `verify_incoming` is enabled. This field is optional.**\***
 * `consul_tls_server_name` (string: `""`) - The server name to use as the SNI host when connecting via TLS. This field is optional.**\***
 
 **\*** This field can be specified using its corresponding [environment variable](https://www.consul.io/docs/commands/index.html#environment-variables) instead. The environment variable takes precedence.
 
 ### `server` parameters
 
-* `url` (string: `""`) - The URL of your ElasticSearch instance. This field is always required.
+* `url` (string: `""`) - The URL of your Elasticsearch instance. This field is always required.
 
 ### `client` parameters
 
-* `tls_enabled` (bool: `false`) - Whether the application should use TLS when communicating with your ElasticSearch instance. This field is optional.
-* `ca_cert` (string: `""`) - Path to a PEM-encoded CA certificate file on the local disk. This file is used to verify the ElasticSearch server's SSL certificate.
-* `client_cert` (string: `""`) - Path to a PEM-encoded client certificate on the local disk. This file is used for TLS communication with the ElasticSearch server.
+* `tls_enabled` (bool: `false`) - Whether the application should use TLS when communicating with your Elasticsearch instance. This field is optional.
+* `ca_cert` (string: `""`) - Path to a PEM-encoded CA certificate file on the local disk. This file is used to verify the Elasticsearch server's SSL certificate.
+* `client_cert` (string: `""`) - Path to a PEM-encoded client certificate on the local disk. This file is used for TLS communication with the Elasticsearch server.
 * `client_key` (string: `""`) - Path to an unencrypted, PEM-encoded private key on disk which corresponds to the matching client certificate.
 * `server_name` (string: `""`) - Name to use as the SNI host when connecting via TLS.
 
 ### Rule Configuration Files
 
-The rule configuration files are used to configure what ElasticSearch queries will be run, how often they will be run, how the data will be transformed, and how the transformed data will be output. These files should be JSON format. The application will look for the rule files at `/etc/go-elasticsearch-alerts/rules` by default, but if you wish to keep them elsewhere you can specify this directory using the `GO_ELASTICSEARCH_ALERTS_RULES_DIR` environment variable.
+The rule configuration files are used to configure what Elasticsearch queries will be run, how often they will be run, how the data will be transformed, and how the transformed data will be output. These files should be JSON format. The application will look for the rule files at `/etc/go-elasticsearch-alerts/rules` by default, but if you wish to keep them elsewhere you can specify this directory using the `GO_ELASTICSEARCH_ALERTS_RULES_DIR` environment variable.
 
 ### Example
 
@@ -165,7 +167,7 @@ The rule configuration files are used to configure what ElasticSearch queries wi
 }
 ```
 
-In the example above, the application would execute the following query (illustrated by the `cURL` request below) to ElasticSearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and write the results to Slack and local disk.
+In the example above, the application would execute the following query (illustrated by the `cURL` request below) to Elasticsearch every ten minutes, group by `aggregations.service_name.buckets` and `aggregations.service_name.buckets.program.buckets`, and write the results to Slack and local disk.
 
 ```shell
 $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
@@ -199,14 +201,14 @@ $ curl http://<your_elasticsearch_host>/filebeat-*/_search \
 * `name` (string: `""`) - The name of the rule (e.g. "Filebeat Errors"). This field is required.
 * `index` (string: `""`) - The index to be queried. This field is required.
 * `schedule` (string: `""`) - The schedule of when the query will be executed in [cron syntax](https://en.wikipedia.org/wiki/Cron). This application uses [this cron scheduler](https://godoc.org/github.com/robfig/cron#hdr-CRON_Expression_Format) so please refer to it for more information on the exact syntax of the cron schedule.
-* `body` (JSON object: `<nil>`) - The body of the [search query](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html) request. This should be exactly what you would include in an ElasticSearch `_search` request to the index specified above. This value will dictate the layout of the data that your ElasticSearch instance sends to this application; therefore, the subsequent `filters` section is dictated by this section. It is recommended that you manually run this query and understand the structure of the response data before writing the `filters` section.
+* `body` (JSON object: `<nil>`) - The body of the [search query](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html) request. This should be exactly what you would include in an Elasticsearch `_search` request to the index specified above. This value will dictate the layout of the data that your Elasticsearch instance sends to this application; therefore, the subsequent `filters` section is dictated by this section. It is recommended that you manually run this query and understand the structure of the response data before writing the `filters` section.
 * `filters` (\[\]string: `[]`) - How the response to this query should be grouped. More information on this field is provided in the [filters](#filters) section. This field is optional. If no filters are provided, only elements of the `hits.hits._source` field of the response will be recorded.
-* `body_field` (string: `"hits.hits._source"`) - The field of the JSON response to collected and sent to outputs. If not specified, the application will group by the field `hits.hits._source` by default.
+* `body_field` (string: `"hits.hits._source"`) - The field on which to group the response. The grouped results will be sent to the specified outputs. This field is optional. If not specified, the application will group by the field `hits.hits._source` by default.
 * `outputs` (\[\][Output](#outputs-parameter): `[]`) - Specifies the outputs to which the results of the query should be written. See the [Output](#output-parameter) section for more details. At least one output must be specified.
 
 ### Filters
 
-The application will group the response to the ElasticSearch query by each element of the `filters` field and include each result of the filters as a separate record. For example, given the [rule file above](#example) let's assume that ElasticSearch returns the following in response to the query:
+The application will group the response to the Elasticsearch query by each element of the `filters` field and include each result of the filters as a separate record. For example, given the [rule file above](#example) let's assume that Elasticsearch returns the following in response to the query:
 ```json
 {
   "hits": {

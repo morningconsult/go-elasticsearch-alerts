@@ -35,10 +35,10 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 )
 
-var SkipElasticSearchTests bool = false
+var SkipElasticsearchTests bool = false
 
 const (
-	ElasticSearchURL string = "http://127.0.0.1:9200"
+	ElasticsearchURL string = "http://127.0.0.1:9200"
 	ConsulURL        string = "http://127.0.0.1:8500"
 )
 
@@ -53,7 +53,7 @@ func TestNewQueryHandler(t *testing.T) {
 			"success",
 			&QueryHandlerConfig{
 				Name:         "Test Errors",
-				ESUrl:        ElasticSearchURL,
+				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
 				QueryData:    map[string]interface{}{
@@ -67,7 +67,7 @@ func TestNewQueryHandler(t *testing.T) {
 		{
 			"no-name",
 			&QueryHandlerConfig{
-				ESUrl:        ElasticSearchURL,
+				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
 				QueryData:    map[string]interface{}{
@@ -90,13 +90,13 @@ func TestNewQueryHandler(t *testing.T) {
 				Schedule:     "@every 10m",
 			},
 			true,
-			"no ElasticSearch URL provided",
+			"no Elasticsearch URL provided",
 		},
 		{
 			"no-query-index",
 			&QueryHandlerConfig{
 				Name:         "Test Errors",
-				ESUrl:        ElasticSearchURL,
+				ESUrl:        ElasticsearchURL,
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
 				QueryData:    map[string]interface{}{
 					"ayy": "lmao",
@@ -104,13 +104,13 @@ func TestNewQueryHandler(t *testing.T) {
 				Schedule:     "@every 10m",
 			},
 			true,
-			"no ElasticSearch index provided",
+			"no Elasticsearch index provided",
 		},
 		{
 			"no-alert-methods",
 			&QueryHandlerConfig{
 				Name:         "Test Errors",
-				ESUrl:        ElasticSearchURL,
+				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{},
 				QueryData:    map[string]interface{}{
@@ -125,7 +125,7 @@ func TestNewQueryHandler(t *testing.T) {
 			"cron-parse-error",
 			&QueryHandlerConfig{
 				Name:         "Test Errors",
-				ESUrl:        ElasticSearchURL,
+				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
 				QueryData:    map[string]interface{}{
