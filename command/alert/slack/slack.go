@@ -24,7 +24,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
-const defaultTextLimit = 50
+const defaultTextLimit = 7500
 
 // Ensure SlackAlertMethod adheres to the alert.AlertMethod interface
 var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
