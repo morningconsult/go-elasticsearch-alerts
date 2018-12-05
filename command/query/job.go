@@ -44,20 +44,58 @@ const (
 	defaultBodyField  string = "hits.hits._source"
 )
 
+// QueryHandlerConfig is passed as an argument to NewQueryHandler()
 type QueryHandlerConfig struct {
-	Name         string
-	Logger       hclog.Logger
+	// Name is the name of the rule. This should come from
+	// the 'name' field of the rule configuration file
+	Name string
+
+	// AlertMethods will be passed along with any results returned
+	// by a query to the alert handler via the outputCh
 	AlertMethods []alert.AlertMethod
-	Client       *http.Client
-	ESUrl        string
-	QueryData    map[string]interface{}
-	QueryIndex   string
-	Schedule     string
-	BodyField    string
-	Filters      []string
+
+	// Client is an *http.Client instance that will be used to
+	// query Elasticsearch
+	Client *http.Client
+
+	// ESUrl is the URL of the Elasticsearch instance. This should
+	// come from the 'elasticsearch.server.url' field of the main
+	// configuration file
+	ESUrl string
+
+	// QueryData is the payload to be included in the query. This
+	// should come from the 'body' field of the rule configuration
+	// file
+	QueryData map[string]interface{}
+
+	// QueryIndex is the Elasticsearch index to be queried. This
+	// should come from the 'index' field of the rule configuration
+	// file
+	QueryIndex string
+
+	// Schedule is the interval at which the defined Elasticsearch
+	// query should executed (in cron syntax)
+	Schedule string
+
+	// BodyField is the field of the JSON response returned by
+	// Elasticsearch to be grouped on and subsequently sent to
+	// the specified outputs. This should come from the 'body_field'
+	// field of the rule configuration file
+	BodyField string
+
+	// Filters are the additional fields to be grouped on. These
+	// should come from the 'filters' field of the rule configuration
+	// file
+	Filters []string
+
+	Logger hclog.Logger
 }
 
+// QueryHandler performs the defined Elasticsearch query at the
+// specified interval and sends results to the AlertHandler if
+// there are any.
 type QueryHandler struct {
+	// StopCh terminates the Run() method when closed
 	StopCh       chan struct{}
 
 	name         string
@@ -73,7 +111,12 @@ type QueryHandler struct {
 	filters      []string
 }
 
+// NewQueryHandler creates a new *QueryHandler instance
 func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
+	if config == nil {
+		config = &QueryHandlerConfig{}
+	}
+
 	if config.Name == "" {
 		return nil, errors.New("no rule name provided")
 	}
@@ -81,11 +124,11 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
 
 	if config.ESUrl == "" {
-		return nil, errors.New("no ElasticSearch URL provided")
+		return nil, errors.New("no Elasticsearch URL provided")
 	}
 
 	if config.QueryIndex == "" {
-		return nil, errors.New("no ElasticSearch index provided")
+		return nil, errors.New("no Elasticsearch index provided")
 	}
 
 	if len(config.AlertMethods) < 1 {
@@ -135,6 +178,15 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	}, nil
 }
 
+// Run starts the QueryHandler. It first attempts to get the "state"
+// document for this rule from Elasticsearch in order to schedule 
+// the next execution at the last scheduled time. If it does not find
+// such a document, or if the next scheduled query is in the past, it
+// will execute the query immediately. Afterwards, it will attempt to
+// write a new state document to Elasticsearch in which the 'next_query'
+// equals the next time the query shall be executed per the provided
+// cron schedule. It will only execute the query if distLock.Acquired()
+// is true. 
 func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *sync.WaitGroup, distLock *lock.Lock) {
 	var (
 		now           = time.Now()
@@ -148,7 +200,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 
 	t, err := q.getNextQuery(ctx)
 	if err != nil {
-		q.logger.Error(fmt.Sprintf("[Rule: %q] error looking up next scheduled query in ElasticSearch, running query now instead", q.name),
+		q.logger.Error(fmt.Sprintf("[Rule: %q] error looking up next scheduled query in Elasticsearch, running query now instead", q.name),
 			"error", err)
 		select {
 		case <-ctx.Done():
@@ -175,7 +227,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 			if distLock.Acquired() {
 				data, err := q.query(ctx)
 				if err != nil {
-					q.logger.Error(fmt.Sprintf("[Rule: %q] error querying ElasticSearch", q.name), "error", err)
+					q.logger.Error(fmt.Sprintf("[Rule: %q] error querying Elasticsearch", q.name), "error", err)
 					break
 				}
 
@@ -207,14 +259,18 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 		next = q.schedule.Next(now)
 		if maintainState {
 			if err := q.setNextQuery(ctx, next, hits); err != nil {
-				q.logger.Error(fmt.Sprintf("[Rule: %q] error creating next query document in ElasticSearch", q.name), "error", err)
-				q.logger.Info(fmt.Sprintf("[Rule: %q] continuing without maintaining job state in ElasticSearch", q.name))
+				q.logger.Error(fmt.Sprintf("[Rule: %q] error creating next query document in Elasticsearch", q.name), "error", err)
+				q.logger.Info(fmt.Sprintf("[Rule: %q] continuing without maintaining job state in Elasticsearch", q.name))
 				maintainState = false
 			}
 		}
 	}
 }
 
+// PutTemplate attempts to create a template in Elasticsearch which
+// will serve as an alias for the state indices. The state indices
+// will be named 'go-es-alerts-status-{date}'; therefore, this template
+// enables searching all state indices via this alias
 func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":5,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
 
@@ -243,11 +299,15 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 		return errors.New("value of 'acknowledged' field of JSON response cannot be cast to boolean")
 	}
 	if !ack {
-		return errors.New("ElasticSearch did not acknowledge creation of new template")
+		return errors.New("Elasticsearch did not acknowledge creation of new template")
 	}
 	return nil
 }
 
+// getNextQuery queries the state indices for the most recently-
+// created document belonging to this rule. It then attempts to
+// parse the 'next_query' field in order to inform the Run() loop
+// when to next execute the query.
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	payload := fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"rule_name":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName())
 
@@ -295,6 +355,9 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	return &t, nil
 }
 
+// setNextQuery creates a new document in a state index to
+// inform the Run() loop when to next execute the query if
+// the process gets restarted
 func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []map[string]interface{}) error {
 	status := struct {
 		Time  string `json:"@timestamp"`
@@ -333,7 +396,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
 	queryData, err := jsonutil.EncodeJSON(q.queryData)
 	if err != nil {
-		return nil, fmt.Errorf("error JSON-encoding ElasticSearch query body: %v", err)
+		return nil, fmt.Errorf("error JSON-encoding Elasticsearch query body: %v", err)
 	}
 
 	resp, err := q.makeRequest(ctx, "GET", fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), queryData)

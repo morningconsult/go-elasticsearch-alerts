@@ -167,8 +167,8 @@ func TestParseConfig_MainConfig(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if cfg.ElasticSearch.Server.ElasticSearchURL != "http://127.0.0.1:9200" {
-				t.Fatalf("got %q, expected \"http://127.0.0.1:9200\"", cfg.ElasticSearch.Server.ElasticSearchURL)
+			if cfg.Elasticsearch.Server.ElasticsearchURL != "http://127.0.0.1:9200" {
+				t.Fatalf("got %q, expected \"http://127.0.0.1:9200\"", cfg.Elasticsearch.Server.ElasticsearchURL)
 			}
 
 			if !cfg.Distributed {
@@ -575,9 +575,9 @@ func TestParseConfig_Rules(t *testing.T) {
 					continue
 				}
 
-				if rules[i].ElasticSearchIndex != index {
+				if rules[i].ElasticsearchIndex != index {
 					t.Fatalf("unexpected index value (got %q, expected %q)",
-						rules[i].ElasticSearchIndex, index)
+						rules[i].ElasticsearchIndex, index)
 				}
 
 				schedule, ok := contents["schedule"].(string)
@@ -612,9 +612,9 @@ func TestParseConfig_Rules(t *testing.T) {
 					continue
 				}
 
-				if !reflect.DeepEqual(body, rules[i].ElasticSearchBody) {
+				if !reflect.DeepEqual(body, rules[i].ElasticsearchBody) {
 					t.Fatalf("rule 'body' is unexpected:\nGot:\n\t%+v\nExpected:\n\t%+v",
-						rules[i].ElasticSearchBody, body)
+						rules[i].ElasticsearchBody, body)
 				}
 
 				outputs, ok := contents["outputs"].([]interface{})

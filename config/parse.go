@@ -30,43 +30,88 @@ const (
 	defaultRulesDir   string = "/etc/go-elasticsearch-alerts/rules"
 )
 
+
+// OutputConfig maps to each element of 'output' field of
+// a rule configuration file
 type OutputConfig struct {
 	Type   string                 `json:"type"`
 	Config map[string]interface{} `json:"config"`
 }
 
+// RuleConfig represents a rule configuration file
 type RuleConfig struct {
-	Name                 string                 `json:"name"`
-	ElasticSearchIndex   string                 `json:"index"`
-	CronSchedule         string                 `json:"schedule"`
-	BodyField            string                 `json:"body_field"`
-	ElasticSearchBodyRaw interface{}            `json:"body"`
-	ElasticSearchBody    map[string]interface{} `json:"-"`
-	Filters              []string               `json:"filters"`
-	Outputs              []*OutputConfig        `json:"outputs"`
+	// Name is the name of the rule. This value should come
+	// from the 'name' field of the rule configuration file
+	Name string `json:"name"`
+
+	// ElasticsearchIndex is the index that this rule should
+	// query. This value should come from the 'index' field
+	// of the rule configuration file
+	ElasticsearchIndex string `json:"index"`
+
+	// CronSchedule is the interval at which the 
+	// *github.com/morningconsult/go-elasticsearch-alerts/command/query.QueryHandler
+	// will execute the query. This value should come from
+	// the 'schedule' field of the rule configuration file
+	CronSchedule string `json:"schedule"`
+
+	// BodyField is the field on which the application should
+	// group query responses before sending alerts. This value
+	// should come from the 'body_field' field of the rule
+	// configuration file
+	BodyField string `json:"body_field"`
+
+	// ElasticsearchBodyRaw is the untyped query that this
+	// alert should send when querying Elasticsearch. This
+	// value should come from the 'body' field of the
+	// rule configuration file
+	ElasticsearchBodyRaw interface{} `json:"body"`
+
+	// ElasticsearchBody is the typed query that this alert
+	// will send when querying Elasticsearch
+	ElasticsearchBody map[string]interface{} `json:"-"`
+
+	// Filters are the additional fields on which the application
+	// should group query responses before sending alerts. This
+	// value should come from the 'filters' field of the rule
+	// configuration file
+	Filters []string `json:"filters"`
+
+	// Outputs are the methods by which alerts should be sent
+	Outputs []*OutputConfig `json:"outputs"`
 }
 
-type DistributedConfig struct {
-	ConsulAddr    string `json:"consul_address"`
-	ConsulLockKey string `json:"consul_lock_key"`
-}
-
+// ServerConfig represents the 'elasticsearch.server'
+// field of the main configuration file
 type ServerConfig struct {
-	ElasticSearchURL        string `json:"url"`
+	// ElasticsearchURL is the URL of your Elasticsearch instance.
+	// This value should come from the 'elasticsearch.server.url'
+	// field of the main configuration file
+	ElasticsearchURL string `json:"url"`
 }
 
+// ESConfig represents the 'elasticsearch' field of the
+// main configuration file
 type ESConfig struct {
+	// Server represents the 'elasticsearch.server' field
+	// of the main configuration file
 	Server *ServerConfig `json:"server"`
+
+	// Client represents the 'elasticsearch.client' field
+	// of the main configuration file
 	Client *ClientConfig `json:"client"`
 }
 
+// Config represents the main configuration file
 type Config struct {
-	ElasticSearch *ESConfig         `json:"elasticsearch"`
+	Elasticsearch *ESConfig         `json:"elasticsearch"`
 	Distributed   bool              `json:"distributed"`
 	Consul        map[string]string `json:"consul"`
 	Rules         []*RuleConfig     `json:"-"`
 }
 
+// ParseConfig parses the main configuration file and returns a
+// *Config instance or an error if there was an error
 func ParseConfig() (*Config, error) {
 	configFile := defaultConfigFile
 	if v := os.Getenv(envConfigFile); v != "" {
@@ -89,15 +134,15 @@ func ParseConfig() (*Config, error) {
 	}
 	file.Close()
 
-	if cfg.ElasticSearch == nil {
+	if cfg.Elasticsearch == nil {
 		return nil, errors.New("no 'elasticsearch' field found in main configuration file")
 	}
 
-	if cfg.ElasticSearch.Server == nil {
+	if cfg.Elasticsearch.Server == nil {
 		return nil, errors.New("no 'elasticsearch.server' field found in main configuration file")
 	}
 
-	if cfg.ElasticSearch.Server.ElasticSearchURL == "" {
+	if cfg.Elasticsearch.Server.ElasticsearchURL == "" {
 		return nil, errors.New("field 'elasticsearch.server.url' of main configuration file is empty")
 	}
 
@@ -128,6 +173,8 @@ func ParseConfig() (*Config, error) {
 	return cfg, nil
 }
 
+// ParseRules parses the rule configuration files and returns
+// an array of *RuleConfig or an error if there was an error
 func ParseRules() ([]*RuleConfig, error) {
 	rulesDir := defaultRulesDir
 	if v := os.Getenv(envRulesDir); v != "" {
@@ -160,25 +207,25 @@ func ParseRules() ([]*RuleConfig, error) {
 		}
 		file.Close()
 
-		switch b := rule.ElasticSearchBodyRaw.(type) {
+		switch b := rule.ElasticsearchBodyRaw.(type) {
 		case map[string]interface{}:
-			rule.ElasticSearchBody = b
+			rule.ElasticsearchBody = b
 		case string:
 			var body map[string]interface{}
 			if err = jsonutil.DecodeJSON([]byte(b), &body); err != nil {
 				return nil, fmt.Errorf("error JSON-decoding 'body' field of file %s: %v", file.Name(), err)
 			}
-			rule.ElasticSearchBody = body
+			rule.ElasticsearchBody = body
 		default:
 			return nil, fmt.Errorf("'body' field of file %s must be valid JSON", file.Name())
 		}
-		rule.ElasticSearchBodyRaw = nil
+		rule.ElasticsearchBodyRaw = nil
 
 		if rule.Name == "" {
 			return nil, fmt.Errorf("no 'name' field found in rule file %s", file.Name())
 		}
 
-		if rule.ElasticSearchIndex == "" {
+		if rule.ElasticsearchIndex == "" {
 			return nil, fmt.Errorf("no 'index' field found in rule file %s", file.Name())
 		}
 

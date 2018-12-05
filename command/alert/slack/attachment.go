@@ -13,10 +13,13 @@
 
 package slack
 
+import "time"
+
 const (
-	defaultAttachmentColor  string = "#36a64f"
-	defaultAttachmentShort  bool   = true
-	defaultAttachmentFooter string = "#data"
+	defaultAttachmentColor = "#36a64f"
+	defaultAttachmentShort = true
+	defaultAttachmentFooter = "Go Elasticsearch Alerts"
+	defaultAttachmentFooterIcon = "https://www.elastic.co/static/images/elastic-logo-200.png"
 )
 
 type Field struct {
@@ -32,19 +35,27 @@ type AttachmentConfig struct {
 	Pretext    string
 	Fields     []*Field
 	Text       string
+	AuthorName string
+	AuthorLink string
 	Footer     string
+	FooterIcon string
+	Timestamp  int64
 	MarkdownIn []string
 }
 
 type Attachment struct {
-	Fallback    string   `json:"fallback"`
-	Color       string   `json:"color,omitempty"`
-	Title       string   `json:"title,omitempty"`
-	Pretext     string   `json:"pretext,omitempty"`
-	Fields      []*Field `json:"fields,omitempty"`
-	Text        string   `json:"text,omitempty"`
-	Footer      string   `json:"footer,omitempty"`
-	MarkdownIn  []string `json:"mrkdwn_in,omitempty"`
+	Fallback   string   `json:"fallback"`
+	Color      string   `json:"color,omitempty"`
+	Title      string   `json:"title,omitempty"`
+	Pretext    string   `json:"pretext,omitempty"`
+	Fields     []*Field `json:"fields,omitempty"`
+	Text       string   `json:"text,omitempty"`
+	AuthorName string   `json:"author_name,omitempty"`
+	AuthorLink string   `json:"author_link,omitempty"`
+	Footer     string   `json:"footer,omitempty"`
+	FooterIcon string   `json:"footer_icon,omitempty"`
+	Timestamp  int64    `json:"ts,omitempty"`
+	MarkdownIn []string `json:"mrkdwn_in,omitempty"`
 }
 
 func NewAttachment(config *AttachmentConfig) *Attachment {
@@ -56,6 +67,14 @@ func NewAttachment(config *AttachmentConfig) *Attachment {
 		config.Footer = defaultAttachmentFooter
 	}
 
+	if config.FooterIcon == "" {
+		config.FooterIcon = defaultAttachmentFooterIcon
+	}
+
+	if config.Timestamp == 0 {
+		config.Timestamp = time.Now().Unix()
+	}
+
 	return &Attachment{
 		Fallback:   config.Fallback,
 		Color:      config.Color,
@@ -63,7 +82,11 @@ func NewAttachment(config *AttachmentConfig) *Attachment {
 		Pretext:    config.Pretext,
 		Fields:     config.Fields,
 		Text:       config.Text,
+		AuthorName: config.AuthorName,
+		AuthorLink: config.AuthorLink,
 		Footer:     config.Footer,
+		FooterIcon: config.FooterIcon,
+		Timestamp:  config.Timestamp,
 		MarkdownIn: config.MarkdownIn,
 	}
 }
