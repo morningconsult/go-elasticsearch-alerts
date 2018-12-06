@@ -64,7 +64,7 @@ This example shows a sample main configuration file.
   "distributed": true,
   "consul": {
     "consul_lock_key": "go-elasticsearch-alerts/leader",
-    "consul_http_address": "http://127.0.0.1:8500",
+    "consul_http_addr": "http://127.0.0.1:8500",
     "consul_http_ssl": "true",
     "consul_cacert": "/tmp/cacert_consul.pem",
     "consul_client_cert": "/tmp/client_cert_consul.pem",
