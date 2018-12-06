@@ -110,7 +110,7 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 			Text:       record.Filter,
 			MarkdownIn: []string{"text"},
 		}
-		if record.BodyField {
+		if record.BodyField && record.Text != "" {
 			config.Text = config.Text+"\n```\n"+record.Text+"\n```"
 			config.Color = "#ff0000"
 		}

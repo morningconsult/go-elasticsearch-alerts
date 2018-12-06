@@ -15,7 +15,6 @@ package utils
 
 import (
 	"fmt"
-	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -242,6 +241,41 @@ func TestGetAll(t *testing.T) {
 	}
 }
 
+func ExampleGet() {
+	jsonData := map[string]interface{}{
+		"hello": map[string]interface{}{
+			"world": []interface{}{
+				map[string]interface{}{
+					"foo": "example-1",
+					"bar": map[string]interface{}{
+						"bim": "baz",
+					},
+				},
+				map[string]interface{}{
+					"foo": "example-2",
+					"bar": map[string]interface{}{
+						"ping": "pong",	
+					},
+				},
+			},
+		},
+	}
+
+	v := Get(jsonData, "hello.world.bar")
+	fmt.Printf("%v\n", v)
+
+	v = Get(jsonData, "hello.world[0].foo")
+	fmt.Printf("%v\n", v)
+
+	v = Get(jsonData, "hello.world[0].bar")
+	fmt.Printf("%#v\n", v)
+
+	// Output:
+	// <nil>
+	// example-1
+	// map[string]interface {}{"bim":"baz"}
+}
+
 func ExampleGetAll() {
 	jsonData := map[string]interface{}{
 		"hello": map[string]interface{}{
@@ -262,29 +296,13 @@ func ExampleGetAll() {
 		},
 	}
 
-	resp, _ := json.MarshalIndent(jsonData, "", "    ")
-	fmt.Printf("%s\n", string(resp))
-
 	v := GetAll(jsonData, "hello.world.bar")
-	fmt.Printf("%#v", v)
+	fmt.Printf("%#v\n", v)
+
+	e := GetAll(jsonData, "hello.bar")
+	fmt.Printf("%v\n", e)
+
 	// Output:
-	// {
-	//     "hello": {
-	//         "world": [
-	//             {
-	//                 "bar": {
-	//                     "bim": "baz"
-	//                 },
-	//                 "foo": "example-1"
-	//             },
-	//             {
-	//                 "bar": {
-	//                     "ping": "pong"
-	//                 },
-	//                 "foo": "example-2"
-	//             }
-	//         ]
-	//     }
-	// }
 	// []interface {}{map[string]interface {}{"bim":"baz"}, map[string]interface {}{"ping":"pong"}}
+	// [<nil>]
 }
