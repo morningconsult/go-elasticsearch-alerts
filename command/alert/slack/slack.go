@@ -101,7 +101,7 @@ func (s *SlackAlertMethod) Write(ctx context.Context, rule string, records []*al
 // BuildPayload creates a *Payload instance from the provided
 // records. After being JSON-encoded it can be included in a
 // POST request to a Slack webhook in order to create a new
-// Slack message. 
+// Slack message.
 func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *Payload {
 	payload := &Payload{
 		Channel:  s.channel,
@@ -119,7 +119,7 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 			MarkdownIn: []string{"text"},
 		}
 		if record.BodyField && record.Text != "" {
-			config.Text = config.Text+"\n```\n"+record.Text+"\n```"
+			config.Text = config.Text + "\n```\n" + record.Text + "\n```"
 			config.Color = "#ff0000"
 		}
 
@@ -169,7 +169,7 @@ func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
 func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
 	var output []*alert.Record
 	for _, record := range records {
-		n := len(record.Text)/s.textLimit
+		n := len(record.Text) / s.textLimit
 		if n < 1 {
 			output = append(output, record)
 			continue

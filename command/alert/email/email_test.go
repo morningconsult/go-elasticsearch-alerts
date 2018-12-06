@@ -106,7 +106,7 @@ func TestBuildMessage(t *testing.T) {
 	records := []*alert.Record{
 		&alert.Record{
 			Filter: "aggregations.hostname.buckets",
-			Text:  "",
+			Text:   "",
 			Fields: []*alert.Field{
 				&alert.Field{
 					Key:   "foo",
@@ -120,7 +120,7 @@ func TestBuildMessage(t *testing.T) {
 		},
 		&alert.Record{
 			Filter: "aggregations.hostname.buckets.program.buckets",
-			Text:  "",
+			Text:   "",
 			Fields: []*alert.Field{
 				&alert.Field{
 					Key:   "foo - bim",
@@ -142,7 +142,7 @@ func TestBuildMessage(t *testing.T) {
 		},
 		&alert.Record{
 			Filter: "hits.hits._source",
-			Text:  "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
+			Text:   "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
 		},
 	}
 
@@ -230,7 +230,7 @@ func ExampleEmailAlertMethod_BuildMessage() {
 	records := []*alert.Record{
 		&alert.Record{
 			Filter: "aggregations.hostname.buckets",
-			Text:  "",
+			Text:   "",
 			Fields: []*alert.Field{
 				&alert.Field{
 					Key:   "foo",
@@ -244,7 +244,7 @@ func ExampleEmailAlertMethod_BuildMessage() {
 		},
 		&alert.Record{
 			Filter: "aggregations.hostname.buckets.program.buckets",
-			Text:  "",
+			Text:   "",
 			Fields: []*alert.Field{
 				&alert.Field{
 					Key:   "foo - bim",
@@ -266,7 +266,7 @@ func ExampleEmailAlertMethod_BuildMessage() {
 		},
 		&alert.Record{
 			Filter: "hits.hits._source",
-			Text:  "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
+			Text:   "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
 		},
 	}
 
@@ -279,7 +279,7 @@ func ExampleEmailAlertMethod_BuildMessage() {
 	// Output:
 	// Content-Type: text/html
 	// Subject: Go Elasticsearch Alerts: Test Rule
-	// 
+	//
 	// <!DOCTYPE html>
 	// <html>
 	// <head>
@@ -288,13 +288,13 @@ func ExampleEmailAlertMethod_BuildMessage() {
 	//     font-family: arial, sans-serif;
 	//     border-collapse: collapse;
 	// }
-	// 
+	//
 	// td, th {
 	//     border: 1px solid #dddddd;
 	//     text-align: left;
 	//     padding: 8px;
 	// }
-	// 
+	//
 	// tr:nth-child(even) {
 	//     background-color: #dddddd;
 	// }
@@ -316,7 +316,7 @@ func ExampleEmailAlertMethod_BuildMessage() {
 	//     <td>8</td>
 	//   </tr>
 	// </table>
-	// 
+	//
 	// <br><h4>Filter path: aggregations.hostname.buckets.program.buckets</h4>
 	// <table>
 	//   <tr>
@@ -340,7 +340,7 @@ func ExampleEmailAlertMethod_BuildMessage() {
 	//     <td>2</td>
 	//   </tr>
 	// </table>
-	// 
+	//
 	// <br><h4>Filter path: hits.hits._source</h4>
 	// {<br>&nbsp;&nbsp;&nbsp;&#34;ayy&#34;:&nbsp;&#34;lmao&#34;<br>}<br>----------------------------------------<br>{<br>&nbsp;&nbsp;&nbsp;&nbsp;&#34;hello&#34;:&nbsp;&#34;world&#34;<br>}
 	// <br>

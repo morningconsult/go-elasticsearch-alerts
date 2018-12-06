@@ -15,10 +15,10 @@ package slack
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -103,8 +103,8 @@ func TestBuildPayload(t *testing.T) {
 			"pagination",
 			[]*alert.Record{
 				&alert.Record{
-					Filter: filter,
-					Text:   `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+					Filter:    filter,
+					Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
 					BodyField: true,
 				},
 			},
@@ -167,7 +167,7 @@ func TestBuildPayload(t *testing.T) {
 						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
 						Timestamp:  time.Now().Unix(),
 						Color:      defaultAttachmentColor,
-						Fields:     []*Field{
+						Fields: []*Field{
 							&Field{
 								Title: "foo",
 								Value: "8",
@@ -216,7 +216,7 @@ func TestWrite(t *testing.T) {
 			[]*alert.Record{
 				&alert.Record{
 					Filter: "hits.hits._source",
-					Text:  "{\n    \"ayy\": \"lmao\"\n}",
+					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
 				&alert.Record{
 					Filter: "aggregations.hostname.buckets",
@@ -246,7 +246,7 @@ func TestWrite(t *testing.T) {
 			[]*alert.Record{
 				&alert.Record{
 					Filter: "hits.hits._source",
-					Text:  "{\n    \"ayy\": \"lmao\"\n}",
+					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
 			true,
@@ -257,7 +257,7 @@ func TestWrite(t *testing.T) {
 			[]*alert.Record{
 				&alert.Record{
 					Filter: "hits.hits._source",
-					Text:  "{\n    \"ayy\": \"lmao\"\n}",
+					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
 			true,
@@ -346,8 +346,8 @@ func prettyJSON(t *testing.T, v interface{}) string {
 func ExampleSlackAlertMethod_BuildPayload() {
 	records := []*alert.Record{
 		&alert.Record{
-			Filter: "hits.hits._source",
-			Text:   `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+			Filter:    "hits.hits._source",
+			Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
 			BodyField: true,
 		},
 		&alert.Record{

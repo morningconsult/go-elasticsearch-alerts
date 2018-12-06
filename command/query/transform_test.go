@@ -334,7 +334,7 @@ func TestTransform(t *testing.T) {
 				},
 				&alert.Record{
 					Filter: "hits.hits._source",
-					Text:  "{\n    \"ayy\": \"lmao\"\n}",
+					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
 			1,

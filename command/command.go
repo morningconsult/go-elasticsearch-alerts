@@ -23,12 +23,12 @@ import (
 
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/go-hclog"
-	"github.com/morningconsult/go-elasticsearch-alerts/config"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
 // Run starts the daemon running. This function should
-// be called directly within os.Exit() in your 
+// be called directly within os.Exit() in your
 // main.main() function.
 func Run() int {
 
@@ -58,7 +58,7 @@ func Run() int {
 
 	controller, err := newController(&controllerConfig{
 		queryHandlers: qhs,
-		alertHandler:  alert.NewAlertHandler(&alert.AlertHandlerConfig{
+		alertHandler: alert.NewAlertHandler(&alert.AlertHandlerConfig{
 			Logger: logger,
 		}),
 	})

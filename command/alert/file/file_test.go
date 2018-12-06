@@ -99,7 +99,7 @@ func TestWrite(t *testing.T) {
 			records := []*alert.Record{
 				&alert.Record{
 					Filter: "hits.hits._source",
-					Text:  "{\n    \"ayy\": \"lmao\"\n}",
+					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			}
 			ctx := context.Background()
@@ -159,7 +159,7 @@ func ExampleFileAlertMethod_Write() {
 		fmt.Printf("error creating new *FileAlertMethod: %v", err)
 		return
 	}
-	
+
 	err = fm.Write(context.Background(), "Test Rule", records)
 	if err != nil {
 		fmt.Printf("error writing data to file: %v", err)

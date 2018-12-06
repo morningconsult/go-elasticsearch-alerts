@@ -30,7 +30,6 @@ const (
 	defaultRulesDir   string = "/etc/go-elasticsearch-alerts/rules"
 )
 
-
 // OutputConfig maps to each element of 'output' field of
 // a rule configuration file.
 type OutputConfig struct {
@@ -57,7 +56,7 @@ type RuleConfig struct {
 	// of the rule configuration file
 	ElasticsearchIndex string `json:"index"`
 
-	// CronSchedule is the interval at which the 
+	// CronSchedule is the interval at which the
 	// *github.com/morningconsult/go-elasticsearch-alerts/command/query.QueryHandler
 	// will execute the query. This value should come from
 	// the 'schedule' field of the rule configuration file

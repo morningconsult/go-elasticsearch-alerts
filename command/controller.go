@@ -18,9 +18,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 )
 
 type controllerConfig struct {

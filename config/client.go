@@ -30,7 +30,7 @@ type ClientConfig struct {
 	// communicate with Elasticsearch via TLS. This value
 	// should come from the 'elasticsearch.client.tls_enabled'
 	// field of the main configuration file
-	TLSEnabled bool   `json:"tls_enabled"`
+	TLSEnabled bool `json:"tls_enabled"`
 
 	// CACert is the path to a PEM-encoded CA certificate file.
 	// This value should come from the 'elasticsearch.client.ca_cert'
@@ -43,7 +43,7 @@ type ClientConfig struct {
 	// field of the main configuration file
 	ClientCert string `json:"client_cert"`
 
-	// ClientKey is the path to a PEM-encoded client key file 
+	// ClientKey is the path to a PEM-encoded client key file
 	// when connecting via TLS. This value should come from the
 	// 'elasticsearch.client.client_key' field of the main
 	// configuration file

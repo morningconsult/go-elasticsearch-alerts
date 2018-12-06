@@ -27,7 +27,7 @@ const hitsDelimiter = "\n----------------------------------------\n"
 
 // Transform converts the raw response returned from Elasticsearch into a
 // []*github.com/morningconsult/go-elasticsearch-alerts/command/alert.Record
-// array and returns that array, the response fields grouped by 
+// array and returns that array, the response fields grouped by
 // *QueryHandler.bodyField (if any), and an error if there was an error.
 // If Transform returns a non-nil error, the other returned values will
 // be nil.
@@ -93,7 +93,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 
 	if len(stringifiedHits) > 0 {
 		record := &alert.Record{
-			Filter:     q.bodyField,
+			Filter:    q.bodyField,
 			Text:      strings.Join(stringifiedHits, hitsDelimiter),
 			BodyField: true,
 		}

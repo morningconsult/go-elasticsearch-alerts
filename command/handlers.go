@@ -20,12 +20,12 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/mitchellh/mapstructure"
-	"github.com/morningconsult/go-elasticsearch-alerts/config"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/email"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/slack"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
 func buildQueryHandlers(rules []*config.RuleConfig, esURL string, esClient *http.Client, logger hclog.Logger) ([]*query.QueryHandler, error) {

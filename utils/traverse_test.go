@@ -254,7 +254,7 @@ func ExampleGet() {
 				map[string]interface{}{
 					"foo": "example-2",
 					"bar": map[string]interface{}{
-						"ping": "pong",	
+						"ping": "pong",
 					},
 				},
 			},
@@ -289,7 +289,7 @@ func ExampleGetAll() {
 				map[string]interface{}{
 					"foo": "example-2",
 					"bar": map[string]interface{}{
-						"ping": "pong",	
+						"ping": "pong",
 					},
 				},
 			},

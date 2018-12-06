@@ -27,9 +27,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
@@ -38,10 +38,10 @@ import (
 )
 
 const (
-	templateVersion string = "0.0.1"
+	templateVersion        string = "0.0.1"
 	defaultStateIndexAlias string = "go-es-alerts"
 	defaultTimestampFormat string = time.RFC3339
-	defaultBodyField  string = "hits.hits._source"
+	defaultBodyField       string = "hits.hits._source"
 )
 
 // QueryHandlerConfig is passed as an argument to NewQueryHandler()
@@ -96,7 +96,7 @@ type QueryHandlerConfig struct {
 // there are any.
 type QueryHandler struct {
 	// StopCh terminates the Run() method when closed
-	StopCh       chan struct{}
+	StopCh chan struct{}
 
 	name         string
 	hostname     string
@@ -162,7 +162,7 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	}
 
 	return &QueryHandler{
-		StopCh:       make(chan struct{}),
+		StopCh: make(chan struct{}),
 
 		name:         config.Name,
 		hostname:     hostname,
@@ -179,14 +179,14 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 }
 
 // Run starts the QueryHandler. It first attempts to get the "state"
-// document for this rule from Elasticsearch in order to schedule 
+// document for this rule from Elasticsearch in order to schedule
 // the next execution at the last scheduled time. If it does not find
 // such a document, or if the next scheduled query is in the past, it
 // will execute the query immediately. Afterwards, it will attempt to
 // write a new state document to Elasticsearch in which the 'next_query'
 // equals the next time the query shall be executed per the provided
 // cron schedule. It will only execute the query if distLock.Acquired()
-// is true. 
+// is true.
 func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *sync.WaitGroup, distLock *lock.Lock) {
 	var (
 		now           = time.Now()
@@ -360,11 +360,11 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 // the process gets restarted
 func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []map[string]interface{}) error {
 	status := struct {
-		Time  string `json:"@timestamp"`
-		Name  string `json:"rule_name"`
-		Next  string `json:"next_query"`
-		Host  string `json:"hostname"`
-		NHits int    `json:"hits_count"`
+		Time  string                   `json:"@timestamp"`
+		Name  string                   `json:"rule_name"`
+		Next  string                   `json:"next_query"`
+		Host  string                   `json:"hostname"`
+		NHits int                      `json:"hits_count"`
 		Hits  []map[string]interface{} `json:"hits,omitempty"`
 	}{
 		Time:  time.Now().Format(defaultTimestampFormat),

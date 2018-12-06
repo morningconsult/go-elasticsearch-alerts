@@ -19,9 +19,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"sync"
 	"path/filepath"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 	// "net/url"
@@ -30,9 +30,9 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/jsonutil"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 )
 
 var SkipElasticsearchTests bool = false
@@ -56,10 +56,10 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			},
 			false,
 			"",
@@ -70,10 +70,10 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			},
 			true,
 			"no rule name provided",
@@ -84,10 +84,10 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			},
 			true,
 			"no Elasticsearch URL provided",
@@ -98,10 +98,10 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				ESUrl:        ElasticsearchURL,
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			},
 			true,
 			"no Elasticsearch index provided",
@@ -113,10 +113,10 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			},
 			true,
 			"at least one alert method must be specified",
@@ -128,16 +128,16 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
-				Schedule:     "blah",
+				Schedule: "blah",
 			},
 			true,
 			"error parsing cron schedule: Expected 5 to 6 fields, found 1: blah",
 		},
 	}
-	
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := NewQueryHandler(tc.config)
@@ -212,8 +212,8 @@ func TestPutTemplate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
-				case "PUT","POST":
-					if tc.status - 200 > 3 {
+				case "PUT", "POST":
+					if tc.status-200 > 3 {
 						http.Error(w, http.StatusText(tc.status), tc.status)
 						return
 					}
@@ -354,7 +354,7 @@ func TestGetNextQuery(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
 				case "GET":
-					if tc.status - 200 > 3 {
+					if tc.status-200 > 3 {
 						http.Error(w, http.StatusText(tc.status), tc.status)
 						return
 					}
@@ -390,10 +390,10 @@ func TestGetNextQuery(t *testing.T) {
 				ESUrl:        u,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"hello": "world",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -442,7 +442,7 @@ func TestRun(t *testing.T) {
 
 		// Mocks successful response to QueryHandler.getNextQuery()
 		if r.URL.Path == fmt.Sprintf("/%s-%s/_search", defaultStateIndexAlias, templateVersion) {
-			payload := fmt.Sprintf(`{"hits":{"hits":[{"_source":{"next_query":%q}}]}}`, time.Now().Add(-1 * time.Hour).Format(time.RFC3339))
+			payload := fmt.Sprintf(`{"hits":{"hits":[{"_source":{"next_query":%q}}]}}`, time.Now().Add(-1*time.Hour).Format(time.RFC3339))
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
 			w.Write([]byte(payload))
@@ -493,7 +493,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 		},
-		Schedule:     "@every 10s",
+		Schedule: "@every 10s",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -577,13 +577,13 @@ func TestSetNextQuery(t *testing.T) {
 				QueryData: map[string]interface{}{
 					"query": "test",
 				},
-				Schedule:     "@every 10s",
+				Schedule: "@every 10s",
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = qh.setNextQuery(context.Background(), time.Now().Add(1 * time.Hour), nil)
+			err = qh.setNextQuery(context.Background(), time.Now().Add(1*time.Hour), nil)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -636,7 +636,7 @@ func TestQuery(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
 				case "GET":
-					if tc.status - 200 > 3 {
+					if tc.status-200 > 3 {
 						http.Error(w, http.StatusText(tc.status), tc.status)
 						return
 					}
@@ -672,10 +672,10 @@ func TestQuery(t *testing.T) {
 				ESUrl:        u,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-				QueryData:    map[string]interface{}{
+				QueryData: map[string]interface{}{
 					"hello": "world",
 				},
-				Schedule:     "@every 10m",
+				Schedule: "@every 10m",
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -717,7 +717,6 @@ func TestNewRequestErrors(t *testing.T) {
 			nil,
 			true,
 		},
-
 	}
 
 	for _, tc := range cases {
@@ -744,10 +743,10 @@ func TestCanceledContext(t *testing.T) {
 		ESUrl:        "http://example.com",
 		QueryIndex:   "test-*",
 		AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
-		QueryData:    map[string]interface{}{
+		QueryData: map[string]interface{}{
 			"hello": "world",
 		},
-		Schedule:     "@every 10m",
+		Schedule: "@every 10m",
 	})
 	if err != nil {
 		t.Fatal(err)

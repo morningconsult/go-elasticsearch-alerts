@@ -16,9 +16,9 @@ package slack
 import "time"
 
 const (
-	defaultAttachmentColor = "#36a64f"
-	defaultAttachmentShort = true
-	defaultAttachmentFooter = "Go Elasticsearch Alerts"
+	defaultAttachmentColor      = "#36a64f"
+	defaultAttachmentShort      = true
+	defaultAttachmentFooter     = "Go Elasticsearch Alerts"
 	defaultAttachmentFooterIcon = "https://www.elastic.co/static/images/elastic-logo-200.png"
 )
 
