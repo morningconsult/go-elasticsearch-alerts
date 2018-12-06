@@ -1,6 +1,6 @@
 # go-elasticsearch-alerts
 
-[![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/docker-credential-vault-login) [![Go Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)][godocs]
+[![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/docker-credential-vault-login) [![Go Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)][godocs] [![Go Report Card](https://goreportcard.com/badge/github.com/morningconsult/go-elasticsearch-alerts)](https://goreportcard.com/report/github.com/morningconsult/go-elasticsearch-alerts)
 
 [godocs]: https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts
 
