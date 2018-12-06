@@ -1,6 +1,6 @@
 # go-elasticsearch-alerts
 
-[![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/docker-credential-vault-login) [![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
+[![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/docker-credential-vault-login) [![Go Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)][godocs]
 
 [godocs]: https://godoc.org/github.com/hashicorp/go-hclog
 
