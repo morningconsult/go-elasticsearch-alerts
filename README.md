@@ -2,7 +2,7 @@
 
 [![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/docker-credential-vault-login) [![Go Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)][godocs]
 
-[godocs]: https://godoc.org/github.com/hashicorp/go-hclog
+[godocs]: https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts
 
 A daemon for generating alerts on Elasticsearch data in real-time.
 
