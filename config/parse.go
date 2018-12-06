@@ -32,9 +32,17 @@ const (
 
 
 // OutputConfig maps to each element of 'output' field of
-// a rule configuration file
+// a rule configuration file.
 type OutputConfig struct {
-	Type   string                 `json:"type"`
+	// Type is the type of output method. Some examples include
+	// 'email', 'file', and 'slack'. Additional output methods
+	// may be added in the future
+	Type string `json:"type"`
+
+	// Config is used to configure the chosen type of output method.
+	// The content of this field is specific to the output type.
+	// Please refer to the README for more detailed information
+	// on this field
 	Config map[string]interface{} `json:"config"`
 }
 
@@ -82,7 +90,7 @@ type RuleConfig struct {
 }
 
 // ServerConfig represents the 'elasticsearch.server'
-// field of the main configuration file
+// field of the main configuration file.
 type ServerConfig struct {
 	// ElasticsearchURL is the URL of your Elasticsearch instance.
 	// This value should come from the 'elasticsearch.server.url'
@@ -91,7 +99,7 @@ type ServerConfig struct {
 }
 
 // ESConfig represents the 'elasticsearch' field of the
-// main configuration file
+// main configuration file.
 type ESConfig struct {
 	// Server represents the 'elasticsearch.server' field
 	// of the main configuration file
@@ -102,7 +110,7 @@ type ESConfig struct {
 	Client *ClientConfig `json:"client"`
 }
 
-// Config represents the main configuration file
+// Config represents the main configuration file.
 type Config struct {
 	// Elasticsearch is the Elasticsearch client and server
 	// configuration. This value should come from the
@@ -125,7 +133,7 @@ type Config struct {
 }
 
 // ParseConfig parses the main configuration file and returns a
-// *Config instance or a non-nil error if there was an error
+// *Config instance or a non-nil error if there was an error.
 func ParseConfig() (*Config, error) {
 	configFile := defaultConfigFile
 	if v := os.Getenv(envConfigFile); v != "" {

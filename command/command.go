@@ -27,6 +27,9 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
+// Run starts the daemon running. This function should
+// be called directly within os.Exit() in your 
+// main.main() function.
 func Run() int {
 
 	logger := hclog.Default()

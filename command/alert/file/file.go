@@ -36,6 +36,7 @@ type OutputJSON struct {
 }
 
 type FileAlertMethodConfig struct {
+	// OutputFilepath is the file where logs will be written
 	OutputFilepath string `mapstructure:"file"`
 }
 
@@ -43,6 +44,8 @@ type FileAlertMethod struct {
 	outputFilepath string
 }
 
+// NewFileAlertMethod returns a new *FileAlertMethod or a non-nil
+// error if there was an error.
 func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error) {
 	if config == nil {
 		return nil, errors.New("no config provided")
@@ -62,6 +65,10 @@ func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error)
 	}, nil
 }
 
+// Write creates JSON-formatted logs from the records and writes
+// them to the file specified at the creation of the FileAlertMethod.
+// If there was an error writing logs to disk, it returns a
+// non-nil error.
 func (f *FileAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {

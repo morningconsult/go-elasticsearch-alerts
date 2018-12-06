@@ -15,6 +15,7 @@ package file
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -127,5 +128,41 @@ func TestWrite(t *testing.T) {
 				t.Fatalf("Got:%+v\n\nExpected:\n%+v", json.Records, records)
 			}
 		})
+	}
+}
+
+func ExampleFileAlertMethod_Write() {
+	records := []*alert.Record{
+		&alert.Record{
+			Filter: "hits.hits._source",
+			Text:   `Lorem ipsum dolor sit amet...`,
+		},
+		&alert.Record{
+			Filter: "aggregation.hostname.buckets",
+			Fields: []*alert.Field{
+				&alert.Field{
+					Key:   "foo",
+					Count: 2,
+				},
+				&alert.Field{
+					Key:   "bar",
+					Count: 3,
+				},
+			},
+		},
+	}
+
+	fm, err := NewFileAlertMethod(&FileAlertMethodConfig{
+		OutputFilepath: "testdata/results.log",
+	})
+	if err != nil {
+		fmt.Printf("error creating new *FileAlertMethod: %v", err)
+		return
+	}
+	
+	err = fm.Write(context.Background(), "Test Rule", records)
+	if err != nil {
+		fmt.Printf("error writing data to file: %v", err)
+		return
 	}
 }

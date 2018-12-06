@@ -24,7 +24,7 @@ import (
 )
 
 // ClientConfig is used to create new configured new
-// *http.Client instances
+// *http.Client instances.
 type ClientConfig struct {
 	// TLSEnabled is used to inform NewESClient whether to
 	// communicate with Elasticsearch via TLS. This value
@@ -58,7 +58,7 @@ type ClientConfig struct {
 
 // NewESClient creates a new HTTP client based on the
 // values of ClientConfig's fields. This client should
-// be used to communicate with Elasticsearch
+// be used to communicate with Elasticsearch.
 func (c *Config) NewESClient() (*http.Client, error) {
 	client := cleanhttp.DefaultClient()
 	if c.Elasticsearch.Client == nil || !c.Elasticsearch.Client.TLSEnabled {

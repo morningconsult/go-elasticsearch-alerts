@@ -15,14 +15,13 @@ package lock
 
 import "sync"
 
-// Lock is used as a mutex to synchronize between
-// nodes running this proces
+// Lock is used as a mutex to synchronize between nodes
 type Lock struct {
 	mutex *sync.RWMutex
 	have  *bool
 }
 
-// NewLock creates a new *Lock instance
+// NewLock creates a new *Lock instance.
 func NewLock() *Lock {
 	return &Lock{
 		mutex: new(sync.RWMutex),
@@ -31,7 +30,7 @@ func NewLock() *Lock {
 }
 
 // Lock returns true if the lock has been acquired and
-// false otherwise
+// false otherwise.
 func (l *Lock) Acquired() bool {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
@@ -39,7 +38,7 @@ func (l *Lock) Acquired() bool {
 }
 
 // Set is used to set whether or not the lock
-// has been acquired
+// has been acquired.
 func (l *Lock) Set(b bool) {
 	l.mutex.Lock()
 	*l.have = b
