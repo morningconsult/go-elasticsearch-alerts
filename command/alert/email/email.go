@@ -16,6 +16,7 @@ package email
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/smtp"
@@ -43,7 +44,7 @@ type EmailAlertMethodConfig struct {
 
 func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, error) {
 	if config == nil {
-		config = &EmailAlertMethodConfig{}
+		return nil, errors.New("no config provided")
 	}
 
 	errors := []string{}
@@ -147,7 +148,7 @@ tr:nth-child(even) {
 </style>
 </head>
 <body>
-{{ range .Records }}<h4>Filter path: {{ .Title }}</h4>{{ if .Fields }}
+{{ range .Records }}<h4>Filter path: {{ .Filter }}</h4>{{ if .Fields }}
 <table>
   <tr>
     <th>Key</th>

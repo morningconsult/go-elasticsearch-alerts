@@ -16,9 +16,9 @@ package slack
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
-	// "time"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/helper/jsonutil"
@@ -58,9 +58,11 @@ type Payload struct {
 	Attachments []*Attachment `json:"attachments,omitempty"`
 }
 
+// NewSlackAlertMethod creates a new *SlackAlertMethod or a
+// non-nil error if there was an error
 func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, error) {
 	if config == nil {
-		config = &SlackAlertMethodConfig{}
+		return nil, errors.New("no config provided")
 	}
 
 	if config.WebhookURL == "" {
@@ -105,13 +107,12 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 	for _, record := range records {
 		config := &AttachmentConfig{
 			Title:      rule,
-			Text:       record.Title,
+			Text:       record.Filter,
 			MarkdownIn: []string{"text"},
 		}
 		if record.BodyField {
 			config.Text = config.Text+"\n```\n"+record.Text+"\n```"
 			config.Color = "#ff0000"
-			config.MarkdownIn = []string{"text"}
 		}
 
 		att := NewAttachment(config)
@@ -169,7 +170,7 @@ func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
 		for i = 0; i < n; i++ {
 			chopped := fmt.Sprintf("(part %d of %d)\n\n%s\n\n(continued)", i+1, n+1, record.Text[s.textLimit*i:s.textLimit*(i+1)])
 			record := &alert.Record{
-				Title:     fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
+				Filter:    fmt.Sprintf("%s (%d of %d)", record.Filter, i+1, n+1),
 				Text:      chopped,
 				BodyField: record.BodyField,
 			}
@@ -177,7 +178,7 @@ func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
 		}
 		chopped := fmt.Sprintf("(part %d of %d)\n\n%s", i+1, n+1, record.Text[s.textLimit*i:])
 		record := &alert.Record{
-			Title:     fmt.Sprintf("%s (%d of %d)", record.Title, i+1, n+1),
+			Filter:    fmt.Sprintf("%s (%d of %d)", record.Filter, i+1, n+1),
 			Text:      chopped,
 			BodyField: record.BodyField,
 		}

@@ -18,7 +18,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"encoding/json"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/vault/helper/jsonutil"
@@ -40,6 +43,11 @@ func TestNewSlackAlertMethod(t *testing.T) {
 				Emoji:      ":robot:",
 			},
 			false,
+		},
+		{
+			"nil-config",
+			nil,
+			true,
 		},
 		{
 			"no-webhook",
@@ -83,24 +91,114 @@ func TestNewSlackAlertMethod(t *testing.T) {
 	}
 }
 
-func TestPreProcess(t *testing.T) {
-
-	records := []*alert.Record{
-		&alert.Record{
-			Title: "Test",
-			Text:  `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+func TestBuildPayload(t *testing.T) {
+	rule := "Test Rule"
+	filter := "test.filter"
+	cases := []struct {
+		name     string
+		records  []*alert.Record
+		expected *Payload
+	}{
+		{
+			"pagination",
+			[]*alert.Record{
+				&alert.Record{
+					Filter: filter,
+					Text:   `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+					BodyField: true,
+				},
+			},
+			&Payload{
+				Attachments: []*Attachment{
+					&Attachment{
+						Title:      rule,
+						Text:       fmt.Sprintf("%s (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```", filter),
+						MarkdownIn: []string{"text"},
+						Color:      "#ff0000",
+						Footer:     "Go Elasticsearch Alerts",
+						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
+						Timestamp:  time.Now().Unix(),
+					},
+					&Attachment{
+						Title:      rule,
+						Text:       fmt.Sprintf("%s (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```", filter),
+						MarkdownIn: []string{"text"},
+						Color:      "#ff0000",
+						Footer:     "Go Elasticsearch Alerts",
+						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
+						Timestamp:  time.Now().Unix(),
+					},
+					&Attachment{
+						Title:      rule,
+						Text:       fmt.Sprintf("%s (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```", filter),
+						MarkdownIn: []string{"text"},
+						Color:      "#ff0000",
+						Footer:     "Go Elasticsearch Alerts",
+						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
+						Timestamp:  time.Now().Unix(),
+					},
+				},
+			},
+		},
+		{
+			"builds-fields",
+			[]*alert.Record{
+				&alert.Record{
+					Filter: filter,
+					Fields: []*alert.Field{
+						&alert.Field{
+							Key:   "foo",
+							Count: 8,
+						},
+						&alert.Field{
+							Key:   "bar",
+							Count: 2,
+						},
+					},
+				},
+			},
+			&Payload{
+				Attachments: []*Attachment{
+					&Attachment{
+						Title:      rule,
+						Text:       filter,
+						MarkdownIn: []string{"text"},
+						Footer:     "Go Elasticsearch Alerts",
+						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
+						Timestamp:  time.Now().Unix(),
+						Color:      defaultAttachmentColor,
+						Fields:     []*Field{
+							&Field{
+								Title: "foo",
+								Value: "8",
+								Short: true,
+							},
+							&Field{
+								Title: "bar",
+								Value: "2",
+								Short: true,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
 	s := &SlackAlertMethod{
-		textLimit: 50,
+		textLimit: 200,
 	}
 
-	output := s.preprocess(records)
-
-	expected := (len(records[0].Text)/s.textLimit)+1
-	if len(output) != expected {
-		t.Fatalf("expected %d records, got %d", expected, len(output))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := s.BuildPayload(rule, tc.records)
+			if !reflect.DeepEqual(tc.expected.Attachments, payload.Attachments) {
+				t.Fatalf("Got Payload.Attachments:\n%+v\n\nExpected Payload.Attachments:\n%+v\n",
+					prettyJSON(t, payload.Attachments),
+					prettyJSON(t, tc.expected.Attachments),
+				)
+			}
+		})
 	}
 
 }
@@ -117,11 +215,11 @@ func TestWrite(t *testing.T) {
 			200,
 			[]*alert.Record{
 				&alert.Record{
-					Title: "hits.hits._source",
+					Filter: "hits.hits._source",
 					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -147,7 +245,7 @@ func TestWrite(t *testing.T) {
 			200,
 			[]*alert.Record{
 				&alert.Record{
-					Title: "hits.hits._source",
+					Filter: "hits.hits._source",
 					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
@@ -158,7 +256,7 @@ func TestWrite(t *testing.T) {
 			201,
 			[]*alert.Record{
 				&alert.Record{
-					Title: "hits.hits._source",
+					Filter: "hits.hits._source",
 					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
@@ -235,4 +333,12 @@ func newMockSlackServer(status int) *httptest.Server {
 			return
 		}
 	}))
+}
+
+func prettyJSON(t *testing.T, v interface{}) string {
+	data, err := json.MarshalIndent(v, "", "    ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }

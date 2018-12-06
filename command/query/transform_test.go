@@ -49,7 +49,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -83,7 +83,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "bar",
@@ -116,7 +116,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "bar",
@@ -173,7 +173,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets.program.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets.program.buckets",
+					Filter: "aggregations.hostname.buckets.program.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo - bim",
@@ -223,7 +223,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -270,7 +270,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -320,7 +320,7 @@ func TestTransform(t *testing.T) {
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "aggregations.hostname.buckets",
+					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
 						&alert.Field{
 							Key:   "foo",
@@ -333,7 +333,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 				&alert.Record{
-					Title: "hits.hits._source",
+					Filter: "hits.hits._source",
 					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			},
@@ -361,7 +361,7 @@ func TestTransform(t *testing.T) {
 			[]string{},
 			[]*alert.Record{
 				&alert.Record{
-					Title: "hits.hits._source",
+					Filter: "hits.hits._source",
 					Text: `{
     "ayy": "lmao"
 }
@@ -396,9 +396,9 @@ func TestTransform(t *testing.T) {
 				if len(records) < i+1 {
 					t.Fatal("received records do not match expected records")
 				}
-				if records[i].Title != record.Title {
+				if records[i].Filter != record.Filter {
 					t.Fatalf("record %d has unexpected title (got %q, expected %q)", i,
-						records[i].Title, record.Title)
+						records[i].Filter, record.Filter)
 				}
 				for j, field := range record.Fields {
 					if len(records[i].Fields) < j+1 {

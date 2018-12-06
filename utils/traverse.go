@@ -69,6 +69,8 @@ func dequeue(is []string) []string {
 	return is[1:]
 }
 
+// GetAll recursively traverses the JSON via the provided
+// path and returns all elements matching the path, if any.
 func GetAll(json map[string]interface{}, path string) []interface{} {
 	raw := getall(0, strings.Split(path, "."), json, "")
 	if v, ok := raw.([]interface{}); ok {

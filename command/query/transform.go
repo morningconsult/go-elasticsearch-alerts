@@ -40,7 +40,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 		}
 
 		record := &alert.Record{
-			Title: filter,
+			Filter: filter,
 		}
 
 		var fields []*alert.Field
@@ -93,7 +93,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 
 	if len(stringifiedHits) > 0 {
 		record := &alert.Record{
-			Title:     q.bodyField,
+			Filter:     q.bodyField,
 			Text:      strings.Join(stringifiedHits, hitsDelimiter),
 			BodyField: true,
 		}

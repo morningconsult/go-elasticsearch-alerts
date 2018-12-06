@@ -28,7 +28,7 @@ type Field struct {
 }
 
 type Record struct {
-	Title     string   `json:"filter,omitempty"`
+	Filter    string   `json:"filter,omitempty"`
 	Text      string   `json:"text,omitempty"`
 	BodyField bool     `json:"-"`
 	Fields    []*Field `json:"fields,omitempty"`

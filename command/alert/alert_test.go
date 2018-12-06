@@ -113,7 +113,7 @@ func TestRun(t *testing.T) {
 		Methods:  []AlertMethod{fm},
 		Records: []*Record{
 			&Record{
-				Title: "test.rule.1",
+				Filter: "test.rule.1",
 				Text:  "test text",
 				Fields: []*Field{
 					&Field{
@@ -127,7 +127,7 @@ func TestRun(t *testing.T) {
 				},
 			},
 			&Record{
-				Title: "test.rule.2",
+				Filter: "test.rule.2",
 				Text:  "test text",
 			},
 		},
@@ -189,7 +189,7 @@ func TestRunError(t *testing.T) {
 		Methods:  []AlertMethod{em},
 		Records: []*Record{
 			&Record{
-				Title: "test.rule.1",
+				Filter: "test.rule.1",
 				Text:  "test text",
 				Fields: []*Field{
 					&Field{
@@ -203,7 +203,7 @@ func TestRunError(t *testing.T) {
 				},
 			},
 			&Record{
-				Title: "test.rule.2",
+				Filter: "test.rule.2",
 				Text:  "test text",
 			},
 		},

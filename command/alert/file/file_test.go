@@ -97,7 +97,7 @@ func TestWrite(t *testing.T) {
 			}
 			records := []*alert.Record{
 				&alert.Record{
-					Title: "hits.hits._source",
+					Filter: "hits.hits._source",
 					Text:  "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			}
