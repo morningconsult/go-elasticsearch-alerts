@@ -104,14 +104,28 @@ type ESConfig struct {
 
 // Config represents the main configuration file
 type Config struct {
-	Elasticsearch *ESConfig         `json:"elasticsearch"`
-	Distributed   bool              `json:"distributed"`
-	Consul        map[string]string `json:"consul"`
-	Rules         []*RuleConfig     `json:"-"`
+	// Elasticsearch is the Elasticsearch client and server
+	// configuration. This value should come from the
+	// 'elasticsearch' field of the main configuration file
+	Elasticsearch *ESConfig `json:"elasticsearch"`
+
+	// Distributed is whether or not this process will be run
+	// in a distributed fashion. This value should come from
+	// the 'distributed' field of the main configuration file
+	Distributed bool `json:"distributed"`
+
+	// Consul is the configuration of your Consul server. This
+	// field is required if the process shall be run in a
+	// distributed fashion. This value should come from the
+	// 'consul' field of the main configuration file
+	Consul map[string]string `json:"consul"`
+
+	// Rules are the methods by which any alerts should be sent.
+	Rules []*RuleConfig `json:"-"`
 }
 
 // ParseConfig parses the main configuration file and returns a
-// *Config instance or an error if there was an error
+// *Config instance or a non-nil error if there was an error
 func ParseConfig() (*Config, error) {
 	configFile := defaultConfigFile
 	if v := os.Getenv(envConfigFile); v != "" {
@@ -173,8 +187,8 @@ func ParseConfig() (*Config, error) {
 	return cfg, nil
 }
 
-// ParseRules parses the rule configuration files and returns
-// an array of *RuleConfig or an error if there was an error
+// ParseRules parses the rule configuration files and returns an
+// array of *RuleConfig or a non-nil error if there was an error.
 func ParseRules() ([]*RuleConfig, error) {
 	rulesDir := defaultRulesDir
 	if v := os.Getenv(envRulesDir); v != "" {

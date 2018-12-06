@@ -342,3 +342,114 @@ func prettyJSON(t *testing.T, v interface{}) string {
 	}
 	return string(data)
 }
+
+func ExampleSlackAlertMethod_BuildPayload() {
+	records := []*alert.Record{
+		&alert.Record{
+			Filter: "hits.hits._source",
+			Text:   `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
+			BodyField: true,
+		},
+		&alert.Record{
+			Filter: "aggregation.hostname.buckets",
+			Fields: []*alert.Field{
+				&alert.Field{
+					Key:   "foo",
+					Count: 2,
+				},
+				&alert.Field{
+					Key:   "bar",
+					Count: 3,
+				},
+			},
+		},
+	}
+
+	sm, _ := NewSlackAlertMethod(&SlackAlertMethodConfig{
+		WebhookURL: "https://hooks.slack.com/services/ABCDEFG",
+		Channel:    "#alerts",
+		Text:       "New alert!",
+		Emoji:      ":robot",
+		TextLimit:  200,
+	})
+
+	payload := sm.BuildPayload("Test rule", records)
+
+	// This loop is performed in order that tests will pass --
+	// it is not necessary to perform this
+	for i, _ := range payload.Attachments {
+		payload.Attachments[i].Timestamp = 1
+	}
+	data, _ := json.MarshalIndent(payload, "", "    ")
+
+	fmt.Println(string(data))
+
+	// Output:
+	// {
+	//     "channel": "#alerts",
+	//     "text": "New alert!",
+	//     "icon_emoji": ":robot",
+	//     "attachments": [
+	//         {
+	//             "fallback": "",
+	//             "color": "#ff0000",
+	//             "title": "Test rule",
+	//             "text": "hits.hits._source (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```",
+	//             "footer": "Go Elasticsearch Alerts",
+	//             "footer_icon": "https://www.elastic.co/static/images/elastic-logo-200.png",
+	//             "ts": 1,
+	//             "mrkdwn_in": [
+	//                 "text"
+	//             ]
+	//         },
+	//         {
+	//             "fallback": "",
+	//             "color": "#ff0000",
+	//             "title": "Test rule",
+	//             "text": "hits.hits._source (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```",
+	//             "footer": "Go Elasticsearch Alerts",
+	//             "footer_icon": "https://www.elastic.co/static/images/elastic-logo-200.png",
+	//             "ts": 1,
+	//             "mrkdwn_in": [
+	//                 "text"
+	//             ]
+	//         },
+	//         {
+	//             "fallback": "",
+	//             "color": "#ff0000",
+	//             "title": "Test rule",
+	//             "text": "hits.hits._source (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```",
+	//             "footer": "Go Elasticsearch Alerts",
+	//             "footer_icon": "https://www.elastic.co/static/images/elastic-logo-200.png",
+	//             "ts": 1,
+	//             "mrkdwn_in": [
+	//                 "text"
+	//             ]
+	//         },
+	//         {
+	//             "fallback": "",
+	//             "color": "#36a64f",
+	//             "title": "Test rule",
+	//             "fields": [
+	//                 {
+	//                     "title": "foo",
+	//                     "value": "2",
+	//                     "short": true
+	//                 },
+	//                 {
+	//                     "title": "bar",
+	//                     "value": "3",
+	//                     "short": true
+	//                 }
+	//             ],
+	//             "text": "aggregation.hostname.buckets",
+	//             "footer": "Go Elasticsearch Alerts",
+	//             "footer_icon": "https://www.elastic.co/static/images/elastic-logo-200.png",
+	//             "ts": 1,
+	//             "mrkdwn_in": [
+	//                 "text"
+	//             ]
+	//         }
+	//     ]
+	// }
+}

@@ -22,11 +22,10 @@ import (
 var re = regexp.MustCompile("\\[[0-9]*\\]$")
 
 // Get functions much like JavaScript's lodash.get() function.
-// It traverses the JSON (as a map[string]interface{}) via the
-// provided path and returns the element that matches the path.
-// If no match is found, it returns nil. Note that the returned
-// value is an interface{}; therefore you may have to cast it
-// to some other type.
+// It traverses the JSON via the provided path and returns the
+// element that matches the path. If no match is found, it
+// returns nil. Note that the returned value is an interface{};
+// therefore you may have to cast it to some other type.
 func Get(json map[string]interface{}, path string) interface{} {
 	return get(strings.Split(path, "."), json)
 }
@@ -75,9 +74,9 @@ func dequeue(is []string) []string {
 	return is[1:]
 }
 
-// GetAll recursively traverses the JSON (as a map[string]interface{})
-// via the provided path and returns all elements matching the path.
-// If no elements are found, it will return nil.
+// GetAll recursively traverses the JSON via the provided path
+// and returns all elements matching the path. If no elements
+// are found, it will return [<nil>].
 func GetAll(json map[string]interface{}, path string) []interface{} {
 	raw := getall(0, strings.Split(path, "."), json, "")
 	if v, ok := raw.([]interface{}); ok {

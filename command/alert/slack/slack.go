@@ -87,6 +87,10 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, err
 	}, nil
 }
 
+// Write creates a properly-formatted Slack message from the
+// records and posts it to the webhook defined at the creation
+// of the SlackAlertMethod. If there was an error making the
+// HTTP request, it returns a non-nil error.
 func (s *SlackAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	if records == nil || len(records) < 1 {
 		return nil
@@ -94,6 +98,10 @@ func (s *SlackAlertMethod) Write(ctx context.Context, rule string, records []*al
 	return s.post(ctx, s.BuildPayload(rule, records))
 }
 
+// BuildPayload creates a *Payload instance from the provided
+// records. After being JSON-encoded it can be included in a
+// POST request to a Slack webhook in order to create a new
+// Slack message. 
 func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *Payload {
 	payload := &Payload{
 		Channel:  s.channel,
