@@ -14,6 +14,7 @@
 package email
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -216,11 +217,133 @@ tr:nth-child(even) {
 </html>`
 
 	eh := &EmailAlertMethod{}
-	msg, err := eh.buildMessage("Test Error", records)
+	msg, err := eh.BuildMessage("Test Error", records)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if msg != expected {
 		t.Errorf("Got:\n%s\n\nExpected:\n%s", msg, expected)
 	}
+}
+
+func ExampleEmailAlertMethod_BuildMessage() {
+	records := []*alert.Record{
+		&alert.Record{
+			Filter: "aggregations.hostname.buckets",
+			Text:  "",
+			Fields: []*alert.Field{
+				&alert.Field{
+					Key:   "foo",
+					Count: 10,
+				},
+				&alert.Field{
+					Key:   "bar",
+					Count: 8,
+				},
+			},
+		},
+		&alert.Record{
+			Filter: "aggregations.hostname.buckets.program.buckets",
+			Text:  "",
+			Fields: []*alert.Field{
+				&alert.Field{
+					Key:   "foo - bim",
+					Count: 3,
+				},
+				&alert.Field{
+					Key:   "foo - baz",
+					Count: 7,
+				},
+				&alert.Field{
+					Key:   "bar - hello",
+					Count: 6,
+				},
+				&alert.Field{
+					Key:   "bar - world",
+					Count: 2,
+				},
+			},
+		},
+		&alert.Record{
+			Filter: "hits.hits._source",
+			Text:  "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
+		},
+	}
+
+	em := &EmailAlertMethod{}
+
+	msg, _ := em.BuildMessage("Test Rule", records)
+
+	fmt.Println(msg)
+
+	// Output:
+	// Content-Type: text/html
+	// Subject: Go Elasticsearch Alerts: Test Error
+	
+	// <!DOCTYPE html>
+	// <html>
+	// <head>
+	// <style>
+	// table {
+	//     font-family: arial, sans-serif;
+	//     border-collapse: collapse;
+	// }
+	
+	// td, th {
+	//     border: 1px solid #dddddd;
+	//     text-align: left;
+	//     padding: 8px;
+	// }
+	
+	// tr:nth-child(even) {
+	//     background-color: #dddddd;
+	// }
+	// </style>
+	// </head>
+	// <body>
+	// <h4>Filter path: aggregations.hostname.buckets</h4>
+	// <table>
+	//   <tr>
+	//     <th>Key</th>
+	//     <th>Count</th>
+	//   </tr>
+	//   <tr>
+	//     <td>foo</td>
+	//     <td>10</td>
+	//   </tr>
+	//   <tr>
+	//     <td>bar</td>
+	//     <td>8</td>
+	//   </tr>
+	// </table>
+	
+	// <br><h4>Filter path: aggregations.hostname.buckets.program.buckets</h4>
+	// <table>
+	//   <tr>
+	//     <th>Key</th>
+	//     <th>Count</th>
+	//   </tr>
+	//   <tr>
+	//     <td>foo - bim</td>
+	//     <td>3</td>
+	//   </tr>
+	//   <tr>
+	//     <td>foo - baz</td>
+	//     <td>7</td>
+	//   </tr>
+	//   <tr>
+	//     <td>bar - hello</td>
+	//     <td>6</td>
+	//   </tr>
+	//   <tr>
+	//     <td>bar - world</td>
+	//     <td>2</td>
+	//   </tr>
+	// </table>
+	
+	// <br><h4>Filter path: hits.hits._source</h4>
+	// {<br>&nbsp;&nbsp;&nbsp;&#34;ayy&#34;:&nbsp;&#34;lmao&#34;<br>}<br>----------------------------------------<br>{<br>&nbsp;&nbsp;&nbsp;&nbsp;&#34;hello&#34;:&nbsp;&#34;world&#34;<br>}
+	// <br>
+	// </body>
+	// </html>
 }

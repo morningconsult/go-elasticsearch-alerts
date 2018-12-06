@@ -59,7 +59,7 @@ type Payload struct {
 }
 
 // NewSlackAlertMethod creates a new *SlackAlertMethod or a
-// non-nil error if there was an error
+// non-nil error if there was an error.
 func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, error) {
 	if config == nil {
 		return nil, errors.New("no config provided")

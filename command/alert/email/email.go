@@ -42,6 +42,8 @@ type EmailAlertMethodConfig struct {
 	Password string   `mapstructure:"password"`
 }
 
+// NewEmailAlertMethod creates a new *EmailAlertMethod or a
+// non-nil error if there was an error.
 func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, error) {
 	if config == nil {
 		return nil, errors.New("no config provided")
@@ -101,15 +103,21 @@ type EmailAlertMethod struct {
 	to   []string
 }
 
+// Write creates an email message from the records and sends
+// it to the email address(es) specified at the creation of the
+// EmailAlertMethod. If there was an error sending the email,
+// it returns a non-nil error.
 func (e *EmailAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
-	body, err := e.buildMessage(rule, records)
+	body, err := e.BuildMessage(rule, records)
 	if err != nil {
 		return fmt.Errorf("error creating email message: %v", err)
 	}
 	return smtp.SendMail(fmt.Sprintf("%s:%d", e.host, e.port), e.auth, e.from, e.to, []byte(body))
 }
 
-func (e *EmailAlertMethod) buildMessage(rule string, records []*alert.Record) (string, error) {
+// BuildMessage creates an email message from the provided
+// records. It will return a non-nil error if an error occurs.
+func (e *EmailAlertMethod) BuildMessage(rule string, records []*alert.Record) (string, error) {
 	alert := struct {
 		Name    string
 		Records []*alert.Record
