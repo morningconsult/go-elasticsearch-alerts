@@ -127,7 +127,7 @@ type Config struct {
 	// 'consul' field of the main configuration file
 	Consul map[string]string `json:"consul"`
 
-	// Rules are the methods by which any alerts should be sent.
+	// Rules are the definitions of the alerts
 	Rules []*RuleConfig `json:"-"`
 }
 
@@ -147,6 +147,7 @@ func ParseConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	filename := file.Name()
 
 	cfg := new(Config)
 	if err := jsonutil.DecodeJSONFromReader(file, cfg); err != nil {
@@ -156,28 +157,28 @@ func ParseConfig() (*Config, error) {
 	file.Close()
 
 	if cfg.Elasticsearch == nil {
-		return nil, errors.New("no 'elasticsearch' field found in main configuration file")
+		return nil, fmt.Errorf("no 'elasticsearch' field found in main configuration file %s", filename)
 	}
 
 	if cfg.Elasticsearch.Server == nil {
-		return nil, errors.New("no 'elasticsearch.server' field found in main configuration file")
+		return nil, fmt.Errorf("no 'elasticsearch.server' field found in main configuration file %s", filename)
 	}
 
 	if cfg.Elasticsearch.Server.ElasticsearchURL == "" {
-		return nil, errors.New("field 'elasticsearch.server.url' of main configuration file is empty")
+		return nil, fmt.Errorf("field 'elasticsearch.server.url' of main configuration file %s is empty", filename)
 	}
 
 	if cfg.Distributed {
 		if cfg.Consul == nil || len(cfg.Consul) < 1 {
-			return nil, errors.New("field 'consul' of main configuration file is empty (required when 'distributed' is true)")
+			return nil, fmt.Errorf("field 'consul' of main configuration file %s is empty (required when 'distributed' is true)", filename)
 		}
 
 		if _, ok := cfg.Consul["consul_http_addr"]; !ok {
-			return nil, errors.New("field 'consul.consul_http_addr' of main configuration file is empty (required when 'distributed' is true)")
+			return nil, fmt.Errorf("field 'consul.consul_http_addr' of main configuration file %s is empty (required when 'distributed' is true)", filename)
 		}
 
 		if _, ok := cfg.Consul["consul_lock_key"]; !ok {
-			return nil, errors.New("field 'consul.consul_lock_key' of main configuration file is empty (required when 'distributed' is true)")
+			return nil, fmt.Errorf("field 'consul.consul_lock_key' of main configuration file %s is empty (required when 'distributed' is true)", filename)
 		}
 	}
 

@@ -65,7 +65,7 @@ func buildQueryHandlers(rules []*config.RuleConfig, esURL string, esClient *http
 			Filters:      rule.Filters,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error creating new job handler: %v", err)
+			return nil, fmt.Errorf("error creating new *query.QueryHandler: %v", err)
 		}
 		queryHandlers = append(queryHandlers, handler)
 	}

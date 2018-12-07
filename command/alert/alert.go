@@ -22,23 +22,66 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
+// Field represents a summary of the query results that
+// match one of the filters specified in the 'filters'
+// field of a rule configuration file.
 type Field struct {
-	Key   string `json:"key" mapstructure:"key`
+	// Key is a concatenation of any 'key' fields match a filter.
+	// See github.com/morningconsult/go-elasticsearch-alerts/utils.GetAll()
+	// for more information on how this key is created
+	Key   string `json:"key" mapstructure:"key"`
+
+	// Count is the number of fields which match a filter
 	Count int    `json:"doc_count" mapstructure:"doc_count"`
 }
 
+// Record is used to send the results of an Elasticsearch query
+// to the *alert.AlertHandler.
 type Record struct {
-	Filter    string   `json:"filter,omitempty"`
-	Text      string   `json:"text,omitempty"`
-	BodyField bool     `json:"-"`
-	Fields    []*Field `json:"fields,omitempty"`
+	// Filter is the filter (either one of the elements of
+	// the 'filter' array field or the 'body_field' field
+	// of a rule configuration file) on which the results
+	// of an Elasticsearch query is grouped
+	Filter string `json:"filter,omitempty"`
+
+	// Text is any text to be included with this record.
+	// This will generally only be non-empty if the Filter
+	// is the body field (e.g. 'hits.hits._source'). It is
+	// generally just the JSON objects stringified and
+	// concatenated
+	Text string `json:"text,omitempty"`
+
+	// BodyField is whether this record used the 'body_field'
+	// index (per the rule configuration file) to group the
+	// Elasticsearch response JSON
+	BodyField bool `json:"-"`
+
+	// Fields is the collection of elements of the 
+	// Elasticsearch response JSON that match the filter.
+	// This will be non-empty only when the Filter is not
+	// the body field
+	Fields []*Field `json:"fields,omitempty"`
 }
 
+// Alert represents a unique set of results from an
+// Elasticsearch query that the AlertHandler sends
+// to the specified outputs.
 type Alert struct {
-	ID       string
+	// ID is a unique UUID string identifying this alert
+	ID string
+
+	// RuleName is the name of the rule that generated
+	// this alert
 	RuleName string
-	Methods  []AlertMethod
-	Records  []*Record
+
+	// Method is a set of alert.AlertMethod instances
+	// which that the AlertHAndler will use to send
+	// alerts
+	Methods []AlertMethod
+
+	// Records are the processed response data from an
+	// Elasticsearch query
+	Records []*Record
 }
 
 type AlertMethod interface {
@@ -49,13 +92,20 @@ type AlertHandlerConfig struct {
 	Logger hclog.Logger
 }
 
+// AlertHandler is used to send alerts to various outputs
 type AlertHandler struct {
 	logger hclog.Logger
 	rand   *rand.Rand
+
+	// StopCh is used to terminate the Run() loop
 	StopCh chan struct{}
+
+	// DoneCh is closed when Run() returns. Once closed,
+	// Run() should not be called again
 	DoneCh chan struct{}
 }
 
+// NewAlertHandler creates a new *AlertHandler instance.
 func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
 	return &AlertHandler{
 		logger: config.Logger,
@@ -65,12 +115,22 @@ func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
 	}
 }
 
+// Run starts the *AlertHandler running. Once started, it
+// waits to receive a new *Alert from outputCh. When it
+// receives the alert, it will attempt to send the alert
+// with the AlertMethods included in the alert. If it fails,
+// it will backoff for a few seconds before trying to send
+// the alert twice more. If it fails all three attempts, it
+// will quit trying to send the alert. Run will return if
+// ctx.Done() or StopCh becomes unblocked. Before returning,
+// it will close the DoneCh. Once DoneCh is closed, Run
+// should not be called again.
 func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
 	defer func() {
 		close(a.DoneCh)
 	}()
 
-	a.logger.Info("starting alert handler")
+	a.logger.Info("Starting alert handler")
 
 	alertCh := make(chan func() (int, error), 8)
 	active := newInventory()

@@ -27,9 +27,9 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
-// Run starts the daemon running. This function should
-// be called directly within os.Exit() in your
-// main.main() function.
+// Run starts the daemon running. This function should be
+// called directly within os.Exit() in your main.main()
+// function.
 func Run() int {
 
 	logger := hclog.Default()
@@ -40,7 +40,7 @@ func Run() int {
 
 	cfg, err := config.ParseConfig()
 	if err != nil {
-		logger.Error("Error loading config file", "error", err)
+		logger.Error("Error loading main configuration file", "error", err)
 		return 1
 	}
 

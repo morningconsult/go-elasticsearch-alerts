@@ -278,31 +278,129 @@ func ExampleGet() {
 
 func ExampleGetAll() {
 	jsonData := map[string]interface{}{
-		"hello": map[string]interface{}{
-			"world": []interface{}{
+		"hits": map[string]interface{}{
+			"hits": []interface{}{
 				map[string]interface{}{
-					"foo": "example-1",
-					"bar": map[string]interface{}{
-						"bim": "baz",
+					"_source": map[string]interface{}{
+						"foo": "bar",
 					},
 				},
 				map[string]interface{}{
-					"foo": "example-2",
-					"bar": map[string]interface{}{
-						"ping": "pong",
+					"_source": map[string]interface{}{
+						"bim": "baz",
+					},
+				},
+			},
+		},
+		"aggregations": map[string]interface{}{
+			"hostname": map[string]interface{}{
+				"buckets": []interface{}{
+					map[string]interface{}{
+						"key":     "foo",
+						"count":   10,
+						"program": map[string]interface{}{
+							"buckets": []interface{}{
+								map[string]interface{}{
+									"key":   "bar",
+									"count": 3,
+								},
+								map[string]interface{}{
+									"key":   "bim",
+									"count": 7,
+								},
+							},
+						},
+					},
+					map[string]interface{}{
+						"key":     "hello",
+						"count":   6,
+						"program": map[string]interface{}{
+							"buckets": []interface{}{
+								map[string]interface{}{
+									"key":   "world",
+									"count": 2,
+								},
+								map[string]interface{}{
+									"key":   "darkness",
+									"count": 4,
+								},
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
-	v := GetAll(jsonData, "hello.world.bar")
+	expected_1 := []interface{}{
+		map[string]interface{}{
+			"key":     "foo",
+			"count":   10,
+			"program": map[string]interface{}{
+				"buckets": []interface{}{
+					map[string]interface{}{
+						"key":   "bar",
+						"count": 3,
+					},
+					map[string]interface{}{
+						"key":   "bim",
+						"count": 7,
+					},
+				},
+			},
+		},
+		map[string]interface{}{
+			"key":     "hello",
+			"count":   6,
+			"program": map[string]interface{}{
+				"buckets": []interface{}{
+					map[string]interface{}{
+						"key":   "world",
+						"count": 2,
+					},
+					map[string]interface{}{
+						"key":   "darkness",
+						"count": 4,
+					},
+				},
+			},
+		},
+	}
+
+	expected_2 := []interface{}{
+		map[string]interface{}{
+			"key":   "foo - bar",
+			"count": 3,
+		},
+		map[string]interface{}{
+			"key":   "foo - bim",
+			"count": 7,
+		},
+		map[string]interface{}{
+			"key":   "hello - world",
+			"count": 2,
+		},
+		map[string]interface{}{
+			"key":   "hello - darkness",
+			"count": 4,
+		},
+	}
+
+	v := GetAll(jsonData, "aggregations.hostname.buckets")
+	fmt.Println(reflect.DeepEqual(v, expected_1))
+	
+	v = GetAll(jsonData, "aggregations.hostname.buckets.program.buckets")
+	fmt.Println(reflect.DeepEqual(v, expected_2))
+
+	v = GetAll(jsonData, "aggregations.buckets")
+	fmt.Printf("%v\n", v)
+
+	v = GetAll(jsonData, "hits.hits._source")
 	fmt.Printf("%#v\n", v)
 
-	e := GetAll(jsonData, "hello.bar")
-	fmt.Printf("%v\n", e)
-
 	// Output:
-	// []interface {}{map[string]interface {}{"bim":"baz"}, map[string]interface {}{"ping":"pong"}}
+	// true
+	// true
 	// [<nil>]
+	// []interface {}{map[string]interface {}{"foo":"bar"}, map[string]interface {}{"bim":"baz"}}
 }
