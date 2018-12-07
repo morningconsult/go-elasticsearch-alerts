@@ -472,14 +472,20 @@ func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
 	return ""
 }
 
+// StateAliasURL returns the URL of the Elasticsearch
+// alias used to search the state indices
 func (q *QueryHandler) StateAliasURL() string {
 	return fmt.Sprintf("%s/%s", q.esURL, q.TemplateName())
 }
 
+// StateIndexURL returns the URL of the Elasticsearch
+// index where state records are stored
 func (q *QueryHandler) StateIndexURL() string {
 	return fmt.Sprintf("%s/%s", q.esURL, url.PathEscape(fmt.Sprintf("<%s-status-%s-{now/d}>", defaultStateIndexAlias, templateVersion)))
 }
 
+// TemplateName returns the name of the Elasticsearch
+// template used to search against all state indices
 func (q *QueryHandler) TemplateName() string {
 	return fmt.Sprintf("%s-%s", defaultStateIndexAlias, templateVersion)
 }

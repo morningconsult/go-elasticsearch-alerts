@@ -29,10 +29,10 @@ type Field struct {
 	// Key is a concatenation of any 'key' fields match a filter.
 	// See github.com/morningconsult/go-elasticsearch-alerts/utils.GetAll()
 	// for more information on how this key is created
-	Key   string `json:"key" mapstructure:"key"`
+	Key string `json:"key" mapstructure:"key"`
 
 	// Count is the number of fields which match a filter
-	Count int    `json:"doc_count" mapstructure:"doc_count"`
+	Count int `json:"doc_count" mapstructure:"doc_count"`
 }
 
 // Record is used to send the results of an Elasticsearch query
@@ -56,7 +56,7 @@ type Record struct {
 	// Elasticsearch response JSON
 	BodyField bool `json:"-"`
 
-	// Fields is the collection of elements of the 
+	// Fields is the collection of elements of the
 	// Elasticsearch response JSON that match the filter.
 	// This will be non-empty only when the Filter is not
 	// the body field

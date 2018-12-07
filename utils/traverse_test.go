@@ -296,8 +296,8 @@ func ExampleGetAll() {
 			"hostname": map[string]interface{}{
 				"buckets": []interface{}{
 					map[string]interface{}{
-						"key":     "foo",
-						"count":   10,
+						"key":   "foo",
+						"count": 10,
 						"program": map[string]interface{}{
 							"buckets": []interface{}{
 								map[string]interface{}{
@@ -312,8 +312,8 @@ func ExampleGetAll() {
 						},
 					},
 					map[string]interface{}{
-						"key":     "hello",
-						"count":   6,
+						"key":   "hello",
+						"count": 6,
 						"program": map[string]interface{}{
 							"buckets": []interface{}{
 								map[string]interface{}{
@@ -332,10 +332,10 @@ func ExampleGetAll() {
 		},
 	}
 
-	expected_1 := []interface{}{
+	expected1 := []interface{}{
 		map[string]interface{}{
-			"key":     "foo",
-			"count":   10,
+			"key":   "foo",
+			"count": 10,
 			"program": map[string]interface{}{
 				"buckets": []interface{}{
 					map[string]interface{}{
@@ -350,8 +350,8 @@ func ExampleGetAll() {
 			},
 		},
 		map[string]interface{}{
-			"key":     "hello",
-			"count":   6,
+			"key":   "hello",
+			"count": 6,
 			"program": map[string]interface{}{
 				"buckets": []interface{}{
 					map[string]interface{}{
@@ -367,7 +367,7 @@ func ExampleGetAll() {
 		},
 	}
 
-	expected_2 := []interface{}{
+	expected2 := []interface{}{
 		map[string]interface{}{
 			"key":   "foo - bar",
 			"count": 3,
@@ -387,10 +387,10 @@ func ExampleGetAll() {
 	}
 
 	v := GetAll(jsonData, "aggregations.hostname.buckets")
-	fmt.Println(reflect.DeepEqual(v, expected_1))
-	
+	fmt.Println(reflect.DeepEqual(v, expected1))
+
 	v = GetAll(jsonData, "aggregations.hostname.buckets.program.buckets")
-	fmt.Println(reflect.DeepEqual(v, expected_2))
+	fmt.Println(reflect.DeepEqual(v, expected2))
 
 	v = GetAll(jsonData, "aggregations.buckets")
 	fmt.Printf("%v\n", v)

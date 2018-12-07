@@ -89,12 +89,12 @@ func (ctrl *controller) startQueryHandlers(ctx context.Context) {
 
 func (ctrl *controller) stopQueryHandlers() {
 	for _, qh := range ctrl.queryHandlers {
-		qh.StopCh <- struct {}{}
+		qh.StopCh <- struct{}{}
 	}
 	ctrl.queryHandlerWG.Wait()
 }
 
 func (ctrl *controller) stopAlertHandler() {
-	ctrl.alertHandler.StopCh <- struct {}{}
+	ctrl.alertHandler.StopCh <- struct{}{}
 	<-ctrl.alertHandler.DoneCh
 }

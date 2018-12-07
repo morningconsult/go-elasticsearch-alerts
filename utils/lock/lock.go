@@ -29,7 +29,7 @@ func NewLock() *Lock {
 	}
 }
 
-// Lock returns true if the lock has been acquired and
+// Acquired returns true if the lock has been acquired and
 // false otherwise.
 func (l *Lock) Acquired() bool {
 	l.mutex.RLock()
@@ -37,8 +37,8 @@ func (l *Lock) Acquired() bool {
 	return *l.have
 }
 
-// Set is used to set whether or not the lock
-// has been acquired.
+// Set is used to set whether or not the lock has been
+// acquired.
 func (l *Lock) Set(b bool) {
 	l.mutex.Lock()
 	*l.have = b

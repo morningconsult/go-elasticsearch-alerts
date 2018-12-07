@@ -22,12 +22,16 @@ const (
 	defaultAttachmentFooterIcon = "https://www.elastic.co/static/images/elastic-logo-200.png"
 )
 
+// Field corresponds to the 'attachment.field'
+// field of a Slack message payload.
 type Field struct {
 	Title string `json:"title"`
 	Value string `json:"value"`
 	Short bool   `json:"short"`
 }
 
+// AttachmentConfig passed to NewAttachment to create
+// a new *Attachment.
 type AttachmentConfig struct {
 	Fallback   string
 	Color      string
@@ -43,6 +47,8 @@ type AttachmentConfig struct {
 	MarkdownIn []string
 }
 
+// Attachment corresponds to the 'attachment' field
+// of a Slack message payload.
 type Attachment struct {
 	Fallback   string   `json:"fallback"`
 	Color      string   `json:"color,omitempty"`
@@ -58,6 +64,7 @@ type Attachment struct {
 	MarkdownIn []string `json:"mrkdwn_in,omitempty"`
 }
 
+// NewAttachment creates a new *Attachment instance.
 func NewAttachment(config *AttachmentConfig) *Attachment {
 	if config.Color == "" {
 		config.Color = defaultAttachmentColor
