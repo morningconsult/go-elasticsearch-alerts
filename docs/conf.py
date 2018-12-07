@@ -16,6 +16,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import subprocess
 
 # -- Project information -----------------------------------------------------
 
@@ -25,8 +26,10 @@ author = u'Morning Consult'
 
 # The short X.Y version
 version = u''
+
 # The full version, including alpha/beta/rc tags
-release = u''
+proc = subprocess.Popen(["git", "describe", "--abbrev=0", "--tags"], stdout=subprocess.PIPE)
+release = unicode(proc.stdout.read().strip("\n"), "utf-8")
 
 
 # -- General configuration ---------------------------------------------------

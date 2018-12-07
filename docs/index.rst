@@ -5,7 +5,7 @@
 
 Go Elasticsearch Alerts
 =======================
-Release v\ |version|. (:ref:`Installation <install>`)
+Release |release|. (:ref:`Installation <install>`)
 
 
 The User Guide
@@ -18,4 +18,5 @@ instructions for installing and using it.
 .. toctree::
    :maxdepth: 2
    
+   user/intro
    user/install
