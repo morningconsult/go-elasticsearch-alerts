@@ -321,6 +321,9 @@ Slack Output Parameters
 - :code-no-background:`text` (string: ``""``) - Text to be sent with the
   Slack message.
 
+You can find an example of what the Slack message looks like
+`here <#slack-output-example>`__.
+
 Email Output Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -343,6 +346,9 @@ Email Output Parameters
   password in the configuration file, you can set the password using the
   ``GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD`` environment variable. This field is
   required (either in the configuration file or in the environment variable).
+
+You can find an example of what the email message looks like
+`here <#email-output-example>`__.
 
 File Output Parameters
 ~~~~~~~~~~~~~~~~~~~~~~
