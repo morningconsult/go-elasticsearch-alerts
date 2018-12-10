@@ -232,7 +232,7 @@ to Slack and local disk.
 
 .. code-block:: shell
 
-  $ curl http://elastic.host/filebeat-*/_search \
+  $ curl http://https://my.elasticsearch.com/filebeat-*/_search \
     --header "Content-Type: application/json" \
     --data '{
       "query": {
@@ -428,8 +428,10 @@ Slack Output Example
 ~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ../images/slack.png
+   :class: shadowed-image
 
 Email Output Example
 ~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ../images/email.png
+   :class: shadowed-image

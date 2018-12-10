@@ -428,8 +428,10 @@ Slack Output Example
 ~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ../images/slack.png
+   :class: shadowed-image
 
 Email Output Example
 ~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ../images/email.png
+   :class: shadowed-image

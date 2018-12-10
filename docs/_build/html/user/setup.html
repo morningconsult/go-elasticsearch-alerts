@@ -245,7 +245,7 @@ extension. There must be at least one rule for the program to operate.</p>
 group by <code class="docutils literal notranslate"><span class="pre">hits.hits._source</span></code>, <code class="docutils literal notranslate"><span class="pre">aggregations.service_name.buckets</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">aggregations.service_name.buckets.program.buckets</span></code>, and write the results
 to Slack and local disk.</p>
-<div class="highlight-shell notranslate" id="curl-request"><div class="highlight"><pre><span></span>$ curl http://elastic.host/filebeat-*/_search <span class="se">\</span>
+<div class="highlight-shell notranslate" id="curl-request"><div class="highlight"><pre><span></span>$ curl http://https://my.elasticsearch.com/filebeat-*/_search <span class="se">\</span>
   --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
   --data <span class="s1">&#39;{</span>
 <span class="s1">    &quot;query&quot;: {</span>
@@ -438,11 +438,11 @@ following data:</p>
 via Slack and email as shown below.</p>
 <div class="section" id="slack-output-example">
 <h3>Slack Output Example<a class="headerlink" href="#slack-output-example" title="Permalink to this headline">¶</a></h3>
-<img alt="../_images/slack.png" src="../_images/slack.png" />
+<img alt="../_images/slack.png" class="shadowed-image" src="../_images/slack.png" />
 </div>
 <div class="section" id="email-output-example">
 <h3>Email Output Example<a class="headerlink" href="#email-output-example" title="Permalink to this headline">¶</a></h3>
-<img alt="../_images/email.png" src="../_images/email.png" />
+<img alt="../_images/email.png" class="shadowed-image" src="../_images/email.png" />
 </div>
 </div>
 </div>
