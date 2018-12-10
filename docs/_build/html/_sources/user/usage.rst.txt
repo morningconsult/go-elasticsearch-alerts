@@ -1,0 +1,52 @@
+.. _usage:
+
+Usage
+=====
+
+Version
+-------
+
+TODO
+
+Startup
+-------
+
+TODO
+
+.. _alerting:
+
+Alerting
+--------
+
+TODO
+
+.. _slack:
+
+Slack
+~~~~~
+
+TODO: Show how filters/body-field affect data (include screenshots)
+
+:ref:`this rule <rule-example>`
+
+Email
+~~~~~
+
+TODO
+
+File
+~~~~
+
+TODO
+
+.. _distributed:
+
+Distributed Operation
+---------------------
+
+TODO
+
+Reloading Rules
+---------------
+
+TODO

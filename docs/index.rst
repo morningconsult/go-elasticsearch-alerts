@@ -20,3 +20,5 @@ instructions for installing and using it.
    
    user/intro
    user/install
+   user/setup
+   user/usage

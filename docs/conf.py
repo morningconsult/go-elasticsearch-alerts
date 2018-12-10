@@ -24,6 +24,9 @@ project = u'Go Elasticsearch Alerts'
 copyright = u'2018, Morning Consult'
 author = u'Morning Consult'
 
+def setup(app):
+    app.add_stylesheet('color.css')
+
 # The short X.Y version
 version = u''
 

@@ -1,0 +1,8 @@
+.red {
+  color:red;
+}
+
+.code-no-background {
+  font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+  font-size: 0.9em;
+}
