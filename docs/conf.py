@@ -25,7 +25,7 @@ copyright = u'2018, Morning Consult'
 author = u'Morning Consult'
 
 def setup(app):
-    app.add_stylesheet('color.css')
+    app.add_stylesheet('custom.css')
 
 # The short X.Y version
 version = u''
@@ -101,7 +101,10 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
+html_sidebars = {
+    'index': ['sidebarintro.html', 'globaltoc.html', 'searchbox.html'],
+    '**': ['sidebarintro.html', 'localtoc.html', 'searchbox.html']
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

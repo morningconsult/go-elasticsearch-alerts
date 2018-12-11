@@ -433,11 +433,11 @@ via Slack and email as shown below.
 Slack Output Example
 ~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../images/slack.png
+.. image:: ../_static/slack.png
    :class: shadowed-image
 
 Email Output Example
 ~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../images/email.png
+.. image:: ../_static/email.png
    :class: shadowed-image

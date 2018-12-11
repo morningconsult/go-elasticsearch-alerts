@@ -9,7 +9,7 @@
     <title>Setup &#8212; Go Elasticsearch Alerts v0.0.21 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/color.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
@@ -457,39 +457,62 @@ via Slack and email as shown below.</p>
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">Go Elasticsearch Alerts</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Setup</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#configuration-files">Configuration Files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#main-configuration-file">Main Configuration File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#rule-configuration-file">Rule Configuration File</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#filters">Filters</a></li>
+        <div class="sphinxsidebarwrapper"><p class="logo">
+    <a href="../index.html">
+      <img class="logo" src="../_static/mc.svg"/>
+    </a>
+  </p>
+  
+  <div class="center">
+    <iframe src="https://ghbtns.com/github-btn.html?user=morningconsult&repo=go-elasticsearch-alerts&type=watch&count=true&size=large"
+      allowtransparency="true" frameborder="0" scrolling="0" height="35px" align="middle"></iframe>
+  </div>
+  
+  <p>
+    Go Elasticsearch Alerts is a simple, flexible daemon
+    for creating alerts on Elasticsearch data
+  </p>
+  
+  <p>Created and maintained by <strong><a href="https://morningconsult.com">Morning Consult</a></strong></p>
+  
+  <h3>Useful Links</h3>
+  <ul>
+    <li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html">Elasticsearch Search Reference</a></li>
+    <li><a href="https://golang.org/doc/install">Installing Go</a></li>
+    <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/issues">Issue Tracker</a></li>
+    <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/releases">Releases</a></li>
+  </ul>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Setup</a><ul>
+<li><a class="reference internal" href="#configuration-files">Configuration Files</a></li>
+<li><a class="reference internal" href="#main-configuration-file">Main Configuration File</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+<li><a class="reference internal" href="#main-file-parameters">Main File Parameters</a></li>
+<li><a class="reference internal" href="#elasticsearch-parameters"><code class="docutils literal notranslate"><span class="pre">elasticsearch</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#consul-parameters"><code class="docutils literal notranslate"><span class="pre">consul</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#server-parameters"><code class="docutils literal notranslate"><span class="pre">server</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#client-parameters"><code class="docutils literal notranslate"><span class="pre">client</span></code> Parameters</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li><a class="reference internal" href="#rule-configuration-file">Rule Configuration File</a><ul>
+<li><a class="reference internal" href="#rule-example">Example</a></li>
+<li><a class="reference internal" href="#rule-file-parameters">Rule File Parameters</a></li>
+<li><a class="reference internal" href="#outputs-parameters"><code class="docutils literal notranslate"><span class="pre">outputs</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#slack-output-parameters">Slack Output Parameters</a></li>
+<li><a class="reference internal" href="#email-output-parameters">Email Output Parameters</a></li>
+<li><a class="reference internal" href="#file-output-parameters">File Output Parameters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#filters">Filters</a><ul>
+<li><a class="reference internal" href="#slack-output-example">Slack Output Example</a></li>
+<li><a class="reference internal" href="#email-output-example">Email Output Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="install.html" title="previous chapter">Installation</a></li>
-      <li>Next: <a href="usage.html" title="next chapter">Usage</a></li>
-  </ul></li>
-</ul>
-</div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -502,14 +525,6 @@ via Slack and email as shown below.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>

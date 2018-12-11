@@ -9,7 +9,7 @@
     <title>Usage &#8212; Go Elasticsearch Alerts v0.0.21 documentation</title>
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/color.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
@@ -73,38 +73,47 @@
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">Go Elasticsearch Alerts</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#startup">Startup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#alerting">Alerting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#distributed-operation">Distributed Operation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#reloading-rules">Reloading Rules</a></li>
+        <div class="sphinxsidebarwrapper"><p class="logo">
+    <a href="../index.html">
+      <img class="logo" src="../_static/mc.svg"/>
+    </a>
+  </p>
+  
+  <div class="center">
+    <iframe src="https://ghbtns.com/github-btn.html?user=morningconsult&repo=go-elasticsearch-alerts&type=watch&count=true&size=large"
+      allowtransparency="true" frameborder="0" scrolling="0" height="35px" align="middle"></iframe>
+  </div>
+  
+  <p>
+    Go Elasticsearch Alerts is a simple, flexible daemon
+    for creating alerts on Elasticsearch data
+  </p>
+  
+  <p>Created and maintained by <strong><a href="https://morningconsult.com">Morning Consult</a></strong></p>
+  
+  <h3>Useful Links</h3>
+  <ul>
+    <li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html">Elasticsearch Search Reference</a></li>
+    <li><a href="https://golang.org/doc/install">Installing Go</a></li>
+    <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/issues">Issue Tracker</a></li>
+    <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/releases">Releases</a></li>
+  </ul>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Usage</a><ul>
+<li><a class="reference internal" href="#startup">Startup</a></li>
+<li><a class="reference internal" href="#alerting">Alerting</a><ul>
+<li><a class="reference internal" href="#slack">Slack</a></li>
+<li><a class="reference internal" href="#email">Email</a></li>
+<li><a class="reference internal" href="#file">File</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#distributed-operation">Distributed Operation</a></li>
+<li><a class="reference internal" href="#reloading-rules">Reloading Rules</a></li>
 </ul>
 </li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="setup.html" title="previous chapter">Setup</a></li>
-  </ul></li>
-</ul>
-</div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <div class="searchformwrapper">
@@ -117,14 +126,6 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div class="clearer"></div>
