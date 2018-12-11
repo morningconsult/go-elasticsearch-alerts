@@ -37,12 +37,14 @@ At runtime, the process parses :ref:`rule configuration files
 <rule-configuration-file>` and starts a Goroutine for each rule. These
 Goroutines are the **query handlers**. It starts another Goroutine - the
 **alert handler** - that waits to receive new alerts from the query handlers.
-At intervals defined in the rule, the query handler executes the query (also
-defined in the rule). If Elasticsearch returns any data, it transforms the
-data based on the rule's filters and sends the processed data to the alert
-handler. The alert handler then sends the alerts to the specified **alert
-outputs** (e.g. Slack or email). The query handlers will then pause until the
-next scheduled execution and then repeat the process.
+At intervals defined in the rule, the query handler executes the Elasticsearch
+query (also defined in the rule). If Elasticsearch returns any data, it
+transforms the data based on the rule's filters and sends the processed data
+to the alert handler. The alert handler then sends the alerts to the specified
+**alert outputs** (e.g. Slack or email). The query handlers will then pause
+until the next scheduled execution and then repeat the process.
+
+.. _statefulness:
 
 Statefulness
 ~~~~~~~~~~~~

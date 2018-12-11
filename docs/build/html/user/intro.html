@@ -66,15 +66,15 @@ was built and how it operates.</p>
 <p>At runtime, the process parses <a class="reference internal" href="setup.html#rule-configuration-file"><span class="std std-ref">rule configuration files</span></a> and starts a Goroutine for each rule. These
 Goroutines are the <strong>query handlers</strong>. It starts another Goroutine - the
 <strong>alert handler</strong> - that waits to receive new alerts from the query handlers.
-At intervals defined in the rule, the query handler executes the query (also
-defined in the rule). If Elasticsearch returns any data, it transforms the
-data based on the rule’s filters and sends the processed data to the alert
-handler. The alert handler then sends the alerts to the specified <strong>alert
-outputs</strong> (e.g. Slack or email). The query handlers will then pause until the
-next scheduled execution and then repeat the process.</p>
+At intervals defined in the rule, the query handler executes the Elasticsearch
+query (also defined in the rule). If Elasticsearch returns any data, it
+transforms the data based on the rule’s filters and sends the processed data
+to the alert handler. The alert handler then sends the alerts to the specified
+<strong>alert outputs</strong> (e.g. Slack or email). The query handlers will then pause
+until the next scheduled execution and then repeat the process.</p>
 </div>
 <div class="section" id="statefulness">
-<h3>Statefulness<a class="headerlink" href="#statefulness" title="Permalink to this headline">¶</a></h3>
+<span id="id2"></span><h3>Statefulness<a class="headerlink" href="#statefulness" title="Permalink to this headline">¶</a></h3>
 <p>Go Elasticsearch Alerts attempts to maintain the state of each query. This
 ensures that if the process is restarted it will not immediately trigger the
 query again; rather, it will trigger it when it was scheduled before the

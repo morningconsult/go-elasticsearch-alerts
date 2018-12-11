@@ -16,6 +16,8 @@ Configuration Files
 This program requires some configuration files: a `main configuration file`_
 and one or more `rule configuration files <#rule-configuration-file>`__.
 
+.. _main-config-file:
+
 Main Configuration File
 -----------------------
 
@@ -285,15 +287,14 @@ Rule File Parameters
 - :code-no-background:`filters` ([]string: ``[]``) - How the response to this
   query should be grouped. How the group data will be presented depends on
   the output method(s) used. More information on this field is provided in the
-  `filters`_ section. More information on how the response data appears in the
-  different output media is provided in the :ref:`Alerting <alerting>` section.
+  `filters`_ section.
 - :code-no-background:`body_field` (string: ``"hits.hits._source"``) - The
   field on which to group the response. The elements of the response data
   that match the value of this field will be stringified and concatenated
   before being sent to the provided output(s). This field is optional. If
   not specified, the program will group by the field ``hits.hits._source``
-  by default. See the :ref:`Alerting <alerting>` section for more information
-  on this field.
+  by default. More information on this field is provided in the `filters`_
+  section.
 - :code-no-background:`outputs` ([]\ `Output <#outputs-parameters>`__: ``[]``)
   - The media by which alerts should be sent. See the `Output
   <#outputs-parameters>`__ section for more details. At least one output must
@@ -310,8 +311,8 @@ and `file <#file-output-parameters>`__. The exact specifications of this field
 will depend on the output type.
 
 - :code-no-background:`type` (string: ``""``) - The type of output. Currently,
-  only ``slack``, ``file``, and ``email`` are supported. This field is always
-  required.
+  only ``"slack"``, ``"file"``, and ``"email"`` are supported. This field is
+  always required.
 - :code-no-background:`config` (JSON object: ``<nil>``) - Configurations
   specific to the output type. This field is alwyas required.
 
@@ -428,8 +429,10 @@ following data:
 
 Upon receiving this JSON data, the program will group the data by
 ``"aggregations.service_name.buckets"`` and
-``"aggregations.service_name.buckets.program.buckets"`` and send the results
-via Slack and email as shown below.
+``"aggregations.service_name.buckets.program.buckets"``. Additionally, it will
+group the data by ``"hits.hits._source"`` (the default ``body_field`` value)
+and then stringify and concatenate the matched hits. After these steps, it will
+send the results via Slack and email as shown below.
 
 Slack Output Example
 ~~~~~~~~~~~~~~~~~~~~

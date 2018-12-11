@@ -44,7 +44,7 @@
 and one or more <a class="reference external" href="#rule-configuration-file">rule configuration files</a>.</p>
 </div>
 <div class="section" id="main-configuration-file">
-<h2>Main Configuration File<a class="headerlink" href="#main-configuration-file" title="Permalink to this headline">¶</a></h2>
+<span id="main-config-file"></span><h2>Main Configuration File<a class="headerlink" href="#main-configuration-file" title="Permalink to this headline">¶</a></h2>
 <p>The main configuration file is a JSON file which configures some of the
 general behavior of the program. Specifically, it is used to configure
 communication with Elasticsearch and distributed operation. The program
@@ -296,15 +296,14 @@ and understand the structure of the response data before setting the
 <li><span class="code-no-background">filters</span> ([]string: <code class="docutils literal notranslate"><span class="pre">[]</span></code>) - How the response to this
 query should be grouped. How the group data will be presented depends on
 the output method(s) used. More information on this field is provided in the
-<a class="reference internal" href="#filters">filters</a> section. More information on how the response data appears in the
-different output media is provided in the <a class="reference internal" href="usage.html#alerting"><span class="std std-ref">Alerting</span></a> section.</li>
+<a class="reference internal" href="#filters">filters</a> section.</li>
 <li><span class="code-no-background">body_field</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;hits.hits._source&quot;</span></code>) - The
 field on which to group the response. The elements of the response data
 that match the value of this field will be stringified and concatenated
 before being sent to the provided output(s). This field is optional. If
 not specified, the program will group by the field <code class="docutils literal notranslate"><span class="pre">hits.hits._source</span></code>
-by default. See the <a class="reference internal" href="usage.html#alerting"><span class="std std-ref">Alerting</span></a> section for more information
-on this field.</li>
+by default. More information on this field is provided in the <a class="reference internal" href="#filters">filters</a>
+section.</li>
 <li><span class="code-no-background">outputs</span> ([]<a class="reference external" href="#outputs-parameters">Output</a>: <code class="docutils literal notranslate"><span class="pre">[]</span></code>)
 - The media by which alerts should be sent. See the <a class="reference external" href="#outputs-parameters">Output</a> section for more details. At least one output must
 be specified.</li>
@@ -320,8 +319,8 @@ and <a class="reference external" href="#file-output-parameters">file</a>. The e
 will depend on the output type.</p>
 <ul class="simple">
 <li><span class="code-no-background">type</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The type of output. Currently,
-only <code class="docutils literal notranslate"><span class="pre">slack</span></code>, <code class="docutils literal notranslate"><span class="pre">file</span></code>, and <code class="docutils literal notranslate"><span class="pre">email</span></code> are supported. This field is always
-required.</li>
+only <code class="docutils literal notranslate"><span class="pre">&quot;slack&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;file&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;email&quot;</span></code> are supported. This field is
+always required.</li>
 <li><span class="code-no-background">config</span> (JSON object: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>) - Configurations
 specific to the output type. This field is alwyas required.</li>
 </ul>
@@ -437,8 +436,10 @@ following data:</p>
 </div>
 <p>Upon receiving this JSON data, the program will group the data by
 <code class="docutils literal notranslate"><span class="pre">&quot;aggregations.service_name.buckets&quot;</span></code> and
-<code class="docutils literal notranslate"><span class="pre">&quot;aggregations.service_name.buckets.program.buckets&quot;</span></code> and send the results
-via Slack and email as shown below.</p>
+<code class="docutils literal notranslate"><span class="pre">&quot;aggregations.service_name.buckets.program.buckets&quot;</span></code>. Additionally, it will
+group the data by <code class="docutils literal notranslate"><span class="pre">&quot;hits.hits._source&quot;</span></code> (the default <code class="docutils literal notranslate"><span class="pre">body_field</span></code> value)
+and then stringify and concatenate the matched hits. After these steps, it will
+send the results via Slack and email as shown below.</p>
 <div class="section" id="slack-output-example">
 <h3>Slack Output Example<a class="headerlink" href="#slack-output-example" title="Permalink to this headline">¶</a></h3>
 <img alt="../_images/slack.png" class="shadowed-image" src="../_images/slack.png" />

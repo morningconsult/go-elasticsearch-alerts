@@ -38,37 +38,174 @@
 <p>This section covers how to use Go Elasticsearch Alerts.</p>
 <div class="section" id="startup">
 <h2>Startup<a class="headerlink" href="#startup" title="Permalink to this headline">¶</a></h2>
-<p>Once you have <a class="reference internal" href="install.html#install"><span class="std std-ref">installed</span></a> your binary, simply execute it in
-order to</p>
-</div>
-<div class="section" id="alerting">
-<span id="id2"></span><h2>Alerting<a class="headerlink" href="#alerting" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
-<div class="section" id="slack">
-<span id="id3"></span><h3>Slack<a class="headerlink" href="#slack" title="Permalink to this headline">¶</a></h3>
-<p>TODO: Show how filters/body-field affect data (include screenshots)</p>
-<p><a class="reference internal" href="setup.html#rule-example"><span class="std std-ref">this rule</span></a></p>
-</div>
-<div class="section" id="email">
-<h3>Email<a class="headerlink" href="#email" title="Permalink to this headline">¶</a></h3>
-<p>TODO</p>
-</div>
-<div class="section" id="file">
-<h3>File<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
-<p>TODO</p>
+<p>Once you have <a class="reference internal" href="install.html#install"><span class="std std-ref">installed</span></a> the binary, simply execute it in
+order to start the daemon running.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ ./go-elasticsearch-alerts
+</pre></div>
 </div>
 </div>
 <div class="section" id="distributed-operation">
 <span id="distributed"></span><h2>Distributed Operation<a class="headerlink" href="#distributed-operation" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
-</div>
-<div class="section" id="use-with-nomad">
-<h2>Use with Nomad<a class="headerlink" href="#use-with-nomad" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
+<p>Go Elasticserach Alerts can be run in a distributed fashion without sending
+duplicate alerts. Distributed operation can be enabled in the <a class="reference internal" href="setup.html#main-config-file"><span class="std std-ref">main
+configuration file</span></a>. It uses the <a class="reference external" href="https://www.consul.io/docs/commands/lock.html">lock</a> feature of Hashicorp’s
+<a class="reference external" href="https://www.consul.io">Consul</a> for synchronization across nodes and as such
+requires a functioning Consul server in order to use this feature.</p>
+<p>Specifically, each instance of this process will attempt to acquire the lock,
+but only one node can have the lock at any given time. If the instance holding
+the lock is killed, another instance will acquire the lock and become the
+leader. Only the instance holding the lock will execute queries. However, all
+instances will continue to <a class="reference internal" href="intro.html#statefulness"><span class="std std-ref">maintain state</span></a> regardless of
+whether or not they have the lock.</p>
 </div>
 <div class="section" id="reloading-rules">
 <h2>Reloading Rules<a class="headerlink" href="#reloading-rules" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
+<p>Go Elasticsearch Alerts allows you to change your <a class="reference internal" href="setup.html#rule-configuration-file"><span class="std std-ref">rule configuration
+files</span></a> without having to restart the process. If
+you change your rules and wish to update the process to use the updated rules,
+simply send the process a SIGHUP signal. It will then stop the currently-
+running query handlers, parse the rules, create new query handlers with the
+new rules, and start query handlers. You can send a SIGHUP signal to the
+process with the following command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">kill</span> -SIGHUP <span class="k">$(</span>ps aux <span class="p">|</span> grep <span class="s1">&#39;[g]o-elasticsearch-alerts&#39;</span> <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="k">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="nomad">
+<h2>Nomad<a class="headerlink" href="#nomad" title="Permalink to this headline">¶</a></h2>
+<p>Because Go Elasticsearch Alerts can be run in a distributed fashion and allows
+live rule updates it is highly compatible with HashiCorp’s <a class="reference external" href="https://www.nomadproject.io/">Nomad</a> application scheduler. See the code block
+below for an example Nomad file.</p>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>job &quot;go-elasticsearch-alerts&quot; {
+
+  datacenters = [&quot;us-east-1&quot;]
+  region      = &quot;us-east&quot;
+  type        = &quot;service&quot;
+
+  update {
+    max_parallel     = 1
+    canary           = 1
+    min_healthy_time = &quot;30s&quot;
+    healthy_deadline = &quot;2m&quot;
+    auto_revert      = true
+  }
+
+  migrate {
+    max_parallel     = 1
+    health_check     = &quot;checks&quot;
+    min_healthy_time = &quot;30s&quot;
+    healthy_deadline = &quot;5m&quot;
+  }
+
+  meta {
+    GO_ELASTICSEARCH_ALERTS_VERSION = &quot;0.0.21&quot;
+  }
+
+  group &quot;alerters&quot; {
+    count = 2
+
+    constraint {
+      distinct_hosts = true
+    }
+
+    ephemeral_disk {
+      sticky = true
+    }
+
+    restart {
+      interval = &quot;20s&quot;
+      attempts = 1
+      delay    = &quot;20s&quot;
+      mode     = &quot;delay&quot;
+    }
+
+    task &quot;daemon&quot; {
+      driver = &quot;docker&quot;
+
+      config {
+        image = &quot;alpine:3.8&quot;
+
+        command = &quot;/local/go-elasticsearch-alerts&quot;
+
+        volumes = [
+          &quot;/etc/elasticsearch/tls:/etc/elasticsearch/tls&quot;,
+          &quot;/etc/consul/tls:/etc/consul/tls&quot;,
+          &quot;/etc/ssl/certs:/etc/ssl/certs&quot;,
+        ]
+
+        dns_servers = [
+          &quot;${attr.unique.network.ip-address}&quot;,
+        ]
+      }
+
+      artifact {
+        source      = &quot;https://github.com/morningconsult/go-elasticsearch-alerts/releases/download/v${NOMAD_META_GO_ELASTICSEARCH_ALERTS_VERSION}/go-elasticsearch-alerts_${NOMAD_META_GO_ELASTICSEARCH_ALERTS_VERSION}_Linux_x86_64.tar.gz&quot;
+        destination = &quot;local/&quot;
+
+        options {
+          checksum = &quot;sha256:471f879ed2f31c030832553c6d9cb878dac5d413892ecad9b05a7446bdf3c807&quot;
+        }
+      }
+
+      resources {
+        memory = 400
+        cpu    = 300
+      }
+
+      env {
+        GO_ELASTICSEARCH_ALERTS_CONFIG_FILE = &quot;/local/alerts-config.json&quot;
+        GO_ELASTICSEARCH_ALERTS_RULES_DIR   = &quot;/local/rules&quot;
+      }
+
+      template {
+        data = &lt;&lt;EOH
+{
+  &quot;elasticsearch&quot;: {
+    &quot;server&quot;: {
+      &quot;url&quot;: &quot;https://elasticsearch.service.consul:9200&quot;
+    },
+    &quot;client&quot;: {
+      &quot;tls_enabled&quot;: true,
+      &quot;ca_cert&quot;: &quot;/etc/elasticsearch/tls/elastic-ca-chain.pem&quot;,
+      &quot;client_cert&quot;: &quot;/etc/elasticsearch/tls/elastic-cert.pem&quot;,
+      &quot;client_key&quot;: &quot;/etc/elasticsearch/tls/elastic-key.pem&quot;,
+      &quot;server_name&quot;: &quot;node.elasticsearch.service.consul&quot;
+    }
+  },
+  &quot;distributed&quot;: true,
+  &quot;consul&quot;: {
+    &quot;consul_lock_key&quot;: &quot;go-elasticsearch-alerts/leader&quot;,
+    &quot;consul_http_addr&quot;: &quot;http://{{ env &quot;attr.unique.network.ip-address&quot; }}:8500&quot;
+  }
+}
+EOH
+        destination = &quot;local/alerts-config.json&quot;
+        change_mode = &quot;restart&quot;
+      }
+
+      template {
+        data = &lt;&lt;EOH
+{{ key &quot;go-elasticsearch-alerts/rules/apm-errors&quot; }}
+EOH
+        destination = &quot;local/rules/apm-errors.json&quot;
+        change_mode   = &quot;signal&quot;
+        change_signal = &quot;SIGHUP&quot;
+      }
+    }
+  }
+}
+</pre></div>
+</div>
+<p>According to this job definition, when the job is executed Nomad will download
+the Go Elasticsearch Binary from the Github releases page since it was defined
+as an artifact and insert it into the container and execute it. Also, because
+the rule (called <code class="docutils literal notranslate"><span class="pre">&quot;apm-errors&quot;</span></code> in the example) is stored as a template in
+Consul, if you change the template in Consul then Nomad will send a SIGHUP to
+the process and update the rule without you having to restart the job. This
+definition avoids the need to create custom Docker images for your job.</p>
+</div>
 </div>
 </div>
 
@@ -107,15 +244,12 @@ order to</p>
   <ul>
 <li><a class="reference internal" href="#">Usage</a><ul>
 <li><a class="reference internal" href="#startup">Startup</a></li>
-<li><a class="reference internal" href="#alerting">Alerting</a><ul>
-<li><a class="reference internal" href="#slack">Slack</a></li>
-<li><a class="reference internal" href="#email">Email</a></li>
-<li><a class="reference internal" href="#file">File</a></li>
+<li><a class="reference internal" href="#distributed-operation">Distributed Operation</a></li>
+<li><a class="reference internal" href="#reloading-rules">Reloading Rules</a></li>
+<li><a class="reference internal" href="#nomad">Nomad</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#distributed-operation">Distributed Operation</a></li>
-<li><a class="reference internal" href="#use-with-nomad">Use with Nomad</a></li>
-<li><a class="reference internal" href="#reloading-rules">Reloading Rules</a></li>
 </ul>
 </li>
 </ul>

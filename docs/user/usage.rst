@@ -8,48 +8,183 @@ This section covers how to use Go Elasticsearch Alerts.
 Startup
 -------
 
-Once you have :ref:`installed <install>` your binary, simply execute it in
-order to 
+Once you have :ref:`installed <install>` the binary, simply execute it in
+order to start the daemon running.
 
-.. _alerting:
+.. code-block:: shell
 
-Alerting
---------
-
-TODO
-
-.. _slack:
-
-Slack
-~~~~~
-
-TODO: Show how filters/body-field affect data (include screenshots)
-
-:ref:`this rule <rule-example>`
-
-Email
-~~~~~
-
-TODO
-
-File
-~~~~
-
-TODO
+  $ ./go-elasticsearch-alerts
 
 .. _distributed:
 
 Distributed Operation
 ---------------------
 
-TODO
+Go Elasticserach Alerts can be run in a distributed fashion without sending
+duplicate alerts. Distributed operation can be enabled in the :ref:`main
+configuration file <main-config-file>`. It uses the `lock
+<https://www.consul.io/docs/commands/lock.html>`__ feature of Hashicorp's
+`Consul <https://www.consul.io>`__ for synchronization across nodes and as such
+requires a functioning Consul server in order to use this feature.
 
-Use with Nomad
---------------
-
-TODO
+Specifically, each instance of this process will attempt to acquire the lock,
+but only one node can have the lock at any given time. If the instance holding
+the lock is killed, another instance will acquire the lock and become the
+leader. Only the instance holding the lock will execute queries. However, all
+instances will continue to :ref:`maintain state <statefulness>` regardless of
+whether or not they have the lock.
 
 Reloading Rules
 ---------------
 
-TODO
+Go Elasticsearch Alerts allows you to change your :ref:`rule configuration
+files <rule-configuration-file>` without having to restart the process. If
+you change your rules and wish to update the process to use the updated rules,
+simply send the process a SIGHUP signal. It will then stop the currently-
+running query handlers, parse the rules, create new query handlers with the
+new rules, and start query handlers. You can send a SIGHUP signal to the
+process with the following command:
+
+.. code-block:: shell
+
+  $ kill -SIGHUP $(ps aux | grep '[g]o-elasticsearch-alerts' | awk '{print $2}')
+
+Nomad
+-----
+
+Because Go Elasticsearch Alerts can be run in a distributed fashion and allows
+live rule updates it is highly compatible with HashiCorp's `Nomad
+<https://www.nomadproject.io/>`__ application scheduler. See the code block
+below for an example Nomad file.
+
+Example
+~~~~~~~
+
+.. code-block:: text
+
+  job "go-elasticsearch-alerts" {
+
+    datacenters = ["us-east-1"]
+    region      = "us-east"
+    type        = "service"
+
+    update {
+      max_parallel     = 1
+      canary           = 1
+      min_healthy_time = "30s"
+      healthy_deadline = "2m"
+      auto_revert      = true
+    }
+
+    migrate {
+      max_parallel     = 1
+      health_check     = "checks"
+      min_healthy_time = "30s"
+      healthy_deadline = "5m"
+    }
+
+    meta {
+      GO_ELASTICSEARCH_ALERTS_VERSION = "0.0.21"
+    }
+
+    group "alerters" {
+      count = 2
+
+      constraint {
+        distinct_hosts = true
+      }
+
+      ephemeral_disk {
+        sticky = true
+      }
+
+      restart {
+        interval = "20s"
+        attempts = 1
+        delay    = "20s"
+        mode     = "delay"
+      }
+
+      task "daemon" {
+        driver = "docker"
+
+        config {
+          image = "alpine:3.8"
+
+          command = "/local/go-elasticsearch-alerts"
+
+          volumes = [
+            "/etc/elasticsearch/tls:/etc/elasticsearch/tls",
+            "/etc/consul/tls:/etc/consul/tls",
+            "/etc/ssl/certs:/etc/ssl/certs",
+          ]
+
+          dns_servers = [
+            "${attr.unique.network.ip-address}",
+          ]
+        }
+
+        artifact {
+          source      = "https://github.com/morningconsult/go-elasticsearch-alerts/releases/download/v${NOMAD_META_GO_ELASTICSEARCH_ALERTS_VERSION}/go-elasticsearch-alerts_${NOMAD_META_GO_ELASTICSEARCH_ALERTS_VERSION}_Linux_x86_64.tar.gz"
+          destination = "local/"
+
+          options {
+            checksum = "sha256:471f879ed2f31c030832553c6d9cb878dac5d413892ecad9b05a7446bdf3c807"
+          }
+        }
+
+        resources {
+          memory = 400
+          cpu    = 300
+        }
+
+        env {
+          GO_ELASTICSEARCH_ALERTS_CONFIG_FILE = "/local/alerts-config.json"
+          GO_ELASTICSEARCH_ALERTS_RULES_DIR   = "/local/rules"
+        }
+
+        template {
+          data = <<EOH
+  {
+    "elasticsearch": {
+      "server": {
+        "url": "https://elasticsearch.service.consul:9200"
+      },
+      "client": {
+        "tls_enabled": true,
+        "ca_cert": "/etc/elasticsearch/tls/elastic-ca-chain.pem",
+        "client_cert": "/etc/elasticsearch/tls/elastic-cert.pem",
+        "client_key": "/etc/elasticsearch/tls/elastic-key.pem",
+        "server_name": "node.elasticsearch.service.consul"
+      }
+    },
+    "distributed": true,
+    "consul": {
+      "consul_lock_key": "go-elasticsearch-alerts/leader",
+      "consul_http_addr": "http://{{ env "attr.unique.network.ip-address" }}:8500"
+    }
+  }
+  EOH
+          destination = "local/alerts-config.json"
+          change_mode = "restart"
+        }
+
+        template {
+          data = <<EOH
+  {{ key "go-elasticsearch-alerts/rules/apm-errors" }}
+  EOH
+          destination = "local/rules/apm-errors.json"
+          change_mode   = "signal"
+          change_signal = "SIGHUP"
+        }
+      }
+    }
+  }
+
+According to this job definition, when the job is executed Nomad will download
+the Go Elasticsearch Binary from the Github releases page since it was defined
+as an artifact and insert it into the container and execute it. Also, because
+the rule (called ``"apm-errors"`` in the example) is stored as a template in
+Consul, if you change the template in Consul then Nomad will send a SIGHUP to
+the process and update the rule without you having to restart the job. This
+definition avoids the need to create custom Docker images for your job.
