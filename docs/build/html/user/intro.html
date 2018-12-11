@@ -51,6 +51,24 @@ has several distinct features:</p>
 <li>Custom filters</li>
 </ul>
 </div>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Go Elasticsearch Alerts is made up of three main components:</p>
+<ul class="simple">
+<li>One or more <em>query handlers</em>;</li>
+<li>An <em>alert handler</em>; and</li>
+<li>One or more <em>alert outputs</em>.</li>
+</ul>
+<p>At runtime, the process parses each <a class="reference internal" href="setup.html#rule-configuration-file"><span class="std std-ref">rule configuration file</span></a> and starts a Goroutine - the <em>query handlers</em> -
+for each rule. It starts another Goroutine - the <em>alert handler</em> - that
+waits to receive new alerts from the query handlers. At intervals defined in
+the rule, the query handler executes the query (also defined in the rule). If
+Elasticsearch returns any data, it transforms the data based on the rule’s
+filters and sends the processed data to the alert handler. The alert handler
+then sends the alerts to the specified <em>alert outputs</em> (e.g. Slack or email).
+The query handlers will then pause until the next scheduled execution and
+then repeat the process.</p>
+</div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
 <p>Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights
@@ -103,6 +121,7 @@ limitations under the License.</p>
   <ul>
 <li><a class="reference internal" href="#">Introduction</a><ul>
 <li><a class="reference internal" href="#purpose">Purpose</a></li>
+<li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#license">License</a></li>
 </ul>
 </li>

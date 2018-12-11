@@ -18,8 +18,29 @@ has several distinct features:
 - Live rule updates
 - Custom filters
 
+Overview
+--------
+
+Go Elasticsearch Alerts is made up of three main components:
+
+- One or more *query handlers*;
+- An *alert handler*; and
+- One or more *alert outputs*.
+
+At runtime, the process parses each :ref:`rule configuration file
+<rule-configuration-file>` and starts a Goroutine - the *query handlers* -
+for each rule. It starts another Goroutine - the *alert handler* - that
+waits to receive new alerts from the query handlers. At intervals defined in
+the rule, the query handler executes the query (also defined in the rule). If
+Elasticsearch returns any data, it transforms the data based on the rule's
+filters and sends the processed data to the alert handler. The alert handler
+then sends the alerts to the specified *alert outputs* (e.g. Slack or email).
+The query handlers will then pause until the next scheduled execution and
+then repeat the process.
+
 License
 -------
+
 Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights
 Reserved.
 

@@ -70,20 +70,17 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 		config.Username = u
 	}
 
-	if config.Username == "" {
-		errors = append(errors, "no SMTP username provided in configuration file or environment")
-	}
-
 	if p := os.Getenv(EnvEmailAuthPassword); p != "" {
 		config.Password = p
 	}
 
-	if config.Password == "" {
-		errors = append(errors, "no SMTP password provided in configuration file or environment")
-	}
-
 	if len(errors) > 0 {
 		return nil, fmt.Errorf("errors with your email output configuration:\n* %s", strings.Join(errors, "\n* "))
+	}
+
+	var auth smtp.Auth = nil
+	if config.Username != "" && config.Password != "" {
+		auth = smtp.PlainAuth("", config.Username, config.Password, config.Host)
 	}
 
 	return &EmailAlertMethod{
@@ -91,7 +88,7 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 		port: config.Port,
 		from: config.From,
 		to:   config.To,
-		auth: smtp.PlainAuth("", config.Username, config.Password, config.Host),
+		auth: auth,
 	}, nil
 }
 

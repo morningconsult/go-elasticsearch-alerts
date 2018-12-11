@@ -151,6 +151,8 @@ instead. The environment variable takes precedence.
 - :code-no-background:`server_name` (string: ``""``) - Name to use as the SNI
   host when connecting via TLS.
 
+.. _rule-configuration-file:
+
 Rule Configuration File
 -----------------------
 
@@ -339,13 +341,12 @@ Email Output Parameters
   the SMTP client will authenticate to the host. If you do not wish to specify
   the username in the configuration file, you can set the password using the
   ``GO_ELASTICSEARCH_ALERTS_SMTP_USERNAME`` environment variable. This field
-  is required (either in the configuration file or in the environment
-  variable).
+  is optional.
 - :code-no-background:`password` (string: ``""``) - The password with which the
   SMTP client will authenticate to the host. If you do not wish to specify the
   password in the configuration file, you can set the password using the
   ``GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD`` environment variable. This field is
-  required (either in the configuration file or in the environment variable).
+  optional.
 
 You can find an example of what the email message looks like
 `here <#email-output-example>`__.

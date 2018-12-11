@@ -176,7 +176,7 @@ host when connecting via TLS.</li>
 </div>
 </div>
 <div class="section" id="rule-configuration-file">
-<h2>Rule Configuration File<a class="headerlink" href="#rule-configuration-file" title="Permalink to this headline">¶</a></h2>
+<span id="id2"></span><h2>Rule Configuration File<a class="headerlink" href="#rule-configuration-file" title="Permalink to this headline">¶</a></h2>
 <p>The rule configuration files are JSON files which define your alerts. The
 program will look for the rule configuration files in the
 <code class="docutils literal notranslate"><span class="pre">/etc/go-elasticsearch-alerts/rules</span></code> directory by default. If you wish to
@@ -185,7 +185,7 @@ with the <code class="docutils literal notranslate"><span class="pre">GO_ELASTIC
 these files should be valid JSON and their file names should have a <code class="docutils literal notranslate"><span class="pre">.json</span></code>
 extension. There must be at least one rule for the program to operate.</p>
 <div class="section" id="rule-example">
-<span id="id2"></span><h3>Example<a class="headerlink" href="#rule-example" title="Permalink to this headline">¶</a></h3>
+<span id="id3"></span><h3>Example<a class="headerlink" href="#rule-example" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
   <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Filebeat Errors&quot;</span><span class="p">,</span>
   <span class="nt">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;filebeat-*&quot;</span><span class="p">,</span>
@@ -352,13 +352,12 @@ email alerts will be sent. At least one address is required.</li>
 the SMTP client will authenticate to the host. If you do not wish to specify
 the username in the configuration file, you can set the password using the
 <code class="docutils literal notranslate"><span class="pre">GO_ELASTICSEARCH_ALERTS_SMTP_USERNAME</span></code> environment variable. This field
-is required (either in the configuration file or in the environment
-variable).</li>
+is optional.</li>
 <li><span class="code-no-background">password</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The password with which the
 SMTP client will authenticate to the host. If you do not wish to specify the
 password in the configuration file, you can set the password using the
 <code class="docutils literal notranslate"><span class="pre">GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD</span></code> environment variable. This field is
-required (either in the configuration file or in the environment variable).</li>
+optional.</li>
 </ul>
 <p>You can find an example of what the email message looks like
 <a class="reference external" href="#email-output-example">here</a>.</p>
