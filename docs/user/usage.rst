@@ -52,8 +52,9 @@ process with the following command:
 Nomad
 -----
 
-Because Go Elasticsearch Alerts can be run in a distributed fashion and allows
-live rule updates it is highly compatible with HashiCorp's `Nomad
+Because Go Elasticsearch Alerts can be run in a `distributed fashion
+<#distributed-operation>`__ and allows `live rule updates <#reloading-rules>`__
+it is highly compatible with HashiCorp's `Nomad
 <https://www.nomadproject.io/>`__ application scheduler. See the code block
 below for an example Nomad file.
 
