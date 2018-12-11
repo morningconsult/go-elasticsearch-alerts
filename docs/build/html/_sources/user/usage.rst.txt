@@ -3,12 +3,13 @@
 Usage
 =====
 
-TODO
+This section covers how to use Go Elasticsearch Alerts.
 
 Startup
 -------
 
-TODO
+Once you have :ref:`installed <install>` your binary, simply execute it in
+order to 
 
 .. _alerting:
 
@@ -40,6 +41,11 @@ TODO
 
 Distributed Operation
 ---------------------
+
+TODO
+
+Use with Nomad
+--------------
 
 TODO
 

@@ -53,21 +53,59 @@ has several distinct features:</p>
 </div>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This section summarizes the salient points of how Go Elasticsearch Alerts
+was built and how it operates.</p>
+<div class="section" id="architecture">
+<h3>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h3>
 <p>Go Elasticsearch Alerts is made up of three main components:</p>
 <ul class="simple">
-<li>One or more <em>query handlers</em>;</li>
-<li>An <em>alert handler</em>; and</li>
-<li>One or more <em>alert outputs</em>.</li>
+<li>One or more <strong>query handlers</strong>;</li>
+<li>An <strong>alert handler</strong>; and</li>
+<li>One or more <strong>alert outputs</strong>.</li>
 </ul>
-<p>At runtime, the process parses each <a class="reference internal" href="setup.html#rule-configuration-file"><span class="std std-ref">rule configuration file</span></a> and starts a Goroutine - the <em>query handlers</em> -
-for each rule. It starts another Goroutine - the <em>alert handler</em> - that
-waits to receive new alerts from the query handlers. At intervals defined in
-the rule, the query handler executes the query (also defined in the rule). If
-Elasticsearch returns any data, it transforms the data based on the rule’s
-filters and sends the processed data to the alert handler. The alert handler
-then sends the alerts to the specified <em>alert outputs</em> (e.g. Slack or email).
-The query handlers will then pause until the next scheduled execution and
-then repeat the process.</p>
+<p>At runtime, the process parses <a class="reference internal" href="setup.html#rule-configuration-file"><span class="std std-ref">rule configuration files</span></a> and starts a Goroutine for each rule. These
+Goroutines are the <strong>query handlers</strong>. It starts another Goroutine - the
+<strong>alert handler</strong> - that waits to receive new alerts from the query handlers.
+At intervals defined in the rule, the query handler executes the query (also
+defined in the rule). If Elasticsearch returns any data, it transforms the
+data based on the rule’s filters and sends the processed data to the alert
+handler. The alert handler then sends the alerts to the specified <strong>alert
+outputs</strong> (e.g. Slack or email). The query handlers will then pause until the
+next scheduled execution and then repeat the process.</p>
+</div>
+<div class="section" id="statefulness">
+<h3>Statefulness<a class="headerlink" href="#statefulness" title="Permalink to this headline">¶</a></h3>
+<p>Go Elasticsearch Alerts attempts to maintain the state of each query. This
+ensures that if the process is restarted it will not immediately trigger the
+query again; rather, it will trigger it when it was scheduled before the
+process was killed. It achieves this by keeping records in a dedicated index
+in your Elasticsearch host, henceforth referred to as the <strong>state index</strong>.
+The documents stored in the state index represent a summary of the execution
+of a query by a query handler. Each time the query handler triggers a query,
+it writes such a document to the state index. An example is shown below.</p>
+<div class="highlight-json notranslate" id="state-doc-example"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;@timestamp&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-12-10T10:00:00Z&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;next_query&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-12-10T10:30:00Z&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;hostname&quot;</span><span class="p">:</span> <span class="s2">&quot;ip-12-32-56-78&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;rule_name&quot;</span><span class="p">:</span> <span class="s2">&quot;example_errors&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;hits_count&quot;</span><span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When the process is started, the query handler will attempt lookup the latest
+document in the state index whose <code class="docutils literal notranslate"><span class="pre">'rule_name'</span></code> field matches the query
+handler’s rule name. If it finds a match, the query handler will schedule the
+next execution of the query at the time given in the <code class="docutils literal notranslate"><span class="pre">'next_query'</span></code> field of
+the matched document (e.g. at <code class="docutils literal notranslate"><span class="pre">2018-12-10T10:30:00Z</span></code> in the <a class="reference internal" href="#state-doc-example"><span class="std std-ref">example
+above</span></a>). If value of <code class="docutils literal notranslate"><span class="pre">'next_query'</span></code> is in the past, it
+will execute the query immediately.</p>
+<p>Immediately following the execution of a query, the query handler will write a
+new document to the state index where the value of the <code class="docutils literal notranslate"><span class="pre">'next_query'</span></code> field
+will be equal to the next time that the query should be executed per the
+schedule defined in the rule. Additionally, it will include the number of hits
+Elasticsearch returned in the response to the query and the actual hits
+themselves.</p>
+</div>
 </div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
@@ -121,7 +159,11 @@ limitations under the License.</p>
   <ul>
 <li><a class="reference internal" href="#">Introduction</a><ul>
 <li><a class="reference internal" href="#purpose">Purpose</a></li>
-<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#overview">Overview</a><ul>
+<li><a class="reference internal" href="#architecture">Architecture</a></li>
+<li><a class="reference internal" href="#statefulness">Statefulness</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#license">License</a></li>
 </ul>
 </li>
