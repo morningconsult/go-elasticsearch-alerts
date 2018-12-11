@@ -115,9 +115,7 @@ Example
           command = "/local/go-elasticsearch-alerts"
 
           volumes = [
-            "/etc/elasticsearch/tls:/etc/elasticsearch/tls",
-            "/etc/consul/tls:/etc/consul/tls",
-            "/etc/ssl/certs:/etc/ssl/certs",
+            "/etc/key:/etc/key"
           ]
 
           dns_servers = [
@@ -153,9 +151,9 @@ Example
       },
       "client": {
         "tls_enabled": true,
-        "ca_cert": "/etc/elasticsearch/tls/elastic-ca-chain.pem",
-        "client_cert": "/etc/elasticsearch/tls/elastic-cert.pem",
-        "client_key": "/etc/elasticsearch/tls/elastic-key.pem",
+        "ca_cert": "/etc/key/elastic-ca-chain.pem",
+        "client_cert": "/etc/key/elastic-cert.pem",
+        "client_key": "/etc/key/elastic-key.pem",
         "server_name": "node.elasticsearch.service.consul"
       }
     },

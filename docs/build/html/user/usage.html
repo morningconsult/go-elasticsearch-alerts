@@ -130,9 +130,7 @@ below for an example Nomad file.</p>
         command = &quot;/local/go-elasticsearch-alerts&quot;
 
         volumes = [
-          &quot;/etc/elasticsearch/tls:/etc/elasticsearch/tls&quot;,
-          &quot;/etc/consul/tls:/etc/consul/tls&quot;,
-          &quot;/etc/ssl/certs:/etc/ssl/certs&quot;,
+          &quot;/etc/key:/etc/key&quot;
         ]
 
         dns_servers = [
@@ -168,9 +166,9 @@ below for an example Nomad file.</p>
     },
     &quot;client&quot;: {
       &quot;tls_enabled&quot;: true,
-      &quot;ca_cert&quot;: &quot;/etc/elasticsearch/tls/elastic-ca-chain.pem&quot;,
-      &quot;client_cert&quot;: &quot;/etc/elasticsearch/tls/elastic-cert.pem&quot;,
-      &quot;client_key&quot;: &quot;/etc/elasticsearch/tls/elastic-key.pem&quot;,
+      &quot;ca_cert&quot;: &quot;/etc/key/elastic-ca-chain.pem&quot;,
+      &quot;client_cert&quot;: &quot;/etc/key/elastic-cert.pem&quot;,
+      &quot;client_key&quot;: &quot;/etc/key/elastic-key.pem&quot;,
       &quot;server_name&quot;: &quot;node.elasticsearch.service.consul&quot;
     }
   },
