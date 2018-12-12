@@ -89,7 +89,8 @@ Demonstration
 -------------
 
 To see a quick demonstration of how Go Elasticsearch Alerts works in action,
-first clone the `respository
+first make sure you have `Docker <https://docs.docker.com/install/>`__
+installed then clone the `respository
 <https://github.com/morningconsult/go-elasticsearch-alerts>`__ and run the
 `setup script
 <https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh>`__:
@@ -157,15 +158,20 @@ While Go Elasticsearch Alerts is still running, if you write more documents
 to the index that match the query criteria then Go Elasticsearch Alerts should
 alert on those documents the next time it triggers (in this case, it will
 trigger every minute). You can try this out by opening another terminal and
-running the following commands:
+running the following set of commands:
 
 .. code-block:: shell
 
-  $ NOW=$( date +%s%N | cut -b1-13 )
-  $ cat <<EOF > /tmp/gea-payload.json
+  #!/bin/bash
+
+  # Get the current epoch timestamp
+  NOW=$( date +%s%N | cut -b1-13 )
+
+  # Create the request data
+  cat <<EOF > /tmp/gea-payload.json
   {
     "@timestamp": "${NOW}",
-    "source": "/var/log/syslog",
+    "source": "/var/log/system.log",
     "system": {
       "syslog": {
         "hostname": "ip-127-0-0-1",
@@ -174,10 +180,18 @@ running the following commands:
     }
   }
   EOF
-  $ curl http://127.0.0.1:9200/test-index/_doc \
-      --request POST \
-      --header "Content-Type: application/json" \
-      --data @/tmp/gea-payload.json
+
+  # Make the request to Elasticsearch
+  curl http://127.0.0.1:9200/test-index/_doc \
+    --request POST \
+    --header "Content-Type: application/json" \
+    --data @/tmp/gea-payload.json
+  
+
+Go Elasticsearch Alerts should pick up this newly created document the next
+time the job triggers and write it to stdout in your terminal. Once you're
+done with the demonstration, stop the Go Elasticsearch Alerts container
+(Ctrl+C) and then run ``docker-compose down``.
 
 License
 -------

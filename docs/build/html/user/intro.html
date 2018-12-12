@@ -110,7 +110,8 @@ themselves.</p>
 <div class="section" id="demonstration">
 <h2>Demonstration<a class="headerlink" href="#demonstration" title="Permalink to this headline">¶</a></h2>
 <p>To see a quick demonstration of how Go Elasticsearch Alerts works in action,
-first clone the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts">respository</a> and run the
+first make sure you have <a class="reference external" href="https://docs.docker.com/install/">Docker</a>
+installed then clone the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts">respository</a> and run the
 <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh">setup script</a>:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
 $ <span class="nb">cd</span> go-elasticsearch-alerts/examples
@@ -170,12 +171,17 @@ stdout (per the <code class="docutils literal notranslate"><span class="pre">'ou
 to the index that match the query criteria then Go Elasticsearch Alerts should
 alert on those documents the next time it triggers (in this case, it will
 trigger every minute). You can try this out by opening another terminal and
-running the following commands:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">NOW</span><span class="o">=</span><span class="k">$(</span> date +%s%N <span class="p">|</span> cut -b1-13 <span class="k">)</span>
-$ cat <span class="s">&lt;&lt;EOF &gt; /tmp/gea-payload.json</span>
+running the following set of commands:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+
+<span class="c1"># Get the current epoch timestamp</span>
+<span class="nv">NOW</span><span class="o">=</span><span class="k">$(</span> date +%s%N <span class="p">|</span> cut -b1-13 <span class="k">)</span>
+
+<span class="c1"># Create the request data</span>
+cat <span class="s">&lt;&lt;EOF &gt; /tmp/gea-payload.json</span>
 <span class="s">{</span>
 <span class="s">  &quot;@timestamp&quot;: &quot;${NOW}&quot;,</span>
-<span class="s">  &quot;source&quot;: &quot;/var/log/syslog&quot;,</span>
+<span class="s">  &quot;source&quot;: &quot;/var/log/system.log&quot;,</span>
 <span class="s">  &quot;system&quot;: {</span>
 <span class="s">    &quot;syslog&quot;: {</span>
 <span class="s">      &quot;hostname&quot;: &quot;ip-127-0-0-1&quot;,</span>
@@ -184,12 +190,18 @@ $ cat <span class="s">&lt;&lt;EOF &gt; /tmp/gea-payload.json</span>
 <span class="s">  }</span>
 <span class="s">}</span>
 <span class="s">EOF</span>
-$ curl http://127.0.0.1:9200/test-index/_doc <span class="se">\</span>
-    --request POST <span class="se">\</span>
-    --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
-    --data @/tmp/gea-payload.json
+
+<span class="c1"># Make the request to Elasticsearch</span>
+curl http://127.0.0.1:9200/test-index/_doc <span class="se">\</span>
+  --request POST <span class="se">\</span>
+  --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+  --data @/tmp/gea-payload.json
 </pre></div>
 </div>
+<p>Go Elasticsearch Alerts should pick up this newly created document the next
+time the job triggers and write it to stdout in your terminal. Once you’re
+done with the demonstration, stop the Go Elasticsearch Alerts container
+(Ctrl+C) and then run <code class="docutils literal notranslate"><span class="pre">docker-compose</span> <span class="pre">down</span></code>.</p>
 </div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>

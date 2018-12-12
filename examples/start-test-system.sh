@@ -99,11 +99,11 @@ for f in /tmp/gea-payload-*.json; do
     -d "@${f}" > /dev/null
 done
 
+## Clean up test data files
+rm /tmp/gea-payload-*.json
+
 sleep 2
 
 echo "==> Done writing Elasticsearch data. Starting Go Elasticsearch Alerts container..."
 
 docker-compose up go-elasticsearch-alerts
-
-## Clean up test data files
-rm /tmp/gea-payload-*.json
