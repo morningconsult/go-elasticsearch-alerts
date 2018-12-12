@@ -1,0 +1,11 @@
+{
+  "elasticsearch": {
+    "server": {
+      "url": "http://elasticsearch_gea:9200"
+    },
+    "client": {
+      "tls_enabled": false
+    }
+  },
+  "distributed": false
+}

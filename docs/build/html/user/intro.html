@@ -107,6 +107,89 @@ Elasticsearch returned in the response to the query and the actual hits
 themselves.</p>
 </div>
 </div>
+<div class="section" id="demonstration">
+<h2>Demonstration<a class="headerlink" href="#demonstration" title="Permalink to this headline">¶</a></h2>
+<p>To see a quick demonstration of how Go Elasticsearch Alerts works in action,
+first clone the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts">respository</a> and run the
+<a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh">setup script</a>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
+$ ./go-elasticsearch-alerts/examples/start-test-system.sh
+</pre></div>
+</div>
+<p>The setup script will perform the following actions:</p>
+<ol class="arabic simple">
+<li>Start an Elasticsearch Docker container</li>
+<li>Wait for Elasticsearch to become healthy (if Elasticsearch is not reporting
+itself as healthy after 10 health checks, the script will exit with a
+non-zero status code)</li>
+<li>Create an index with mappings (called “test-index”)</li>
+<li>Write some documents to the new index (these represent the data for which we
+want to create alerts)</li>
+<li>Start Go Elasticsearch Alerts running in another Docker container</li>
+</ol>
+<p>Now Go Elasticsearch Alerts should be running in a Docker container in your
+terminal. You should see some logs appear in your terminal, including the data
+the setup script wrote to the test index. The process is now alerting on the
+rule defined <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">here</a>.
+As you can see in the rule, every one minute (per the <code class="docutils literal notranslate"><span class="pre">'schedule'</span></code> field)
+the query handler will make the following request (illustrated as a cURL
+request) to Elasticsearch:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl http://127.0.0.1:9200/test-index/_search <span class="se">\</span>
+    --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+    --data <span class="s1">&#39;{</span>
+<span class="s1">      &quot;query&quot;: {</span>
+<span class="s1">        &quot;bool&quot;: {</span>
+<span class="s1">          &quot;must&quot;: [</span>
+<span class="s1">            { &quot;term&quot; : { &quot;source&quot; : { &quot;value&quot; : &quot;/var/log/system.log&quot; } } }</span>
+<span class="s1">          ],</span>
+<span class="s1">          &quot;filter&quot;: [</span>
+<span class="s1">            { &quot;range&quot; : { &quot;@timestamp&quot; : { &quot;gte&quot; : &quot;now-1m/m&quot; } } }</span>
+<span class="s1">          ]</span>
+<span class="s1">        }</span>
+<span class="s1">      },</span>
+<span class="s1">      &quot;aggregations&quot;: {</span>
+<span class="s1">        &quot;hostname&quot;: {</span>
+<span class="s1">          &quot;terms&quot;: {</span>
+<span class="s1">            &quot;field&quot;: &quot;system.syslog.hostname&quot;,</span>
+<span class="s1">            &quot;min_doc_count&quot;: 1</span>
+<span class="s1">          }</span>
+<span class="s1">        }</span>
+<span class="s1">      },</span>
+<span class="s1">      &quot;size&quot;: 20,</span>
+<span class="s1">      &quot;sort&quot;: [</span>
+<span class="s1">        { &quot;@timestamp&quot;: &quot;desc&quot; }</span>
+<span class="s1">      ]</span>
+<span class="s1">    }&#39;</span>
+</pre></div>
+</div>
+<p>If it receives any data, it will transform the data (per the <code class="docutils literal notranslate"><span class="pre">'body_field'</span></code>
+and <code class="docutils literal notranslate"><span class="pre">'filters'</span></code> fields of the rule file) and then write the process data to
+stdout (per the <code class="docutils literal notranslate"><span class="pre">'outputs[0]'</span></code> field).</p>
+<p>While Go Elasticsearch Alerts is still running, if you write more documents
+to the index that match the query criteria then Go Elasticsearch Alerts should
+alert on those documents the next time it triggers (in this case, it will
+trigger every minute). You can try this out by opening another terminal and
+running the following commands:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">NOW</span><span class="o">=</span><span class="k">$(</span> date +%s%N <span class="p">|</span> cut -b1-13 <span class="k">)</span>
+$ cat <span class="s">&lt;&lt;EOF &gt; /tmp/gea-payload.json</span>
+<span class="s">{</span>
+<span class="s">  &quot;@timestamp&quot;: &quot;${NOW}&quot;,</span>
+<span class="s">  &quot;source&quot;: &quot;/var/log/syslog&quot;,</span>
+<span class="s">  &quot;system&quot;: {</span>
+<span class="s">    &quot;syslog&quot;: {</span>
+<span class="s">      &quot;hostname&quot;: &quot;ip-127-0-0-1&quot;,</span>
+<span class="s">      &quot;message&quot;: &quot;[ERROR] error getting server health from 192.168.0.1&quot;</span>
+<span class="s">    }</span>
+<span class="s">  }</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+$ curl http://127.0.0.1:9200/test-index/_doc <span class="se">\</span>
+    --request POST <span class="se">\</span>
+    --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+    --data @/tmp/gea-payload.json
+</pre></div>
+</div>
+</div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
 <p>Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights
@@ -164,6 +247,7 @@ limitations under the License.</p>
 <li><a class="reference internal" href="#statefulness">Statefulness</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#demonstration">Demonstration</a></li>
 <li><a class="reference internal" href="#license">License</a></li>
 </ul>
 </li>

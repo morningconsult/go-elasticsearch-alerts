@@ -1,0 +1,42 @@
+---
+version: '3'
+services:
+  go-elasticsearch-alerts:
+    build: .
+    container_name: go-elasticsearch-alerts
+    environment:
+      - GO_ELASTICSEARCH_ALERTS_CONFIG_FILE=/go/config/config.json
+      - GO_ELASTICSEARCH_ALERTS_RULES_DIR=/go/config/rules
+    volumes:
+      - gea_data:/usr/share/go-elasticsearch-alerts/data
+    networks:
+      - geanet
+
+  elasticsearch_gea:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.3
+    container_name: elasticsearch_gea
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_gea_data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - geanet
+
+
+volumes:
+  gea_data:
+    driver: local
+  es_gea_data:
+    driver: local
+
+networks:
+  geanet:
+    driver: bridge
