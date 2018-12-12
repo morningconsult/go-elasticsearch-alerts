@@ -162,7 +162,7 @@ The rule configuration files are JSON files which define your alerts. The
 program will look for the rule configuration files in the
 ``/etc/go-elasticsearch-alerts/rules`` directory by default. If you wish to
 keep these files in a different directory, you can specify this directory
-with the ``GO_ELASTICSEARCH_ALERTS_CONFIG_FILE`` environment variable. All of
+with the ``GO_ELASTICSEARCH_ALERTS_RULES_DIR`` environment variable. All of
 these files should be valid JSON and their file names should have a ``.json``
 extension. There must be at least one rule for the program to operate.
 
