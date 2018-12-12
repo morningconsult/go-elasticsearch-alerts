@@ -209,7 +209,7 @@ func ParseRules() ([]*RuleConfig, error) {
 
 	ruleFiles, err := filepath.Glob(filepath.Join(rulesDir, "*.json"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error globbing rules dir: %v", err)
 	}
 
 	var rules []*RuleConfig
@@ -219,13 +219,13 @@ func ParseRules() ([]*RuleConfig, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, err
+			return nil, fmt.Errorf("error opening rule file %s: %v", file.Name(), err)
 		}
 
 		rule := new(RuleConfig)
 		if err = jsonutil.DecodeJSONFromReader(file, rule); err != nil {
 			file.Close()
-			return nil, err
+			return nil, fmt.Errorf("error JSON-decoding rule file %s: %v", file.Name(), err)
 		}
 		file.Close()
 

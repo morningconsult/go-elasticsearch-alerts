@@ -7,6 +7,22 @@ Go Elasticsearch Alerts
 =======================
 Release |release|. (:ref:`Installation <install>`)
 
+.. image:: https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge
+    :target: https://ci.morningconsultintelligence.com/teams/oss/pipelines/go-elasticsearch-alerts
+
+.. image:: https://img.shields.io/badge/godoc-reference-blue.svg
+    :target: https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts
+
+.. image:: https://goreportcard.com/badge/github.com/morningconsult/go-elasticsearch-alerts
+    :target: https://goreportcard.com/report/github.com/morningconsult/go-elasticsearch-alerts
+
+Go Elasticsearch Alerts lets you create alerts on your Elasticsearch data. To
+get started, just write a :ref:`configuration file <main-config-file>` and a
+:ref:`rule <rule-configuration-file>` and you can receive alerts like the one
+shown below when Go Elasticsearch Alerts finds new data matching the rule.
+
+.. image:: ./_static/slack.png
+   :class: shadowed-image
 
 The User Guide
 --------------
