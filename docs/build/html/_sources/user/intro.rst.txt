@@ -117,7 +117,7 @@ terminal. You should see some logs appear in your terminal, including the data
 the setup script wrote to the test index. The process is now alerting on the
 rule defined `here
 <https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json>`__.
-As you can see in the rule, every one minute (per the ``'schedule'`` field)
+As you can see in the rule, every two minutes (per the ``'schedule'`` field)
 the query handler will make the following request (illustrated as a cURL
 request) to Elasticsearch:
 
@@ -132,7 +132,7 @@ request) to Elasticsearch:
               { "term" : { "source" : { "value" : "/var/log/system.log" } } }
             ],
             "filter": [
-              { "range" : { "@timestamp" : { "gte" : "now-1m/m" } } }
+              { "range" : { "@timestamp" : { "gte" : "now-2m/m" } } }
             ]
           }
         },
@@ -151,14 +151,15 @@ request) to Elasticsearch:
       }'
 
 If it receives any data, it will transform the data (per the ``'body_field'``
-and ``'filters'`` fields of the rule file) and then write the process data to
-stdout (per the ``'outputs[0]'`` field).
+and ``'filters'`` fields of the `rule
+<https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json>`__
+) and then write the process data to stdout (per the ``'outputs[0]'`` field).
 
 While Go Elasticsearch Alerts is still running, if you write more documents
 to the index that match the query criteria then Go Elasticsearch Alerts should
 alert on those documents the next time it triggers (in this case, it will
-trigger every minute). You can try this out by opening another terminal and
-running the following set of commands:
+trigger every two minutes). You can try this out by opening another terminal
+and running the following set of commands:
 
 .. code-block:: shell
 

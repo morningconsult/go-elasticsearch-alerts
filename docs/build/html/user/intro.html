@@ -133,7 +133,7 @@ want to create alerts)</li>
 terminal. You should see some logs appear in your terminal, including the data
 the setup script wrote to the test index. The process is now alerting on the
 rule defined <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">here</a>.
-As you can see in the rule, every one minute (per the <code class="docutils literal notranslate"><span class="pre">'schedule'</span></code> field)
+As you can see in the rule, every two minutes (per the <code class="docutils literal notranslate"><span class="pre">'schedule'</span></code> field)
 the query handler will make the following request (illustrated as a cURL
 request) to Elasticsearch:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl http://127.0.0.1:9200/test-index/_search <span class="se">\</span>
@@ -145,7 +145,7 @@ request) to Elasticsearch:</p>
 <span class="s1">            { &quot;term&quot; : { &quot;source&quot; : { &quot;value&quot; : &quot;/var/log/system.log&quot; } } }</span>
 <span class="s1">          ],</span>
 <span class="s1">          &quot;filter&quot;: [</span>
-<span class="s1">            { &quot;range&quot; : { &quot;@timestamp&quot; : { &quot;gte&quot; : &quot;now-1m/m&quot; } } }</span>
+<span class="s1">            { &quot;range&quot; : { &quot;@timestamp&quot; : { &quot;gte&quot; : &quot;now-2m/m&quot; } } }</span>
 <span class="s1">          ]</span>
 <span class="s1">        }</span>
 <span class="s1">      },</span>
@@ -165,13 +165,13 @@ request) to Elasticsearch:</p>
 </pre></div>
 </div>
 <p>If it receives any data, it will transform the data (per the <code class="docutils literal notranslate"><span class="pre">'body_field'</span></code>
-and <code class="docutils literal notranslate"><span class="pre">'filters'</span></code> fields of the rule file) and then write the process data to
-stdout (per the <code class="docutils literal notranslate"><span class="pre">'outputs[0]'</span></code> field).</p>
+and <code class="docutils literal notranslate"><span class="pre">'filters'</span></code> fields of the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">rule</a>
+) and then write the process data to stdout (per the <code class="docutils literal notranslate"><span class="pre">'outputs[0]'</span></code> field).</p>
 <p>While Go Elasticsearch Alerts is still running, if you write more documents
 to the index that match the query criteria then Go Elasticsearch Alerts should
 alert on those documents the next time it triggers (in this case, it will
-trigger every minute). You can try this out by opening another terminal and
-running the following set of commands:</p>
+trigger every two minutes). You can try this out by opening another terminal
+and running the following set of commands:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 
 <span class="c1"># Get the current epoch timestamp</span>

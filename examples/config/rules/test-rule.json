@@ -1,7 +1,7 @@
 {
   "name": "Example Error",
   "index": "test-index",
-  "schedule": "@every 1m",
+  "schedule": "@every 2m",
   "body": {
     "query": {
       "bool": {
@@ -9,7 +9,7 @@
           { "term" : { "source" : { "value" : "/var/log/system.log" } } }
         ],
         "filter": [
-          { "range" : { "@timestamp" : { "gte" : "now-1m/m" } } }
+          { "range" : { "@timestamp" : { "gte" : "now-2m/m" } } }
         ]
       }
     },
