@@ -97,7 +97,8 @@ first clone the `respository
 .. code-block:: shell
 
   $ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
-  $ ./go-elasticsearch-alerts/examples/start-test-system.sh
+  $ cd go-elasticsearch-alerts/examples
+  $ ./start-test-system.sh
 
 The setup script will perform the following actions:
 
