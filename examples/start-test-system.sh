@@ -61,7 +61,7 @@ curl "http://127.0.0.1:9200/${INDEX}" \
   }' > /dev/null
 
 
-NOW=$( date +%s%N | cut -b1-13 )
+NOW="$( date +%s )000"
 cat <<EOF > /tmp/gea-payload-1.json
 {
   "@timestamp": "${NOW}",
