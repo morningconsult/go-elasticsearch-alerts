@@ -1,0 +1,250 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Demonstration &#8212; Go Elasticsearch Alerts v0.0.22 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation" href="install.html" />
+    <link rel="prev" title="Introduction" href="intro.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="demonstration">
+<span id="demo"></span><h1>Demonstration<a class="headerlink" href="#demonstration" title="Permalink to this headline">¶</a></h1>
+<p>This section goes over a small demonstration of the features of Go
+Elasticsearch Alerts.</p>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>To see a quick demonstration of how Go Elasticsearch Alerts works in action,
+first make sure you have <a class="reference external" href="https://docs.docker.com/install/">Docker</a>
+installed then clone the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts">respository</a> and run the
+<a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh">setup script</a>:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
+$ <span class="nb">cd</span> go-elasticsearch-alerts/examples
+$ ./start-test-system.sh
+</pre></div>
+</div>
+<p>The setup script will perform the following actions:</p>
+<ol class="arabic simple">
+<li>Start an Elasticsearch Docker container</li>
+<li>Wait for Elasticsearch to become healthy (if Elasticsearch is not reporting
+itself as healthy after 10 health checks, the script will exit with a
+non-zero status code)</li>
+<li>Create an index with mappings (called “test-index”)</li>
+<li>Write some documents to the new index (these represent the data for which we
+want to create alerts)</li>
+<li>Start a <a class="reference external" href="https://www.consul.io">Consul</a> Docker container</li>
+<li>Wait for Consul to become healthy (exits after 10 failed health checks)</li>
+<li>Start Go Elasticsearch Alerts running in another Docker container</li>
+</ol>
+<p>Note that the Elasticsearch and Consul containers will attempt to use ports
+9200 and 8500 respectively. If these ports are unavailable then the script will
+fail.</p>
+<p>Now Go Elasticsearch Alerts should be running in a Docker container in your
+terminal. You should see some logs appear in your terminal, including the data
+the setup script wrote to the test index. The process is now alerting on the
+rule defined <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">here</a>.
+As you can see in the rule, every two minutes (per the <code class="docutils literal notranslate"><span class="pre">'schedule'</span></code> field)
+the query handler will make the following request (illustrated as a cURL
+request) to Elasticsearch:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ curl http://127.0.0.1:9200/test-index/_search <span class="se">\</span>
+    --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+    --data <span class="s1">&#39;{</span>
+<span class="s1">      &quot;query&quot;: {</span>
+<span class="s1">        &quot;bool&quot;: {</span>
+<span class="s1">          &quot;must&quot;: [</span>
+<span class="s1">            { &quot;term&quot; : { &quot;source&quot; : { &quot;value&quot; : &quot;/var/log/system.log&quot; } } }</span>
+<span class="s1">          ],</span>
+<span class="s1">          &quot;filter&quot;: [</span>
+<span class="s1">            { &quot;range&quot; : { &quot;@timestamp&quot; : { &quot;gte&quot; : &quot;now-2m/m&quot; } } }</span>
+<span class="s1">          ]</span>
+<span class="s1">        }</span>
+<span class="s1">      },</span>
+<span class="s1">      &quot;aggregations&quot;: {</span>
+<span class="s1">        &quot;hostname&quot;: {</span>
+<span class="s1">          &quot;terms&quot;: {</span>
+<span class="s1">            &quot;field&quot;: &quot;system.syslog.hostname&quot;,</span>
+<span class="s1">            &quot;min_doc_count&quot;: 1</span>
+<span class="s1">          }</span>
+<span class="s1">        }</span>
+<span class="s1">      },</span>
+<span class="s1">      &quot;size&quot;: 20,</span>
+<span class="s1">      &quot;sort&quot;: [</span>
+<span class="s1">        { &quot;@timestamp&quot;: &quot;desc&quot; }</span>
+<span class="s1">      ]</span>
+<span class="s1">    }&#39;</span>
+</pre></div>
+</div>
+<p>If it receives any data, it will transform the data (per the <code class="docutils literal notranslate"><span class="pre">'body_field'</span></code>
+and <code class="docutils literal notranslate"><span class="pre">'filters'</span></code> fields of the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">rule</a>
+) and then write the process data to stdout (per the <code class="docutils literal notranslate"><span class="pre">'outputs[0]'</span></code> field).</p>
+</div>
+<div class="section" id="elasticsearch">
+<h2>Elasticsearch<a class="headerlink" href="#elasticsearch" title="Permalink to this headline">¶</a></h2>
+<p>While Go Elasticsearch Alerts is still running, if you write more documents
+to Elasticsearch that match the rule then Go Elasticsearch Alerts should alert
+on those documents the next time it triggers (in this case, it will trigger
+every two minutes). You can try this out by opening another terminal and
+running the following set of commands:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+
+<span class="c1"># Get the current epoch timestamp</span>
+<span class="nv">NOW</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span> date +%s <span class="k">)</span><span class="s2">000&quot;</span>
+
+<span class="c1"># Create the request data</span>
+cat <span class="s">&lt;&lt;EOF &gt; /tmp/gea-payload.json</span>
+<span class="s">{</span>
+<span class="s">  &quot;@timestamp&quot;: &quot;${NOW}&quot;,</span>
+<span class="s">  &quot;source&quot;: &quot;/var/log/system.log&quot;,</span>
+<span class="s">  &quot;system&quot;: {</span>
+<span class="s">    &quot;syslog&quot;: {</span>
+<span class="s">      &quot;hostname&quot;: &quot;ip-127-0-0-1&quot;,</span>
+<span class="s">      &quot;message&quot;: &quot;[ERROR] error getting server health from 192.168.0.1&quot;</span>
+<span class="s">    }</span>
+<span class="s">  }</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Make the request to Elasticsearch</span>
+curl http://127.0.0.1:9200/test-index/_doc <span class="se">\</span>
+  --request POST <span class="se">\</span>
+  --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+  --data @/tmp/gea-payload.json
+</pre></div>
+</div>
+<p>Go Elasticsearch Alerts should pick up this newly created document the next
+time the job triggers and write it to stdout in your terminal.</p>
+</div>
+<div class="section" id="consul">
+<h2>Consul<a class="headerlink" href="#consul" title="Permalink to this headline">¶</a></h2>
+<p>When Go Elasticsearch Alerts started, you should have seen a log that looked
+like this:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>go-elasticsearch-alerts    | 2018-12-13T15:45:04.798Z [INFO]  This process is now the leader
+</pre></div>
+</div>
+<p>This is because we are operating in distributed mode (as specified by the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/config.json">main
+configuration file</a>).
+Since we only started one instance of Go Elasticsearch Alerts, the process
+immediately acquires the lock from Consul. However, if we were to start
+multiple instances then only one of them would announce itself the leader
+since only one instance can have the lock at any given time.</p>
+<p>You can also see the lock itself in Consul. To do so, open a web broswer and
+navigate to <a class="reference external" href="http://127.0.0.1:8500">Consul</a>. The Consul UI should open in
+your browser.</p>
+<img alt="../_images/consul-1.png" class="shadowed-image" src="../_images/consul-1.png" />
+<p>The lock itself is stored in Consul’s key/value store. You can see the lock in
+the your Consul UI <a class="reference external" href="http://127.0.0.1:8500/ui/dc1/kv/go-elasticsearch-alerts/lock/edit">here</a>. It
+should look like this:</p>
+<img alt="../_images/consul-2.png" class="shadowed-image" src="../_images/consul-2.png" />
+<p>If you delete the lock, Go Elasticsearch Alerts should announce that it is no
+longer the leader but very quickly become the leader again. This is because as
+soon as the lock is deleted, it will create a new one. If you stop Consul, then
+Go Elasticsearch Alerts will also terminate.</p>
+</div>
+<div class="section" id="cleanup">
+<h2>Cleanup<a class="headerlink" href="#cleanup" title="Permalink to this headline">¶</a></h2>
+<p>Once you’re done with the demonstration, stop the Go Elasticsearch Alerts
+container (Ctrl+C) and then run <code class="docutils literal notranslate"><span class="pre">docker-compose</span> <span class="pre">down</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+    <a href="../index.html">
+      <img class="logo" src="../_static/mc.svg"/>
+    </a>
+  </p>
+  
+  <div class="center">
+    <iframe src="https://ghbtns.com/github-btn.html?user=morningconsult&repo=go-elasticsearch-alerts&type=watch&count=true&size=large"
+      allowtransparency="true" frameborder="0" scrolling="0" height="35px" align="middle"></iframe>
+  </div>
+  
+  <p>
+    Go Elasticsearch Alerts is a simple, flexible daemon
+    for creating alerts on Elasticsearch data
+  </p>
+  
+  <p>Created and maintained by <strong><a href="https://morningconsult.com">Morning Consult</a></strong></p>
+  
+  <h3>Useful Links</h3>
+  <ul>
+    <li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html">Elasticsearch Search Reference</a></li>
+    <li><a href="https://golang.org/doc/install">Installing Go</a></li>
+    <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/issues">Issue Tracker</a></li>
+    <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/releases">Releases</a></li>
+  </ul>
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Demonstration</a><ul>
+<li><a class="reference internal" href="#setup">Setup</a></li>
+<li><a class="reference internal" href="#elasticsearch">Elasticsearch</a></li>
+<li><a class="reference internal" href="#consul">Consul</a></li>
+<li><a class="reference internal" href="#cleanup">Cleanup</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Morning Consult.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/user/demo.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

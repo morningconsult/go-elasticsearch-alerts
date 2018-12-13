@@ -24,6 +24,8 @@ alert shown below when Go Elasticsearch Alerts finds new data matching the rule.
 .. image:: ./_static/slack.png
    :class: shadowed-image
 
+To try it out yourself, check out the :ref:`demonstration <demo>`.
+
 The User Guide
 --------------
 
@@ -35,6 +37,7 @@ instructions for installing and using it.
    :maxdepth: 2
    
    user/intro
+   user/demo
    user/install
    user/setup
    user/usage

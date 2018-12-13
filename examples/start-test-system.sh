@@ -3,9 +3,11 @@
 set -e
 
 INDEX="test-index"
+ES_URL="http://127.0.0.1:9200"
+CONSUL_URL="http://127.0.0.1:8500"
 
 ## Start Elasticsearch container
-docker-compose up -d elasticsearch_gea
+docker-compose up -d elasticsearch-gea
 
 echo "==> Waiting for Elasticsearch to be healthy..."
 
@@ -18,21 +20,19 @@ do
     exit 1
   fi
 
-  # CURL=$( curl http://127.0.0.1:9200/_cluster/health )
-  # echo $CURL
-  STATUS=$( curl -s http://127.0.0.1:9200/_cluster/health | jq .status )
+  STATUS=$( curl -s "${ES_URL}/_cluster/health" | jq .status )
   if [ "${STATUS}" == '"green"' ]
   then
     break
   fi
 
-  sleep 3
+  sleep 5
 done
 
 echo "==> Elasticsearch is healthy. Creating index \"${INDEX}\"..."
 
 ## Create the test index
-curl "http://127.0.0.1:9200/${INDEX}" \
+curl "${ES_URL}/${INDEX}" \
   -s \
   -H "Content-Type: application/json" \
   -X PUT \
@@ -92,7 +92,7 @@ echo "==> Writing some test data to Elasticsearch..."
 
 for f in /tmp/gea-payload-*.json; do
   # Write a document to the new index
-  curl "http://127.0.0.1:9200/${INDEX}/_doc" \
+  curl "${ES_URL}/${INDEX}/_doc" \
     -s \
     -H "Content-Type: application/json" \
     -X POST \
@@ -101,6 +101,32 @@ done
 
 ## Clean up test data files
 rm /tmp/gea-payload-*.json
+
+## Start up Consul
+
+echo "==> Done writing Elasticsearch data. Starting Consul..."
+
+docker image rm examples_go-elasticsearch-alerts
+
+docker-compose up -d consul-gea
+
+## Wait until Consul is healthy by checking for health 10 times
+for i in {0..10}
+do
+  if [ $i -gt 9 ]
+  then
+    echo "Consul is not healthy after 10 attempts"
+    exit 1
+  fi
+
+  STATUS=$( curl -s "${CONSUL_URL}/v1/status/leader" )
+  if [ "${STATUS}" == '"127.0.0.1:8300"' ]
+  then
+    break
+  fi
+
+  sleep 2
+done
 
 sleep 2
 

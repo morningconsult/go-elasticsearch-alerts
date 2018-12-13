@@ -12,9 +12,9 @@ services:
     networks:
       - geanet
 
-  elasticsearch_gea:
+  elasticsearch-gea:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.5.3
-    container_name: elasticsearch_gea
+    container_name: elasticsearch-gea
     environment:
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
@@ -30,11 +30,22 @@ services:
     networks:
       - geanet
 
+  consul-gea:
+    image: consul
+    container_name: consul-gea
+    volumes:
+      - consul_gea_data:/usr/share/consul/data
+    ports:
+      - 8500:8500
+    networks:
+      - geanet
 
 volumes:
   gea_data:
     driver: local
   es_gea_data:
+    driver: local
+  consul_gea_data:
     driver: local
 
 networks:

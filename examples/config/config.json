@@ -1,11 +1,15 @@
 {
   "elasticsearch": {
     "server": {
-      "url": "http://elasticsearch_gea:9200"
+      "url": "http://elasticsearch-gea:9200"
     },
     "client": {
       "tls_enabled": false
     }
   },
-  "distributed": false
+  "distributed": true,
+  "consul": {
+    "consul_http_addr": "http://consul-gea:8500",
+    "consul_lock_key": "go-elasticsearch-alerts/lock"
+  }
 }
