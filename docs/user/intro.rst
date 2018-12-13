@@ -166,7 +166,7 @@ and running the following set of commands:
   #!/bin/bash
 
   # Get the current epoch timestamp
-  NOW=$( date +%s%N | cut -b1-13 )
+  NOW="$( date +%s )000"
 
   # Create the request data
   cat <<EOF > /tmp/gea-payload.json
