@@ -106,8 +106,6 @@ rm /tmp/gea-payload-*.json
 
 echo "==> Done writing Elasticsearch data. Starting Consul..."
 
-docker image rm examples_go-elasticsearch-alerts
-
 docker-compose up -d consul-gea
 
 ## Wait until Consul is healthy by checking for health 10 times
