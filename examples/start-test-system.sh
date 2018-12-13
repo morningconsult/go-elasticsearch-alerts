@@ -9,16 +9,18 @@ CONSUL_URL="http://127.0.0.1:8500"
 ## Start Elasticsearch container
 docker-compose up -d elasticsearch-gea
 
-echo "==> Waiting for Elasticsearch to be healthy..."
+echo "==> Starting Elasticsearch health checks."
 
 ## Wait until Elasticsearch is healthy by checking for health 10 times
 for i in {0..10}
 do
   if [ $i -gt 9 ]
   then
-    echo "Elasticsearch is not healthy after 10 attempts"
+    echo "==> Elasticsearch is not healthy after 10 attempts"
     exit 1
   fi
+
+  echo "==> Performing Elasticsearch health check..."
 
   STATUS=$( curl -s "${ES_URL}/_cluster/health" | jq .status )
   if [ "${STATUS}" == '"green"' ]
@@ -26,7 +28,10 @@ do
     break
   fi
 
-  sleep 5
+  echo "==> Elasticsearch health check failed. Retrying in 20 seconds."
+
+  sleep 20
+
 done
 
 echo "==> Elasticsearch is healthy. Creating index \"${INDEX}\"..."
@@ -107,6 +112,8 @@ rm /tmp/gea-payload-*.json
 echo "==> Done writing Elasticsearch data. Starting Consul..."
 
 docker-compose up -d consul-gea
+
+sleep 2
 
 ## Wait until Consul is healthy by checking for health 10 times
 for i in {0..10}

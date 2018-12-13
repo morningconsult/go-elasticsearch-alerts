@@ -44,7 +44,7 @@ Elasticsearch Alerts.</p>
 first make sure you have <a class="reference external" href="https://docs.docker.com/install/">Docker</a>
 installed then clone the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts">respository</a> and run the
 <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh">setup script</a>:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/morningconsult/go-elasticsearch-alerts.git
 $ <span class="nb">cd</span> go-elasticsearch-alerts/examples
 $ ./start-test-system.sh
 </pre></div>
@@ -62,7 +62,7 @@ want to create alerts)</li>
 <li>Wait for Consul to become healthy (exits after 10 failed health checks)</li>
 <li>Start Go Elasticsearch Alerts running in another Docker container</li>
 </ol>
-<p>Note that the Elasticsearch and Consul containers will attempt to use ports
+<p><strong>Note</strong>: The Elasticsearch and Consul containers will attempt to use ports
 9200 and 8500 respectively. If these ports are unavailable then the script will
 fail.</p>
 <p>Now Go Elasticsearch Alerts should be running in a Docker container in your

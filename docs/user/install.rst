@@ -28,7 +28,7 @@ binary if you have Docker installed. Simply clone this repository
 and run ``make docker`` to build the binary within a Docker
 container and output it to the local directory::
 
-    $ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
+    $ git clone https://github.com/morningconsult/go-elasticsearch-alerts.git
     $ cd go-elasticsearch-alerts
     $ make docker
 

@@ -17,7 +17,7 @@ installed then clone the `respository
 
 .. code-block:: shell
 
-  $ git clone git@github.com:morningconsult/go-elasticsearch-alerts.git
+  $ git clone https://github.com/morningconsult/go-elasticsearch-alerts.git
   $ cd go-elasticsearch-alerts/examples
   $ ./start-test-system.sh
 
@@ -34,7 +34,7 @@ The setup script will perform the following actions:
 6. Wait for Consul to become healthy (exits after 10 failed health checks)
 7. Start Go Elasticsearch Alerts running in another Docker container
 
-Note that the Elasticsearch and Consul containers will attempt to use ports
+**Note**: The Elasticsearch and Consul containers will attempt to use ports
 9200 and 8500 respectively. If these ports are unavailable then the script will
 fail.
 
