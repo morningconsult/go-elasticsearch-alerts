@@ -60,7 +60,7 @@ resources:
   type: docker-image
   source:
     repository: golang
-    tag: 1.11-alpine3.8
+    tag: 1.11.3-alpine3.8
 
 - name: slack
   type: slack-alert

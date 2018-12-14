@@ -17,7 +17,7 @@ set -e
 PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
 
 # NOTE: This script is intended to be run in a
-#   golang:1.11-alpine3.8 Docker container
+#   golang:1.11.3-alpine3.8 Docker container
 
 # Install make
 apk add -qU --no-cache make
