@@ -9,4 +9,5 @@ steps:
 - name: test
   image: golang
   commands:
-  - go test ./...
+  - go get
+  - make test
