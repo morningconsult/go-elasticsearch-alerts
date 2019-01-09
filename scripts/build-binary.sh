@@ -27,11 +27,11 @@ if [ "${PACKAGE_ROOT}" = "" ]; then
   exit 1
 fi
 
-BIN_NAME=$( basename "${PACKAGE_ROOT}" )
+# BIN_NAME=$( basename "${PACKAGE_ROOT}" )
 
 cd "${ROOT}"
 
-mkdir -p "${BIN_DIR}"
+# mkdir -p "${BIN_DIR}"
 
 version_ldflags="-X \"${PACKAGE_ROOT}/version.Date=$( date +"%b %d, %Y" )\""
 
@@ -47,5 +47,4 @@ CGO_ENABLED=0 go build \
   -installsuffix cgo \
   -a \
   -ldflags "-s ${version_ldflags}" \
-  -o "${BIN_DIR}/${BIN_NAME}" \
   .

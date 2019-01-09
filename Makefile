@@ -16,12 +16,12 @@ FLY := $(shell which fly)
 REPO=github.com/morningconsult/go-elasticsearch-alerts
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
-LOCAL_BINARY=bin/$(BINARY_NAME)
+LOCAL_BINARY=$(BINARY_NAME)
 
 all: build
 
 update_deps:
-	scripts/update-deps.sh
+	@GO111MODULE=on go mod tidy -v && go mod vendor -v
 .PHONY: update_deps
 
 docker: Dockerfile
@@ -34,10 +34,10 @@ build: $(LOCAL_BINARY)
 $(LOCAL_BINARY): $(SOURCES)
 	@echo "==> Starting binary build..."
 	@sh -c "'./scripts/build-binary.sh' '$(shell git describe --tags --abbrev=0)' '$(shell git rev-parse --short HEAD)' '$(REPO)'"
-	@echo "==> Done. Binary can be found at $(LOCAL_BINARY)"
+	@echo "==> Done."
 
 test:
-	@go test -v -cover $(shell go list "./..." | grep -v scripts)
+	@GO111MODULE=on go test -v -cover ./...
 .PHONY: test
 
 git_chglog_check:
