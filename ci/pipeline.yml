@@ -11,12 +11,10 @@ resource_types:
     repository: arbourd/concourse-slack-alert-resource
     channel: '#build'
 
-- name: merge-request
+- name: pull-request
   type: docker-image
   source:
-    aws_secret_access_key: ((aws-secret-access-key))
-    aws_access_key_id: ((aws-access-key-id))
-    repository: ((docker-repository))/morningconsult/gitlab-merge-request-resource
+    repository: jtarchie/pr
 
 
 # ====================================
@@ -25,27 +23,14 @@ resource_types:
 #
 # ====================================
 resources:
-- name: go-elasticsearch-alerts-gitlab
-  type: git
-  source:
-    uri: ((gitlab-repo))
-    branch: master
-    private_key: ((gitlab-private-key))
-
-- name: go-elasticsearch-alerts-github
-  type: git
+- name: test-pull-request
+  type: pull-request
   source:
     private_key: ((github-private-key))
     access_token: ((github-access-token))
+    repo: morningconsult/docker-credential-vault-login
     uri: ((github-repo))
-    branch: master
-
-- name: test-merge-request
-  type: merge-request
-  source:
-    private_key: ((github-private-key))
-    private_token: ((gitlab-access-token))
-    uri: ((gitlab-repo))
+    base: master
 
 - name: new-release
   type: git
@@ -78,38 +63,30 @@ jobs:
   build_logs_to_retain: 30
   serial: true
   plan:
-  - get: test-merge-request
+  - get: test-pull-request
     trigger: true
-  - put: test-merge-request
+  - put: test-pull-request
     params:
-      repository: test-merge-request
+      repository: test-pull-request
       status: running
   - get: golang
   - task: test-pr
     image: golang
-    file: test-merge-request/ci/tasks/test-merge-request.yml
+    file: test-pull-request/ci/tasks/test-pull-request.yml
     on_success:
-      put: test-merge-request
+      put: test-pull-request
       params:
-        repository: test-merge-request
+        repository: test-pull-request
         status: success
         context: $BUILD_JOB_NAME
-        comment: test-merge-request/ci/pr_test_success
+        comment: test-pull-request/ci/pr_test_success
     on_failure:
-      put: test-merge-request
+      put: test-pull-request
       params:
-        repository: test-merge-request
+        repository: test-pull-request
         status: failed
         context: $BUILD_JOB_NAME
-        comment: test-merge-request/ci/pr_test_failure
-
-- name: github-mirror
-  serial: true
-  plan:
-  - get: go-elasticsearch-alerts-gitlab
-    trigger: true
-  - put: go-elasticsearch-alerts-github
-    params: {repository: go-elasticsearch-alerts-gitlab}
+        comment: test-pull-request/ci/pr_test_failure
 
 - name: build-release
   serial: true
