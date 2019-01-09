@@ -28,7 +28,7 @@ resources:
   source:
     private_key: ((github-private-key))
     access_token: ((github-access-token))
-    repo: morningconsult/docker-credential-vault-login
+    repo: morningconsult/go-elasticsearch-alerts
     uri: ((github-repo))
     base: master
 
