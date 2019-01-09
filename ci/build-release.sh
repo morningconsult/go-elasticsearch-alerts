@@ -15,7 +15,7 @@
 set -e
 
 readonly PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
-readonly GORELEASER_VERSION=v0.88.0
+readonly GORELEASER_VERSION=v0.95.0
 
 echo "==> Installing APK dependencies"
 

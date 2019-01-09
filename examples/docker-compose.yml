@@ -5,8 +5,8 @@ services:
     build: .
     container_name: go-elasticsearch-alerts
     environment:
-      - GO_ELASTICSEARCH_ALERTS_CONFIG_FILE=/go/config/config.json
-      - GO_ELASTICSEARCH_ALERTS_RULES_DIR=/go/config/rules
+      - GO_ELASTICSEARCH_ALERTS_CONFIG_FILE=/build/config/config.json
+      - GO_ELASTICSEARCH_ALERTS_RULES_DIR=/build/config/rules
     volumes:
       - gea_data:/usr/share/go-elasticsearch-alerts/data
     networks:
