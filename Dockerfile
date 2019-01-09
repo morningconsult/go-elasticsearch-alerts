@@ -14,7 +14,7 @@
 FROM golang:1.11.4-alpine3.8
 
 RUN set -e; \
-  apk add -qU --no-cache git make; \
+  apk add -qU --no-cache git make bzr; \
   rm -f /var/cache/apk/*;
 
 ARG TARGET_GOOS
@@ -23,13 +23,10 @@ ARG TARGET_GOARCH
 ENV GOOS $TARGET_GOOS
 ENV GOARCH $TARGET_GOARCH
 
-ARG BINARY=go-elasticsearch-alerts
-ARG PROJECT=github.com/morningconsult/$BINARY
-
-WORKDIR /go/src/$PROJECT
+WORKDIR /build
 
 COPY . .
 
-RUN make
+RUN GO111MODULE=on make
 
 ENTRYPOINT "/bin/sh"

@@ -9,6 +9,7 @@ RUN set -e; \
   git clone -b fix-consul-client-logic https://github.com/morningconsult/go-elasticsearch-alerts; \
   cd go-elasticsearch-alerts; \
   GO111MODULE=on CGO_ENABLED=0 make; \
+  ls; \
   mv ./bin/go-elasticsearch-alerts /usr/local/bin;
 
 COPY . .

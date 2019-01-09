@@ -16,7 +16,7 @@ FLY := $(shell which fly)
 REPO=github.com/morningconsult/go-elasticsearch-alerts
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
-LOCAL_BINARY=$(BINARY_NAME)
+LOCAL_BINARY=bin/$(BINARY_NAME)
 
 all: build
 
@@ -34,7 +34,7 @@ build: $(LOCAL_BINARY)
 $(LOCAL_BINARY): $(SOURCES)
 	@echo "==> Starting binary build..."
 	@sh -c "'./scripts/build-binary.sh' '$(shell git describe --tags --abbrev=0)' '$(shell git rev-parse --short HEAD)' '$(REPO)'"
-	@echo "==> Done."
+	@echo "==> Done. Your binary can be found at bin/go-elasticsearch-alerts."
 
 test:
 	@GO111MODULE=on go test -v -cover ./...

@@ -19,16 +19,8 @@ PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
 # NOTE: This script is intended to be run in a
 #   golang:1.11.3-alpine3.8 Docker container
 
-# Install make
-apk add -qU --no-cache make
-
-# Create project structure
-mkdir -p "${GOPATH}/src/${PROJECT}"
-
-# Move all files to project folder
-cp -r * "${GOPATH}/src/${PROJECT}"
-
-cd "${GOPATH}/src/${PROJECT}"
+# Install dependencies
+apk add -qU --no-cache make git bzr
 
 # Run tests
 CGO_ENABLED=0 make test
