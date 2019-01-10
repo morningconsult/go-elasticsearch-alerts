@@ -1,4 +1,4 @@
-// Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights Reserved.
+// Copyright 2019 The Morning Consult, LLC or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"). You may
 // not use this file except in compliance with the License. A copy of the
@@ -18,10 +18,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
-	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/go-hclog"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
@@ -203,30 +201,4 @@ func makeReloadCh(ctx context.Context) chan struct{} {
 		}
 	}()
 	return resultCh
-}
-
-func newConsulClient(config map[string]string) (*api.Client, error) {
-	consulEnvVars := []string{
-		api.HTTPAddrEnvName,
-		api.HTTPTokenEnvName,
-		api.HTTPSSLEnvName,
-		api.HTTPCAFile,
-		api.HTTPCAPath,
-		api.HTTPClientCert,
-		api.HTTPClientKey,
-		api.HTTPTLSServerName,
-		api.HTTPSSLVerifyEnvName,
-	}
-
-	for _, env := range consulEnvVars {
-		v, ok := config[env]
-		if !ok {
-			v, ok = config[strings.ToLower(env)]
-		}
-		if ok && v != "" && os.Getenv(env) == "" {
-			os.Setenv(env, v)
-			defer os.Unsetenv(env)
-		}
-	}
-	return api.NewClient(&api.Config{})
 }

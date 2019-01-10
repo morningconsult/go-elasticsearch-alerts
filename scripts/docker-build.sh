@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights Reserved.
+# Copyright 2019 The Morning Consult, LLC or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may
 # not use this file except in compliance with the License. A copy of the
@@ -15,8 +15,6 @@
 set -e
 
 TOOL="go-elasticsearch-alerts"
-REPO="github.com/morningconsult/${TOOL}"
-BIN_DIR="bin"
 
 ROOT=$( cd "$( dirname "${0}" )/.." && pwd )
 cd "${ROOT}"
@@ -36,8 +34,8 @@ echo "==> Building the binary..."
 
 CONTAINER_ID=$( docker run --rm --detach --tty ${IMAGE} )
 
-docker cp "${CONTAINER_ID}:/go/src/${REPO}/${BIN_DIR}/${TOOL}" "${ROOT}/${BIN_DIR}"
+docker cp "${CONTAINER_ID}:/build/bin/${TOOL}" "${ROOT}/bin"
 
 docker kill "${CONTAINER_ID}" > /dev/null
 
-echo "==> Done. The binary can be found at: ${ROOT}/${BIN_DIR}/${TOOL}"
+echo "==> Done. The binary can be found at: ${ROOT}/bin/${TOOL}"

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights Reserved.
+# Copyright 2019 The Morning Consult, LLC or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may
 # not use this file except in compliance with the License. A copy of the
@@ -27,8 +27,6 @@ if [ "${PACKAGE_ROOT}" = "" ]; then
   exit 1
 fi
 
-BIN_NAME=$( basename "${PACKAGE_ROOT}" )
-
 cd "${ROOT}"
 
 mkdir -p "${BIN_DIR}"
@@ -43,9 +41,9 @@ if [ "${COMMIT}" != "" ]; then
   version_ldflags="${version_ldflags} -X \"${PACKAGE_ROOT}/version.Commit=${COMMIT}\""
 fi
 
-CGO_ENABLED=0 go build \
+GOPATH="" GO111MODULE=on CGO_ENABLED=0 go build \
   -installsuffix cgo \
   -a \
   -ldflags "-s ${version_ldflags}" \
-  -o "${BIN_DIR}/${BIN_NAME}" \
+  -o "${BIN_DIR}/$( basename ${PACKAGE_ROOT} )" \
   .
