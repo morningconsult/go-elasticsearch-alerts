@@ -33,13 +33,11 @@ resources:
     base: master
 
 - name: new-release
-  type: git
+  type: github-release
   source:
-    private_key: ((github-private-key))
+    owner: morningconsult
+    repository: go-elasticsearch-alerts
     access_token: ((github-access-token))
-    uri: ((github-repo))
-    branch: master
-    tag_filter: 'v[0-9]*'
 
 - name: golang
   type: docker-image
