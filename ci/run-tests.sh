@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights Reserved.
+# Copyright 2019 The Morning Consult, LLC or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You may
 # not use this file except in compliance with the License. A copy of the
@@ -19,16 +19,8 @@ PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
 # NOTE: This script is intended to be run in a
 #   golang:1.11.3-alpine3.8 Docker container
 
-# Install make
-apk add -qU --no-cache make
-
-# Create project structure
-mkdir -p "${GOPATH}/src/${PROJECT}"
-
-# Move all files to project folder
-cp -r * "${GOPATH}/src/${PROJECT}"
-
-cd "${GOPATH}/src/${PROJECT}"
+# Install dependencies
+apk add -qU --no-cache make git bzr
 
 # Run tests
 CGO_ENABLED=0 make test

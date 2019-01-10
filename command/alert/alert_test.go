@@ -1,4 +1,4 @@
-// Copyright 2018 The Morning Consult, LLC or its affiliates. All Rights Reserved.
+// Copyright 2019 The Morning Consult, LLC or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"). You may
 // not use this file except in compliance with the License. A copy of the
@@ -14,12 +14,13 @@
 package alert
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	// "io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -177,8 +178,12 @@ func TestRunError(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
+	buf := new(bytes.Buffer)
+	logger := hclog.New(&hclog.LoggerOptions{
+		Output: buf,
+	})
 	ah := NewAlertHandler(&AlertHandlerConfig{
-		Logger: hclog.Default(),
+		Logger: logger,
 	})
 
 	em := &errorAlertMethod{}
@@ -223,6 +228,10 @@ func TestRunError(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	// Should attempt to execute Write() 3 times (see logs)
+	expected := `[ERROR] [Alert Handler] error returned by alert function: error="test error" remaining_retries=0`
+	if !strings.Contains(buf.String(), expected) {
+		t.Fatalf("Expected errors to contain:\n\t%s\nGot:\n\t%s", expected, buf.String())
+	}
 }
 
 func randomUUID(t *testing.T) string {
