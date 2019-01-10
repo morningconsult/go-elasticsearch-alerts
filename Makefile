@@ -11,9 +11,13 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+# Disable verbosity
+MAKEFLAGS += --silent --no-print-directory
+
 FLY := $(shell which fly)
 
-REPO=github.com/morningconsult/go-elasticsearch-alerts
+
+REPO := github.com/$(shell git config remote.origin.url | sed -e 's/.*://g' -e 's/\.git//g')
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
 LOCAL_BINARY=bin/$(BINARY_NAME)
@@ -66,12 +70,14 @@ check_fly:
 
 
 set_pipeline: check_fly
+	$(FLY) --target mci-ci-oss validate-pipeline \
+		--config ci/pipeline.yml
+
 	$(FLY) --target mci-ci-oss set-pipeline \
 		--config ci/pipeline.yml \
 		--pipeline $(CONCOURSE_PIPELINE) \
 		--non-interactive \
-		-v gitlab-repo="$$(git config remote.origin.url)" \
-    -v github-repo="$$(git config remote.github.url)"
+		-v github-repo="$$(git config remote.origin.url)"
 
 	$(FLY) --target mci-ci-oss unpause-pipeline \
 		--pipeline $(CONCOURSE_PIPELINE)
