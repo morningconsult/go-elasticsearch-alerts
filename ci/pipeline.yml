@@ -45,7 +45,7 @@ resources:
   type: docker-image
   source:
     repository: golang
-    tag: 1.11.4-alpine3.8
+    tag: 1.11.3-alpine3.8
 
 - name: slack
   type: slack-alert
@@ -76,21 +76,21 @@ jobs:
     on_success:
       put: test-pull-request
       params:
-        path: test-pull-request
+        repository: test-pull-request
         status: success
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_success
     on_failure:
       put: test-pull-request
       params:
-        path: test-pull-request
+        repository: test-pull-request
         status: failure
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_failure
     on_abort:
       put: test-pull-request
       params:
-        path: test-pull-request
+        repository: test-pull-request
         status: error
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_failure
