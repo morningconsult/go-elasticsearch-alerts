@@ -14,7 +14,7 @@ resource_types:
 - name: pull-request
   type: docker-image
   source:
-    repository: jtarchie/pr
+    repository: teliaoss/github-pr-resource
 
 
 # ====================================
@@ -26,11 +26,8 @@ resources:
 - name: test-pull-request
   type: pull-request
   source:
-    private_key: ((github-private-key))
+    repository: morningconsult/go-elasticsearch-alerts
     access_token: ((github-access-token))
-    repo: morningconsult/go-elasticsearch-alerts
-    uri: ((github-repo))
-    base: master
 
 - name: new-release
   type: git
@@ -63,9 +60,14 @@ jobs:
   build_logs_to_retain: 30
   serial: true
   plan:
-  - get: test-pull-request
-    trigger: true
-  - get: golang
+  - aggregate:
+    - get: test-pull-request
+      trigger: true
+    - get: golang
+  - put: test-pull-request
+    params:
+      path: test-pull-request
+      status: pending
   - task: test-pr
     image: golang
     file: test-pull-request/ci/tasks/test-pull-request.yml
