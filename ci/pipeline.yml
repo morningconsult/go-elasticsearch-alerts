@@ -60,9 +60,14 @@ jobs:
   build_logs_to_retain: 30
   serial: true
   plan:
-  - get: test-pull-request
-    trigger: true
-  - get: golang
+  - aggregate:
+    - get: test-pull-request
+      trigger: true
+    - get: golang
+  - put: test-pull-request
+    params:
+      path: test-pull-request
+      status: pending
   - task: test-pr
     image: golang
     file: test-pull-request/ci/tasks/test-pull-request.yml
@@ -70,21 +75,21 @@ jobs:
       put: test-pull-request
       params:
         path: test-pull-request
-        status: SUCCESS
+        status: success
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_success
     on_failure:
       put: test-pull-request
       params:
         path: test-pull-request
-        status: FAILURE
+        status: failure
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_failure
     on_abort:
       put: test-pull-request
       params:
         path: test-pull-request
-        status: ERROR
+        status: error
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_failure
 
