@@ -36,7 +36,7 @@ resources:
     access_token: ((github-access-token))
     uri: ((github-repo))
     branch: master
-    tag_filter: 'v[0-9]*'
+    tag_filter: 'v*'
 
 - name: golang
   type: docker-image
