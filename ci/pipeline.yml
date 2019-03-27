@@ -14,7 +14,7 @@ resource_types:
 - name: pull-request
   type: docker-image
   source:
-    repository: jtarchie/pr
+    repository: teliaoss/github-pr-resource
 
 
 # ====================================
@@ -26,11 +26,8 @@ resources:
 - name: test-pull-request
   type: pull-request
   source:
-    private_key: ((github-private-key))
+    repository: morningconsult/go-elasticsearch-alerts
     access_token: ((github-access-token))
-    repo: morningconsult/go-elasticsearch-alerts
-    uri: ((github-repo))
-    base: master
 
 - name: new-release
   type: git
@@ -73,21 +70,21 @@ jobs:
       put: test-pull-request
       params:
         path: test-pull-request
-        status: success
+        status: SUCCESS
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_success
     on_failure:
       put: test-pull-request
       params:
         path: test-pull-request
-        status: failure
+        status: FAILURE
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_failure
     on_abort:
       put: test-pull-request
       params:
         path: test-pull-request
-        status: error
+        status: ERROR
         context: $BUILD_JOB_NAME
         comment: test-pull-request/ci/pr_test_failure
 
