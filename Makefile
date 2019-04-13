@@ -63,7 +63,7 @@ CONCOURSE_PIPELINE := go-elasticsearch-alerts
 check_fly:
 ifeq ($(FLY),)
 	sudo mkdir -p /usr/local/bin
-	sudo wget -q -O /usr/local/bin/fly "https://ci.morningconsultintelligence.com/api/v1/cli?arch=amd64&platform=linux"; \
+	sudo wget -q -O /usr/local/bin/fly "https://ci.morningconsultintelligence.com/api/v1/cli?arch=amd64&platform=linux";
 	sudo chmod +x /usr/local/bin/fly
 	/usr/local/bin/fly --version
 endif
