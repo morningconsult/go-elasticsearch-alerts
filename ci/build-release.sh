@@ -19,7 +19,7 @@ readonly GORELEASER_VERSION=v0.104.0
 
 echo "==> Installing APK dependencies"
 
-apk add -qU --no-progress \
+apk add -qU --no-cache --no-progress \
   make \
   bash \
   git \

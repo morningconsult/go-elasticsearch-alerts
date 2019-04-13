@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	templateVersion        string = "0.0.1"
+	templateVersion        string = "0.0.2"
 	defaultStateIndexAlias string = "go-es-alerts"
 	defaultTimestampFormat string = time.RFC3339
 	defaultBodyField       string = "hits.hits._source"
@@ -272,7 +272,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 // will be named 'go-es-alerts-status-{date}'; therefore, this template
 // enables searching all state indices via this alias
 func (q *QueryHandler) PutTemplate(ctx context.Context) error {
-	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":5,"number_of_replicas":1,"auto_expand_replicas":"0-2","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
+	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":1,"number_of_replicas":1,"auto_expand_replicas":"0-3","codec":"best_compression","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
 
 	resp, err := q.makeRequest(ctx, "PUT", fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()), []byte(payload))
 	if err != nil {
