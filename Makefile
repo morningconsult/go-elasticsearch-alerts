@@ -59,19 +59,21 @@ changelog: git_chglog_check
 
 CONCOURSE_PIPELINE := go-elasticsearch-alerts
 
+
 check_fly:
-	if [ -z "$(FLY)" ]; then \
-		sudo mkdir -p /usr/local/bin; \
-		sudo wget -q -O /usr/local/bin/fly "https://ci.morningconsultintelligence.com/api/v1/cli?arch=amd64&platform=linux"; \
-		sudo chmod +x /usr/local/bin/fly; \
-		/usr/local/bin/fly --version; \
-	fi
+ifeq ($(FLY),)
+	sudo mkdir -p /usr/local/bin
+	sudo wget -q -O /usr/local/bin/fly "https://ci.morningconsultintelligence.com/api/v1/cli?arch=amd64&platform=linux"; \
+	sudo chmod +x /usr/local/bin/fly
+	/usr/local/bin/fly --version
+endif
 .PHONY: check_fly
 
 
 set_pipeline: check_fly
 	$(FLY) --target mci-ci-oss validate-pipeline \
-		--config ci/pipeline.yml
+		--config ci/pipeline.yml \
+		--strict
 
 	$(FLY) --target mci-ci-oss set-pipeline \
 		--config ci/pipeline.yml \

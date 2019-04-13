@@ -14,13 +14,16 @@
 
 set -e
 
-PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
+readonly PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
 
 # NOTE: This script is intended to be run in a
 #   golang:1.11.3-alpine3.8 Docker container
 
 # Install dependencies
-apk add -qU --no-cache make git bzr
+apk add -qU --no-cache --no-progress \
+  make \
+  git \
+  bzr
 
 # Run tests
 CGO_ENABLED=0 make test

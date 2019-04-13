@@ -6,13 +6,12 @@
 # ====================================
 resource_types:
 - name: slack-alert
-  type: docker-image
+  type: registry-image
   source:
     repository: arbourd/concourse-slack-alert-resource
-    channel: '#build'
 
 - name: pull-request
-  type: docker-image
+  type: registry-image
   source:
     repository: teliaoss/github-pr-resource
 
@@ -39,7 +38,7 @@ resources:
     tag_filter: 'v*'
 
 - name: golang
-  type: docker-image
+  type: registry-image
   source:
     repository: golang
     tag: 1.11.4-alpine3.8
@@ -77,21 +76,18 @@ jobs:
         path: test-pull-request
         status: success
         context: $BUILD_JOB_NAME
-        comment: test-pull-request/ci/pr_test_success
     on_failure:
       put: test-pull-request
       params:
         path: test-pull-request
         status: failure
         context: $BUILD_JOB_NAME
-        comment: test-pull-request/ci/pr_test_failure
     on_abort:
       put: test-pull-request
       params:
         path: test-pull-request
         status: error
         context: $BUILD_JOB_NAME
-        comment: test-pull-request/ci/pr_test_failure
 
 - name: build-release
   serial: true
