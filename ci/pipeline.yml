@@ -75,19 +75,19 @@ jobs:
       params:
         path: test-pull-request
         status: success
-        context: $BUILD_JOB_NAME
+        context: test-pr
     on_failure:
       put: test-pull-request
       params:
         path: test-pull-request
         status: failure
-        context: $BUILD_JOB_NAME
+        context: test-pr
     on_abort:
       put: test-pull-request
       params:
         path: test-pull-request
         status: error
-        context: $BUILD_JOB_NAME
+        context: test-pr
 
 - name: build-release
   serial: true
