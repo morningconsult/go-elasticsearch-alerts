@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.0
 	github.com/hashicorp/memberlist v0.1.0 // indirect
 	github.com/hashicorp/serf v0.8.1 // indirect
-	github.com/hashicorp/vault v1.0.1
+	github.com/hashicorp/vault v1.1.2
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/miekg/dns v1.1.2 // indirect
 	github.com/mitchellh/go-homedir v1.0.0
