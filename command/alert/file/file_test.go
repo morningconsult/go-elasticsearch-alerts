@@ -15,13 +15,13 @@ package file
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -119,13 +119,13 @@ func TestWrite(t *testing.T) {
 			}
 			defer jsonfile.Close()
 
-			json := new(OutputJSON)
-			if err = jsonutil.DecodeJSONFromReader(jsonfile, json); err != nil {
+			data := OutputJSON{}
+			if err = json.NewDecoder(jsonfile).Decode(&data); err != nil {
 				t.Fatal(err)
 			}
 
-			if !reflect.DeepEqual(json.Records, records) {
-				t.Fatalf("Got:%+v\n\nExpected:\n%+v", json.Records, records)
+			if !reflect.DeepEqual(data.Records, records) {
+				t.Fatalf("Got:%+v\n\nExpected:\n%+v", data.Records, records)
 			}
 		})
 	}

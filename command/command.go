@@ -32,6 +32,7 @@ func Run() int {
 
 	logger := hclog.Default()
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	shutdownCh := makeShutdownCh()
 	reloadCh := makeReloadCh(ctx)
@@ -102,7 +103,7 @@ func Run() int {
 				for {
 					select {
 					case <-ctx.Done():
-						lock.Unlock()
+						lock.Unlock() // nolint: errcheck
 						return
 					default:
 						logger.Info("This process is now the leader")
@@ -111,12 +112,12 @@ func Run() int {
 
 					select {
 					case <-ctx.Done():
-						lock.Unlock()
+						lock.Unlock() // nolint: errcheck
 						return
 					case <-lockCh:
 						logger.Info("This process is no longer the leader")
 						controller.distLock.Set(false)
-						lock.Unlock()
+						lock.Unlock() // nolint: errcheck
 						break UnlockedLoop
 					}
 				}
@@ -166,7 +167,6 @@ func Run() int {
 			controller.updateHandlersCh <- qhs
 		}
 	}
-	return 0
 }
 
 // makeShutdownCh returns a channel that can be used for shutdown

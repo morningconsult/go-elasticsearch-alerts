@@ -14,7 +14,9 @@
 package query
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -24,23 +26,16 @@ import (
 	"sync"
 	"testing"
 	"time"
-	// "net/url"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 )
 
-var SkipElasticsearchTests bool = false
-
-const (
-	ElasticsearchURL string = "http://127.0.0.1:9200"
-	ConsulURL        string = "http://127.0.0.1:8500"
-)
+const ElasticsearchURL string = "http://127.0.0.1:9200"
 
 func TestNewQueryHandler(t *testing.T) {
 	cases := []struct {
@@ -222,7 +217,7 @@ func TestPutTemplate(t *testing.T) {
 					var err error
 					switch v := tc.data.(type) {
 					case map[string]interface{}:
-						data, err = jsonutil.EncodeJSON(v)
+						data, err = json.Marshal(v)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -233,7 +228,7 @@ func TestPutTemplate(t *testing.T) {
 					default:
 						t.Fatalf("unsupported data type: %T", v)
 					}
-					w.Write(data)
+					w.Write(data) // nolint: errcheck
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -363,7 +358,7 @@ func TestGetNextQuery(t *testing.T) {
 					var err error
 					switch v := tc.data.(type) {
 					case map[string]interface{}:
-						data, err = jsonutil.EncodeJSON(v)
+						data, err = json.Marshal(v)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -374,7 +369,7 @@ func TestGetNextQuery(t *testing.T) {
 					default:
 						t.Fatalf("unsupported data type: %T", v)
 					}
-					w.Write(data)
+					w.Write(data) // nolint: errcheck
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -436,7 +431,7 @@ func TestRun(t *testing.T) {
 		if r.URL.Path == fmt.Sprintf("/_template/%s-%s", defaultStateIndexAlias, templateVersion) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
-			w.Write([]byte(`{"acknowledged": true}`))
+			w.Write([]byte(`{"acknowledged": true}`)) // nolint: errcheck
 			return
 		}
 
@@ -445,27 +440,23 @@ func TestRun(t *testing.T) {
 			payload := fmt.Sprintf(`{"hits":{"hits":[{"_source":{"next_query":%q}}]}}`, time.Now().Add(-1*time.Hour).Format(time.RFC3339))
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
-			w.Write([]byte(payload))
+			w.Write([]byte(payload)) // nolint: errcheck
 			return
 		}
 
 		// Mocks successful response to QueryHandler.setNextQuery()
 		if r.URL.Path == fmt.Sprintf("/<%s-status-%s-{now/d}>/_doc", defaultStateIndexAlias, templateVersion) {
 			w.WriteHeader(201)
-			w.Write([]byte("ok"))
+			w.Write([]byte("ok")) // nolint: errcheck
 			return
 		}
 
 		// Mocks successful response to QueryHandler.query()
 		if r.URL.Path == fmt.Sprintf("/%s/_search", queryIndex) {
-			data, err := jsonutil.EncodeJSON(expected)
-			if err != nil {
-				t.Fatal(err)
-			}
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(200)
-			w.Write(data)
-			return
+			if err := json.NewEncoder(w).Encode(&expected); err != nil {
+				http.Error(w, err.Error(), 500)
+			}
 		}
 
 	}))
@@ -561,7 +552,7 @@ func TestSetNextQuery(t *testing.T) {
 				case "POST", "PUT":
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(tc.status)
-					w.Write([]byte(`{"acknowledged": true}`))
+					w.Write([]byte(`{"acknowledged": true}`)) // nolint: errcheck
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -645,7 +636,7 @@ func TestQuery(t *testing.T) {
 					var err error
 					switch v := tc.data.(type) {
 					case map[string]interface{}:
-						data, err = jsonutil.EncodeJSON(v)
+						data, err = json.Marshal(v)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -656,7 +647,7 @@ func TestQuery(t *testing.T) {
 					default:
 						t.Fatalf("unsupported data type: %T", v)
 					}
-					w.Write(data)
+					w.Write(data) // nolint: errcheck
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -722,7 +713,7 @@ func TestNewRequestErrors(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{}
-			_, err := qh.newRequest(context.Background(), tc.method, "http://example.com", tc.payload)
+			_, err := qh.newRequest(context.Background(), tc.method, "http://example.com", bytes.NewBuffer(tc.payload))
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")

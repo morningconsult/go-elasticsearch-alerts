@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-var re = regexp.MustCompile("\\[[0-9]*\\]$")
+var re = regexp.MustCompile(`\[[0-9]*\]$`)
 
 // Get functions much like JavaScript's lodash.get() function.
 // It traverses the JSON via the provided path and returns the

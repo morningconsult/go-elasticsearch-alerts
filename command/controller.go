@@ -93,8 +93,3 @@ func (ctrl *controller) stopQueryHandlers() {
 	}
 	ctrl.queryHandlerWG.Wait()
 }
-
-func (ctrl *controller) stopAlertHandler() {
-	ctrl.alertHandler.StopCh <- struct{}{}
-	<-ctrl.alertHandler.DoneCh
-}

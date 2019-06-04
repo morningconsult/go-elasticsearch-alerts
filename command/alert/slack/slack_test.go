@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -315,7 +314,7 @@ func newMockSlackServer(status int) *httptest.Server {
 			}
 
 			var data map[string]interface{}
-			if err := jsonutil.DecodeJSONFromReader(r.Body, &data); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 				http.Error(w, "Internal Server Error", 500)
 				return
 			}
@@ -326,7 +325,7 @@ func newMockSlackServer(status int) *httptest.Server {
 				return
 			}
 			w.WriteHeader(status)
-			w.Write([]byte("OK"))
+			w.Write([]byte("OK")) // nolint: errcheck
 			return
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -377,7 +376,7 @@ func ExampleSlackAlertMethod_BuildPayload() {
 
 	// This loop is performed in order that tests will pass --
 	// it is not necessary to perform this
-	for i, _ := range payload.Attachments {
+	for i := range payload.Attachments {
 		payload.Attachments[i].Timestamp = 1
 	}
 	data, _ := json.MarshalIndent(payload, "", "    ")

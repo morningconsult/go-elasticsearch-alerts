@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -30,7 +31,6 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
@@ -238,7 +238,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 				}
 				hits = tmp
 
-				if records != nil && len(records) > 0 {
+				if len(records) > 0 {
 					id, err := uuid.GenerateUUID()
 					if err != nil {
 						q.logger.Error(fmt.Sprintf("[Rule: %q] error creating new random UUID", q.name), "error", err)
@@ -274,7 +274,7 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":1,"number_of_replicas":1,"auto_expand_replicas":"0-3","codec":"best_compression","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
 
-	resp, err := q.makeRequest(ctx, "PUT", fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()), []byte(payload))
+	resp, err := q.makeRequest(ctx, "PUT", fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()), bytes.NewBufferString(payload))
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -286,7 +286,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 	}
 
 	var data map[string]interface{}
-	if err = jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return fmt.Errorf("error JSON-decoding response body: %v", err)
 	}
 
@@ -319,7 +319,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	query.Add("filter_path", "hits.hits._source.next_query")
 	u.RawQuery = query.Encode()
 
-	resp, err := q.makeRequest(ctx, "GET", u.String(), []byte(payload))
+	resp, err := q.makeRequest(ctx, "GET", u.String(), bytes.NewBufferString(payload))
 	if err != nil {
 		return nil, fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -330,7 +330,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	}
 
 	var data = make(map[string]interface{})
-	if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, fmt.Errorf("error JSON-decoding HTTP response: %v", err)
 	}
 
@@ -375,12 +375,12 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 		Hits:  hits,
 	}
 
-	payload, err := jsonutil.EncodeJSON(status)
-	if err != nil {
-		return fmt.Errorf("error JSON-encoding data: %v", err)
+	payload := bytes.Buffer{}
+	if err := json.NewEncoder(&payload).Encode(&status); err != nil {
+		return fmt.Errorf("error JSON-encoding payload: %v", err)
 	}
 
-	resp, err := q.makeRequest(ctx, "POST", q.StateIndexURL()+"/_doc", payload)
+	resp, err := q.makeRequest(ctx, "POST", q.StateIndexURL()+"/_doc", &payload)
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -394,12 +394,12 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 }
 
 func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
-	queryData, err := jsonutil.EncodeJSON(q.queryData)
-	if err != nil {
+	payload := bytes.Buffer{}
+	if err := json.NewEncoder(&payload).Encode(&q.queryData); err != nil {
 		return nil, fmt.Errorf("error JSON-encoding Elasticsearch query body: %v", err)
 	}
 
-	resp, err := q.makeRequest(ctx, "GET", fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), queryData)
+	resp, err := q.makeRequest(ctx, "GET", fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), &payload)
 	if err != nil {
 		return nil, fmt.Errorf("error making HTTP request: %v", err)
 	}
@@ -411,8 +411,8 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 	}
 
 	var data = make(map[string]interface{})
-	if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
-		return nil, err
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("error JSON-decoding Elasticsearch response: %v", err)
 	}
 	return data, nil
 }
@@ -421,30 +421,25 @@ func (q *QueryHandler) cleanedName() string {
 	return strings.Replace(strings.ToLower(q.name), " ", "-", -1)
 }
 
-func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, payload []byte) (*http.Response, error) {
-	req, err := q.newRequest(ctx, method, url, payload)
+func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, data io.Reader) (*http.Response, error) {
+	req, err := q.newRequest(ctx, method, url, data)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new request: %v", err)
 	}
 	return q.client.Do(req)
 }
 
-func (q *QueryHandler) newRequest(ctx context.Context, method, url string, payload []byte) (*http.Request, error) {
+func (q *QueryHandler) newRequest(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
 	var req *http.Request
 	var err error
-	if payload != nil {
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(payload))
-		if err != nil {
-			return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
-		}
-		req.Header.Add("Content-Type", "application/json")
-	} else {
-		req, err = http.NewRequest(method, url, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
-		}
-	}
 
+	req, err = http.NewRequest(method, url, data)
+	if err != nil {
+		return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
+	}
+	if data != nil {
+		req.Header.Add("Content-Type", "application/json")
+	}
 	req = req.WithContext(ctx)
 	return req, nil
 }
@@ -453,7 +448,7 @@ func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
 	switch resp.Header.Get("Content-Type") {
 	case "application/json":
 		var data map[string]interface{}
-		if err := jsonutil.DecodeJSONFromReader(resp.Body, &data); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 			return ""
 		}
 
@@ -469,7 +464,6 @@ func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
 		}
 		return string(data)
 	}
-	return ""
 }
 
 // StateAliasURL returns the URL of the Elasticsearch

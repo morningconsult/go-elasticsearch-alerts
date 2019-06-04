@@ -15,13 +15,12 @@ package file
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/mitchellh/go-homedir"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
@@ -76,32 +75,10 @@ func (f *FileAlertMethod) Write(ctx context.Context, rule string, records []*ale
 	}
 	defer outfile.Close()
 
-	entry := &OutputJSON{
+	entry := OutputJSON{
 		RuleName:   rule,
 		ReceivedAt: time.Now(),
 		Records:    records,
 	}
-	data, err := jsonutil.EncodeJSON(entry)
-	if err != nil {
-		return fmt.Errorf("error JSON-encoding data: %v", err)
-	}
-
-	return write(outfile, data)
-}
-
-func write(writer io.Writer, data []byte) error {
-	start := 0
-	for {
-		if start >= len(data) {
-			break
-		}
-
-		n, err := writer.Write(data[start:])
-		if err != nil {
-			return fmt.Errorf("error writing data: %v", err)
-		}
-
-		start += n
-	}
-	return nil
+	return json.NewEncoder(outfile).Encode(&entry)
 }

@@ -16,12 +16,12 @@ package slack
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -143,11 +143,14 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 }
 
 func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
-	data, err := jsonutil.EncodeJSON(payload)
+	buf := bytes.Buffer{}
+	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", s.webhookURL, &buf)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", s.webhookURL, bytes.NewBuffer(data))
 	req.Header.Add("Content-Type", "application/json")
 	req = req.WithContext(ctx)
 

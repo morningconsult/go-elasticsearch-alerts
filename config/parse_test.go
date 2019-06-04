@@ -14,13 +14,12 @@
 package config
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
-
-	"github.com/hashicorp/vault/helper/jsonutil"
 )
 
 func TestParseConfig_MainConfig(t *testing.T) {
@@ -631,7 +630,7 @@ func TestParseConfig_Rules(t *testing.T) {
 }
 
 func writeJSONToFile(t *testing.T, path string, contents interface{}) {
-	data, err := jsonutil.EncodeJSON(contents)
+	data, err := json.Marshal(contents)
 	if err != nil {
 		t.Fatal(err)
 	}

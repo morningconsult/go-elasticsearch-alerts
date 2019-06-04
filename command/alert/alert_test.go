@@ -16,18 +16,16 @@ package alert
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/vault/helper/jsonutil"
 )
 
 // Ensure FileAlertMethod adheres to the AlertMethod interface
@@ -53,17 +51,12 @@ func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Rec
 	}
 	defer outfile.Close()
 
-	entry := &OutputJSON{
+	entry := OutputJSON{
 		RuleName:   rule,
 		ReceivedAt: time.Now(),
 		Records:    records,
 	}
-	data, err := jsonutil.EncodeJSON(entry)
-	if err != nil {
-		return fmt.Errorf("error JSON-encoding data: %v", err)
-	}
-
-	return write(outfile, data)
+	return json.NewEncoder(outfile).Encode(&entry)
 }
 
 // errorAlertMethod is a mock alert.AlertMethod used to simulate an
@@ -74,25 +67,7 @@ func (e *errorAlertMethod) Write(ctx context.Context, rule string, records []*Re
 	return fmt.Errorf("test error")
 }
 
-func write(writer io.Writer, data []byte) error {
-	start := 0
-	for {
-		if start >= len(data) {
-			break
-		}
-
-		n, err := writer.Write(data[start:])
-		if err != nil {
-			return fmt.Errorf("error writing data: %v", err)
-		}
-
-		start += n
-	}
-	return nil
-}
-
 func TestRun(t *testing.T) {
-	var wg sync.WaitGroup
 	outputCh := make(chan *Alert, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -136,44 +111,41 @@ func TestRun(t *testing.T) {
 
 	outputCh <- a
 
-	wg.Add(1)
-
 	go ah.Run(ctx, outputCh)
 
 	defer func() {
 		cancel()
 		<-ah.DoneCh
 	}()
-	for {
-		select {
-		case <-ctx.Done():
-			t.Fatal("context timed out")
-		case <-time.After(500 * time.Millisecond):
-			// check for file
-			logfile, err := os.Open(filename)
-			if err != nil {
-				t.Fatal(err)
-			}
 
-			json := new(OutputJSON)
-			if err = jsonutil.DecodeJSONFromReader(logfile, json); err != nil {
-				t.Fatal(err)
-			}
-
-			if json.RuleName != a.RuleName {
-				t.Fatalf("rule name mismatch (got %q, expected %q)", json.RuleName, a.RuleName)
-			}
-
-			if len(json.Records) != len(a.Records) {
-				t.Fatalf("received unexpected number of records (got %d, expected %d)", len(a.Records), len(json.Records))
-			}
-			return
+	select {
+	case <-ctx.Done():
+		t.Fatal("context timed out")
+	case <-time.After(500 * time.Millisecond):
+		// check for file
+		logfile, err := os.Open(filename)
+		if err != nil {
+			t.Fatal(err)
 		}
+		defer logfile.Close()
+
+		data := OutputJSON{}
+		if err = json.NewDecoder(logfile).Decode(&data); err != nil {
+			t.Fatal(err)
+		}
+
+		if data.RuleName != a.RuleName {
+			t.Fatalf("rule name mismatch (got %q, expected %q)", data.RuleName, a.RuleName)
+		}
+
+		if len(data.Records) != len(a.Records) {
+			t.Fatalf("received unexpected number of records (got %d, expected %d)", len(a.Records), len(data.Records))
+		}
+		return
 	}
 }
 
 func TestRunError(t *testing.T) {
-	var wg sync.WaitGroup
 	outputCh := make(chan *Alert, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -216,8 +188,6 @@ func TestRunError(t *testing.T) {
 
 	outputCh <- a
 
-	wg.Add(1)
-
 	go ah.Run(ctx, outputCh)
 
 	defer func() {
@@ -225,7 +195,7 @@ func TestRunError(t *testing.T) {
 		<-ah.DoneCh
 	}()
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(7 * time.Second)
 
 	// Should attempt to execute Write() 3 times (see logs)
 	expected := `[ERROR] [Alert Handler] error returned by alert function: error="test error" remaining_retries=0`

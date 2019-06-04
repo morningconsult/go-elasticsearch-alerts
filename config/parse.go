@@ -14,12 +14,13 @@
 package config
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -150,7 +151,7 @@ func ParseConfig() (*Config, error) {
 	filename := file.Name()
 
 	cfg := new(Config)
-	if err := jsonutil.DecodeJSONFromReader(file, cfg); err != nil {
+	if err := json.NewDecoder(file).Decode(cfg); err != nil {
 		file.Close()
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func ParseRules() ([]*RuleConfig, error) {
 		}
 
 		rule := new(RuleConfig)
-		if err = jsonutil.DecodeJSONFromReader(file, rule); err != nil {
+		if err = json.NewDecoder(file).Decode(rule); err != nil {
 			file.Close()
 			return nil, fmt.Errorf("error JSON-decoding rule file %s: %v", file.Name(), err)
 		}
@@ -234,7 +235,7 @@ func ParseRules() ([]*RuleConfig, error) {
 			rule.ElasticsearchBody = b
 		case string:
 			var body map[string]interface{}
-			if err = jsonutil.DecodeJSON([]byte(b), &body); err != nil {
+			if err = json.NewDecoder(bytes.NewBufferString(b)).Decode(&body); err != nil {
 				return nil, fmt.Errorf("error JSON-decoding 'body' field of file %s: %v", file.Name(), err)
 			}
 			rule.ElasticsearchBody = body
