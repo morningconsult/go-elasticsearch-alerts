@@ -59,7 +59,7 @@ jobs:
   build_logs_to_retain: 30
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: test-pull-request
       trigger: true
     - get: golang
@@ -70,12 +70,6 @@ jobs:
   - task: test-pr
     image: golang
     file: test-pull-request/ci/tasks/test-pull-request.yml
-    on_success:
-      put: test-pull-request
-      params:
-        path: test-pull-request
-        status: success
-        context: test-pr
     on_failure:
       put: test-pull-request
       params:
@@ -88,11 +82,16 @@ jobs:
         path: test-pull-request
         status: error
         context: test-pr
+  - put: test-pull-request
+    params:
+      path: test-pull-request
+      status: success
+      context: test-pr
 
 - name: build-release
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: new-release
       trigger: true
     - get: golang
