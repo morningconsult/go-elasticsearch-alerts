@@ -67,6 +67,7 @@ jobs:
     params:
       path: test-pull-request
       status: pending
+      context: test-pr
   - task: test-pr
     image: golang
     file: test-pull-request/ci/tasks/test-pull-request.yml
