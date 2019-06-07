@@ -3,5 +3,5 @@ platform: linux
 inputs:
   - name: repo
 run:
-  path: ci/run-tests.sh
+  path: ci/test/validate.sh
   dir: repo
