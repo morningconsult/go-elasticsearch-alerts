@@ -22,26 +22,40 @@ resource_types:
 #
 # ====================================
 resources:
-- name: test-pull-request
+- name: go-elasticsearch-alerts-pr
   type: pull-request
   source:
     repository: morningconsult/go-elasticsearch-alerts
     access_token: ((github-access-token))
 
-- name: new-release
+- name: go-elasticsearch-alerts
   type: git
   source:
     private_key: ((github-private-key))
     access_token: ((github-access-token))
     uri: ((github-repo))
     branch: master
-    tag_filter: 'v*'
+    clean_tags: true
+
+- name: go-elasticsearch-alerts-bumped
+  type: git
+  source:
+    private_key: ((github-private-key))
+    access_token: ((github-access-token))
+    uri: ((github-repo))
+    branch: master
 
 - name: golang
   type: registry-image
   source:
     repository: golang
-    tag: 1.11.4-alpine3.8
+    tag: 1.12-alpine3.9
+
+- name: python
+  type: registry-image
+  source:
+    repository: python
+    tag: 3.7.3-alpine3.9
 
 - name: slack
   type: slack-alert
@@ -55,50 +69,98 @@ resources:
 #
 # ====================================
 jobs:
-- name: test-pr
+- name: validate-pull-request
   build_logs_to_retain: 30
   serial: true
   plan:
   - in_parallel:
-    - get: test-pull-request
+    - get: go-elasticsearch-alerts-pr
       trigger: true
     - get: golang
-  - put: test-pull-request
+  - put: go-elasticsearch-alerts-pr
     params:
-      path: test-pull-request
+      path: go-elasticsearch-alerts-pr
       status: pending
-      context: test-pr
-  - task: test-pr
+  - task: validate-pull-request
     image: golang
-    file: test-pull-request/ci/tasks/test-pull-request.yml
+    file: go-elasticsearch-alerts-pr/ci/tasks/validate.yml
+    input_mapping: {repo: go-elasticsearch-alerts-pr}
     on_failure:
-      put: test-pull-request
+      put: go-elasticsearch-alerts-pr
       params:
-        path: test-pull-request
+        path: go-elasticsearch-alerts-pr
         status: failure
-        context: test-pr
     on_abort:
-      put: test-pull-request
+      put: go-elasticsearch-alerts-pr
       params:
-        path: test-pull-request
+        path: go-elasticsearch-alerts-pr
         status: error
-        context: test-pr
-  - put: test-pull-request
+  - put: go-elasticsearch-alerts-pr
     params:
-      path: test-pull-request
+      path: go-elasticsearch-alerts-pr
       status: success
-      context: test-pr
 
-- name: build-release
+- name: validate-master
+  build_logs_to_retain: 30
   serial: true
   plan:
   - in_parallel:
-    - get: new-release
+    - get: go-elasticsearch-alerts
       trigger: true
+    - get: golang
+  - task: validate-master
+    image: golang
+    file: go-elasticsearch-alerts/ci/tasks/validate.yml
+    input_mapping: {repo: go-elasticsearch-alerts}
+    on_failure:
+      put: slack
+      params: {alert_type: failed}
+    on_abort:
+      put: slack
+      params: {alert_type: aborted}
+
+- name: build-new-release
+  build_logs_to_retain: 30
+  serial: true
+  plan:
+  - in_parallel:
+    - get: go-elasticsearch-alerts
+      trigger: true
+      passed: [validate-master]
+    - get: python
+  - task: build-release
+    image: python
+    file: go-elasticsearch-alerts/ci/tasks/build-release.yml
+    input_mapping: {repo: go-elasticsearch-alerts}
+    output_mapping: {repo-dirty: go-elasticsearch-alerts-dirty}
+    params:
+      GITHUB_ACTOR: ((github-actor))
+      GITHUB_EMAIL: ((github-email))
+    on_success:
+      put: go-elasticsearch-alerts-bumped
+      params:
+        repository: go-elasticsearch-alerts-dirty
+        merge: true
+    on_failure:
+      put: slack
+      params: {alert_type: failed}
+    on_abort:
+      put: slack
+      params: {alert_type: aborted}
+
+- name: publish-release
+  build_logs_to_retain: 30
+  serial: true
+  plan:
+  - in_parallel:
+    - get: go-elasticsearch-alerts-bumped
+      trigger: true
+      passed: [build-new-release]
     - get: golang
   - task: test-and-build
     image: golang
-    file: new-release/ci/tasks/build-release.yml
+    file: go-elasticsearch-alerts-bumped/ci/tasks/publish-release.yml
+    input_mapping: {repo: go-elasticsearch-alerts-bumped}
     params:
       GITHUB_TOKEN: ((github-access-token))
     on_failure:

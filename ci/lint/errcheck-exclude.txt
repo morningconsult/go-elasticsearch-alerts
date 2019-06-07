@@ -1,0 +1,4 @@
+(io.Closer).Close
+(net/http.ResponseWriter).Write
+os.Setenv
+(github.com/hashicorp/consul/api.Lock).Unlock
