@@ -17,7 +17,7 @@ set -eu
 readonly GOLANGCI_LINT_VERSION="v1.16.0"
 
 apk add -qU --no-cache --no-progress \
-    curl
+    curl \
     git
 
 curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin "${GOLANGCI_LINT_VERSION}"
