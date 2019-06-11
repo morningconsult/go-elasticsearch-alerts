@@ -7,7 +7,7 @@ def enumerate_semver(version):
     return (int(i.strip('vV')) for i in version.split('.'))
 
 def get_latest_version(repo):
-    semver_re = re.compile("^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$")
+    semver_re = re.compile("^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$")
 
     semvers = [str(tag) for tag in repo.tags if semver_re.search(str(tag))]
 
@@ -21,8 +21,8 @@ def get_latest_version(repo):
 
     return semvers[0]
 
-def next_version(version, repo, branch='master'):
-    latest_tagged_commit = repo.commit(str(version))
+def next_version(latest_tag, version, repo, branch='master'):
+    latest_tagged_commit = repo.commit(latest_tag)
 
     pre_v1 = version.major < 1
 
@@ -48,8 +48,8 @@ def main():
     if latest_tag == '':
         print('No semantic version tags found')
         exit(1)
-    v = Version(latest_tag)
-    version = next_version(v, repo)
+    v = Version(latest_tag.strip("vV"))
+    version = next_version(latest_tag, v, repo)
     print(version)
 
 if __name__ == '__main__': main()
