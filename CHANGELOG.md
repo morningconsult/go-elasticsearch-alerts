@@ -2,6 +2,13 @@
 ## [Unreleased]
 
 ### Chore
+- Update deprecated field in .goreleaser.yml
+
+
+<a name="v0.1.5"></a>
+## [v0.1.5] - 2019-06-11
+### Chore
+- Bump version and update changelog [ci skip]
 - Bump version and update changelog [ci skip]
 - Bump version and update changelog [ci skip]
 - Add golang.org/x/xerrors and enforce authentication when setting pipeline
@@ -227,7 +234,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.5...HEAD
+[v0.1.5]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...v0.1.5
 [v0.1.4]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.2...v0.1.4
 [v0.1.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.0...v0.1.1
