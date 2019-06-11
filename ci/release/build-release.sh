@@ -52,4 +52,4 @@ git add ./VERSION ./CHANGELOG.md
 git commit -m "chore: Bump version and update changelog [ci skip]"
 
 # Tag the repo with the latest version
-git tag "${VERSION}"
+git tag "v${VERSION}"
