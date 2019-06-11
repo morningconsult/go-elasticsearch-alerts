@@ -1,17 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
-### Ci
-- Fix missing secrets [ci skip]
-
-
-<a name="0.0.2"></a>
-## [0.0.2] - 2019-06-11
 ### Chore
+- Bump version and update changelog [ci skip]
 - Bump version and update changelog [ci skip]
 - Add golang.org/x/xerrors and enforce authentication when setting pipeline
 - Fix linting issues
 - Removed github.com/hashicorp/helper/jsonutil as a dependency and general housekeeping
+
+### Ci
+- Fix missing secrets [ci skip]
 
 ### Feat
 - Improve pipeline
@@ -208,20 +206,12 @@
 
 
 <a name="v0.0.2"></a>
-## [v0.0.2] - 2018-11-27
+## v0.0.2 - 2018-11-27
 ### Bin
 - Deleted
 
 ### Chore
 - go fmt
-
-### Makefile
-- Allow for relative paths when running git-chglog
-
-
-<a name="0.0.1"></a>
-## 0.0.1 - 2018-11-27
-### Chore
 - Delete changelog
 - Added Changelog
 - Added license
@@ -229,13 +219,15 @@
 - minor changes
 - Fixed some mistakes
 
+### Makefile
+- Allow for relative paths when running git-chglog
+
 ### Vendor
 - Updated deps
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/0.0.2...HEAD
-[0.0.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...0.0.2
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...HEAD
 [v0.1.4]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.2...v0.1.4
 [v0.1.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.0...v0.1.1
@@ -260,4 +252,3 @@
 [v0.0.5]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.0.4...v0.0.5
 [v0.0.4]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.0.3...v0.0.4
 [v0.0.3]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.0.2...v0.0.3
-[v0.0.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/0.0.1...v0.0.2
