@@ -109,7 +109,7 @@ func TestBuildPayload(t *testing.T) {
 			[]*alert.Record{
 				{
 					Filter:    filter,
-					Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`, // nolint: lll
+					Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
 					BodyField: true,
 				},
 			},
@@ -117,7 +117,7 @@ func TestBuildPayload(t *testing.T) {
 				Attachments: []*Attachment{
 					{
 						Title:      rule,
-						Text:       fmt.Sprintf("%s (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```", filter), // nolint: lll
+						Text:       fmt.Sprintf("%s (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```", filter),
 						MarkdownIn: []string{"text"},
 						Color:      "#ff0000",
 						Footer:     "Go Elasticsearch Alerts",
@@ -126,7 +126,7 @@ func TestBuildPayload(t *testing.T) {
 					},
 					{
 						Title:      rule,
-						Text:       fmt.Sprintf("%s (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```", filter), // nolint: lll
+						Text:       fmt.Sprintf("%s (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```", filter),
 						MarkdownIn: []string{"text"},
 						Color:      "#ff0000",
 						Footer:     "Go Elasticsearch Alerts",
@@ -135,7 +135,7 @@ func TestBuildPayload(t *testing.T) {
 					},
 					{
 						Title:      rule,
-						Text:       fmt.Sprintf("%s (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```", filter), // nolint: lll
+						Text:       fmt.Sprintf("%s (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```", filter),
 						MarkdownIn: []string{"text"},
 						Color:      "#ff0000",
 						Footer:     "Go Elasticsearch Alerts",
@@ -354,7 +354,7 @@ func ExampleAlertMethod_BuildPayload() {
 	records := []*alert.Record{
 		{
 			Filter:    "hits.hits._source",
-			Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`, // nolint: lll
+			Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
 			BodyField: true,
 		},
 		{

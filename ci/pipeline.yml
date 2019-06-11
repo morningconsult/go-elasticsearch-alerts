@@ -31,8 +31,6 @@ resources:
 - name: go-elasticsearch-alerts
   type: git
   source:
-    private_key: ((github-private-key))
-    access_token: ((github-access-token))
     uri: ((github-repo))
     branch: master
     clean_tags: true
@@ -40,8 +38,6 @@ resources:
 - name: go-elasticsearch-alerts-bumped
   type: git
   source:
-    private_key: ((github-private-key))
-    access_token: ((github-access-token))
     uri: ((github-repo))
     branch: master
 
