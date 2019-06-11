@@ -24,10 +24,6 @@ LOCAL_BINARY=bin/$(BINARY_NAME)
 
 all: build
 
-update_deps:
-	@GO111MODULE=on go mod tidy -v && go mod vendor -v
-.PHONY: update_deps
-
 docker: Dockerfile
 	scripts/docker-build.sh
 .PHONY: docker
@@ -39,10 +35,6 @@ $(LOCAL_BINARY): $(SOURCES)
 	@echo "==> Starting binary build..."
 	@sh -c "'./scripts/build-binary.sh' '$(shell git describe --tags --abbrev=0)' '$(shell git rev-parse --short HEAD)' '$(REPO)'"
 	@echo "==> Done. Your binary can be found at bin/go-elasticsearch-alerts."
-
-test:
-	@GO111MODULE=on go test -v -cover ./...
-.PHONY: test
 
 git_chglog_check:
 	if [ -z "$(shell which git-chglog)" ]; then \
@@ -79,7 +71,10 @@ set_pipeline: check_fly
 		--config ci/pipeline.yml \
 		--pipeline $(CONCOURSE_PIPELINE) \
 		--non-interactive \
-		-v github-repo="$$(git config remote.origin.url)"
+		--check-creds \
+		-v github-repo="$$(git config remote.origin.url)" \
+		-v github-actor="Dilan Bellinghoven" \
+		-v github-email="dbellinghoven@morningconsult.com"
 
 	$(FLY) --target mci-ci-oss unpause-pipeline \
 		--pipeline $(CONCOURSE_PIPELINE)

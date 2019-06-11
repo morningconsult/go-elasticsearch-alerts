@@ -15,26 +15,22 @@
 set -e
 
 readonly PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
-readonly GORELEASER_VERSION=v0.104.0
+readonly GORELEASER_VERSION="v0.108.0"
 
 echo "==> Installing APK dependencies"
 
 apk add -qU --no-cache --no-progress \
-  make \
-  bash \
   git \
-  gnupg \
-  bzr
+  gnupg
 
 echo "==> Installing goreleaser $GORELEASER_VERSION"
 
-wget --quiet -O /tmp/goreleaser.tar.gz https://github.com/goreleaser/goreleaser/releases/download/${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz
-tar xzf /tmp/goreleaser.tar.gz -C /tmp
-mv /tmp/goreleaser /usr/local/bin
+wget --quiet -O /tmp/goreleaser.tar.gz "https://github.com/goreleaser/goreleaser/releases/download/${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz"
+tar xzf /tmp/goreleaser.tar.gz -C /usr/local/bin
 
 echo "==> Running unit tests"
 
-CGO_ENABLED=0 make test
+CGO_ENABLED=0 GO111MODULE=on go test ./...
 
 goreleaser release \
   --rm-dist

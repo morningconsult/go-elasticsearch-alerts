@@ -15,17 +15,17 @@ package file
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/vault/helper/jsonutil"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
-func TestNewFileAlertMethod(t *testing.T) {
+func TestNewAlertMethod(t *testing.T) {
 	cases := []struct {
 		name     string
 		filename string
@@ -49,8 +49,9 @@ func TestNewFileAlertMethod(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			f, err := NewFileAlertMethod(&FileAlertMethodConfig{
+			a, err := NewAlertMethod(&AlertMethodConfig{
 				OutputFilepath: tc.filename,
 			})
 			if tc.err {
@@ -61,6 +62,10 @@ func TestNewFileAlertMethod(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatal(err)
+			}
+			f, ok := a.(*AlertMethod)
+			if !ok {
+				t.Fatalf("Expected type *AlertMethod")
 			}
 			if f.outputFilepath != tc.filename {
 				t.Fatalf("unexpected filename (got %q, expected %q)", f.outputFilepath, tc.filename)
@@ -88,16 +93,17 @@ func TestWrite(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			defer os.Remove(tc.filename)
-			f, err := NewFileAlertMethod(&FileAlertMethodConfig{
+			f, err := NewAlertMethod(&AlertMethodConfig{
 				OutputFilepath: tc.filename,
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
 			records := []*alert.Record{
-				&alert.Record{
+				{
 					Filter: "hits.hits._source",
 					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
@@ -119,32 +125,32 @@ func TestWrite(t *testing.T) {
 			}
 			defer jsonfile.Close()
 
-			json := new(OutputJSON)
-			if err = jsonutil.DecodeJSONFromReader(jsonfile, json); err != nil {
+			data := outputJSON{}
+			if err = json.NewDecoder(jsonfile).Decode(&data); err != nil {
 				t.Fatal(err)
 			}
 
-			if !reflect.DeepEqual(json.Records, records) {
-				t.Fatalf("Got:%+v\n\nExpected:\n%+v", json.Records, records)
+			if !reflect.DeepEqual(data.Records, records) {
+				t.Fatalf("Got:%+v\n\nExpected:\n%+v", data.Records, records)
 			}
 		})
 	}
 }
 
-func ExampleFileAlertMethod_Write() {
+func ExampleAlertMethod_Write() {
 	records := []*alert.Record{
-		&alert.Record{
+		{
 			Filter: "hits.hits._source",
 			Text:   `Lorem ipsum dolor sit amet...`,
 		},
-		&alert.Record{
+		{
 			Filter: "aggregation.hostname.buckets",
 			Fields: []*alert.Field{
-				&alert.Field{
+				{
 					Key:   "foo",
 					Count: 2,
 				},
-				&alert.Field{
+				{
 					Key:   "bar",
 					Count: 3,
 				},
@@ -152,11 +158,11 @@ func ExampleFileAlertMethod_Write() {
 		},
 	}
 
-	fm, err := NewFileAlertMethod(&FileAlertMethodConfig{
+	fm, err := NewAlertMethod(&AlertMethodConfig{
 		OutputFilepath: "testdata/results.log",
 	})
 	if err != nil {
-		fmt.Printf("error creating new *FileAlertMethod: %v", err)
+		fmt.Printf("error creating new *AlertMethod: %v", err)
 		return
 	}
 

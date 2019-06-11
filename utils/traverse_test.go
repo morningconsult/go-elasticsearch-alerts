@@ -121,6 +121,7 @@ func TestGet(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			out := Get(tc.json, tc.path)
 			if !reflect.DeepEqual(out, tc.output) {
@@ -232,6 +233,7 @@ func TestGetAll(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			out := GetAll(tc.json, tc.path)
 			if !reflect.DeepEqual(out, tc.output) {

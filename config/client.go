@@ -16,11 +16,11 @@ package config
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hashicorp/go-cleanhttp"
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
+	"golang.org/x/xerrors"
 )
 
 // ClientConfig is used to create new configured new
@@ -66,25 +66,25 @@ func (c *Config) NewESClient() (*http.Client, error) {
 	}
 
 	if c.Elasticsearch.Client.CACert == "" {
-		return nil, fmt.Errorf("no path to CA certificate")
+		return nil, xerrors.New("no path to CA certificate")
 	}
 	if c.Elasticsearch.Client.ClientCert == "" {
-		return nil, fmt.Errorf("no path to client certificate")
+		return nil, xerrors.New("no path to client certificate")
 	}
 	if c.Elasticsearch.Client.ClientKey == "" {
-		return nil, fmt.Errorf("no path to client key")
+		return nil, xerrors.New("no path to client key")
 	}
 
 	// Load client certificate
 	cert, err := tls.LoadX509KeyPair(c.Elasticsearch.Client.ClientCert, c.Elasticsearch.Client.ClientKey)
 	if err != nil {
-		return nil, fmt.Errorf("error loading X509 key pair: %v", err)
+		return nil, xerrors.Errorf("error loading X509 key pair: %w", err)
 	}
 
 	// Load CA certificate
 	caCert, err := ioutil.ReadFile(c.Elasticsearch.Client.CACert)
 	if err != nil {
-		return nil, fmt.Errorf("error reading CA certificate file: %v", err)
+		return nil, xerrors.Errorf("error reading CA certificate file: %w", err)
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)

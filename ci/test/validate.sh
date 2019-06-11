@@ -12,18 +12,19 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-set -e
+set -eu
 
-readonly PROJECT="github.com/morningconsult/go-elasticsearch-alerts"
+readonly GOLANGCI_LINT_VERSION="v1.17.0"
 
-# NOTE: This script is intended to be run in a
-#   golang:1.11.3-alpine3.8 Docker container
+ROOT=$( cd "$( dirname "${0}" )/../.." && pwd )
+cd "${ROOT}"
 
-# Install dependencies
 apk add -qU --no-cache --no-progress \
-  make \
-  git \
-  bzr
+    curl \
+    git
 
-# Run tests
-CGO_ENABLED=0 make test
+curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin "${GOLANGCI_LINT_VERSION}"
+
+CGO_ENABLED=0 golangci-lint run ./...
+
+CGO_ENABLED=0 GO111MODULE=on go test ./...

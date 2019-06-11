@@ -14,11 +14,9 @@
 package command
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/go-hclog"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/mitchellh/mapstructure"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/email"
@@ -26,29 +24,35 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/slack"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
+	"golang.org/x/xerrors"
 )
 
-func buildQueryHandlers(rules []*config.RuleConfig, esURL string, esClient *http.Client, logger hclog.Logger) ([]*query.QueryHandler, error) {
+func buildQueryHandlers(
+	rules []*config.RuleConfig,
+	esURL string,
+	esClient *http.Client,
+	logger hclog.Logger,
+) ([]*query.QueryHandler, error) {
 	if len(rules) < 1 {
-		return nil, errors.New("at least one rule must be provided")
+		return nil, xerrors.New("at least one rule must be provided")
 	}
 	if logger == nil {
-		return nil, errors.New("no logger provided")
+		return nil, xerrors.New("no logger provided")
 	}
 	if esClient == nil {
-		return nil, errors.New("no HTTP client provided")
+		return nil, xerrors.New("no HTTP client provided")
 	}
 	if esURL == "" {
-		return nil, errors.New("no URL provided")
+		return nil, xerrors.New("no URL provided")
 	}
 
-	var queryHandlers []*query.QueryHandler
+	queryHandlers := make([]*query.QueryHandler, 0, len(rules))
 	for _, rule := range rules {
-		var methods []alert.AlertMethod
+		var methods []alert.Method
 		for _, output := range rule.Outputs {
 			method, err := buildMethod(output)
 			if err != nil {
-				return nil, fmt.Errorf("error creating alert.AlertMethod: %v", err)
+				return nil, xerrors.Errorf("error creating alert.AlertMethod: %v", err)
 			}
 			methods = append(methods, method)
 		}
@@ -65,50 +69,41 @@ func buildQueryHandlers(rules []*config.RuleConfig, esURL string, esClient *http
 			Filters:      rule.Filters,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error creating new *query.QueryHandler: %v", err)
+			return nil, xerrors.Errorf("error creating new *query.QueryHandler: %v", err)
 		}
 		queryHandlers = append(queryHandlers, handler)
 	}
 	return queryHandlers, nil
 }
 
-func buildMethod(output *config.OutputConfig) (alert.AlertMethod, error) {
-	var method alert.AlertMethod
+func buildMethod(output *config.OutputConfig) (alert.Method, error) {
+	var method alert.Method
 	var err error
 
 	switch output.Type {
 	case "slack":
-		slackConfig := new(slack.SlackAlertMethodConfig)
+		slackConfig := new(slack.AlertMethodConfig)
 		if err = mapstructure.Decode(output.Config, slackConfig); err != nil {
-			return nil, fmt.Errorf("error decoding Slack output configuration: %v", err)
+			return nil, xerrors.Errorf("error decoding Slack output configuration: %v", err)
 		}
-
-		method, err = slack.NewSlackAlertMethod(slackConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error creating new Slack output method: %v", err)
-		}
+		method, err = slack.NewAlertMethod(slackConfig)
 	case "file":
-		fileConfig := new(file.FileAlertMethodConfig)
+		fileConfig := new(file.AlertMethodConfig)
 		if err = mapstructure.Decode(output.Config, fileConfig); err != nil {
-			return nil, fmt.Errorf("error decoding file output configuration: %v", err)
+			return nil, xerrors.Errorf("error decoding file output configuration: %v", err)
 		}
-
-		method, err = file.NewFileAlertMethod(fileConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error creating new file output method: %v", err)
-		}
+		method, err = file.NewAlertMethod(fileConfig)
 	case "email":
-		emailConfig := new(email.EmailAlertMethodConfig)
+		emailConfig := new(email.AlertMethodConfig)
 		if err = mapstructure.Decode(output.Config, emailConfig); err != nil {
-			return nil, fmt.Errorf("error decoding email output configuration: %v", err)
+			return nil, xerrors.Errorf("error decoding email output configuration: %v", err)
 		}
-
-		method, err = email.NewEmailAlertMethod(emailConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error creating new email output method: %v", err)
-		}
+		method, err = email.NewAlertMethod(emailConfig)
 	default:
-		return nil, fmt.Errorf("output type %q is not supported", output.Type)
+		return nil, xerrors.Errorf("output type %q is not supported", output.Type)
+	}
+	if err != nil {
+		return nil, xerrors.Errorf("error creating new %s output method: %v", output.Type, err)
 	}
 	return method, nil
 }

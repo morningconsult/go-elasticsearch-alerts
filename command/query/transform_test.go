@@ -16,6 +16,7 @@ package query
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -48,14 +49,14 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo",
 							Count: 2,
 						},
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 3,
 						},
@@ -82,10 +83,10 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 3,
 						},
@@ -115,10 +116,10 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 3,
 						},
@@ -172,22 +173,22 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets.program.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets.program.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo - bim",
 							Count: 2,
 						},
-						&alert.Field{
+						{
 							Key:   "foo - baz",
 							Count: 3,
 						},
-						&alert.Field{
+						{
 							Key:   "bar - ayy",
 							Count: 1,
 						},
-						&alert.Field{
+						{
 							Key:   "bar - lmao",
 							Count: 2,
 						},
@@ -222,14 +223,14 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo",
 							Count: 2,
 						},
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 3,
 						},
@@ -269,14 +270,14 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo",
 							Count: 2,
 						},
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 3,
 						},
@@ -319,22 +320,23 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{"aggregations.hostname.buckets"},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo",
 							Count: 2,
 						},
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 3,
 						},
 					},
 				},
-				&alert.Record{
-					Filter: "hits.hits._source",
-					Text:   "{\n    \"ayy\": \"lmao\"\n}",
+				{
+					Filter:    "hits.hits._source",
+					Text:      "{\n    \"ayy\": \"lmao\"\n}",
+					BodyField: true,
 				},
 			},
 			1,
@@ -360,7 +362,7 @@ func TestTransform(t *testing.T) {
 			},
 			[]string{},
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "hits.hits._source",
 					Text: `{
     "ayy": "lmao"
@@ -369,6 +371,7 @@ func TestTransform(t *testing.T) {
 {
     "yeah": "buddy"
 }`,
+					BodyField: true,
 				},
 			},
 			2,
@@ -377,6 +380,7 @@ func TestTransform(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{
 				filters:   tc.filters,
@@ -392,27 +396,8 @@ func TestTransform(t *testing.T) {
 			if tc.err && err == nil {
 				t.Fatal("expected an error but did not receive one")
 			}
-			for i, record := range tc.output {
-				if len(records) < i+1 {
-					t.Fatal("received records do not match expected records")
-				}
-				if records[i].Filter != record.Filter {
-					t.Fatalf("record %d has unexpected title (got %q, expected %q)", i,
-						records[i].Filter, record.Filter)
-				}
-				for j, field := range record.Fields {
-					if len(records[i].Fields) < j+1 {
-						t.Fatal("received records.Fields does not match expected fields")
-					}
-					if records[i].Fields[j].Key != field.Key {
-						t.Fatalf("field %d of record %d has unexpected key (got %q, expected %q)", i, j,
-							records[i].Fields[j].Key, field.Key)
-					}
-					if records[i].Fields[j].Count != field.Count {
-						t.Fatalf("field %d of record %d has unexpected key (got %q, expected %q)", i, j,
-							records[i].Fields[j].Count, field.Count)
-					}
-				}
+			if !cmp.Equal(tc.output, records) {
+				t.Errorf("Results differ:\n%v", cmp.Diff(tc.output, records))
 			}
 		})
 	}

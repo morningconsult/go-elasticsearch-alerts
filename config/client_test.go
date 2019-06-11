@@ -113,8 +113,9 @@ func TestNewESClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := tc.config.NewESClient()
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.config.NewESClient()
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")

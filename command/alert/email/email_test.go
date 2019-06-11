@@ -21,15 +21,15 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
-func TestNewEmailAlertMethod(t *testing.T) {
+func TestNewAlertMethod(t *testing.T) {
 	cases := []struct {
 		name   string
-		config *EmailAlertMethodConfig
+		config *AlertMethodConfig
 		err    bool
 	}{
 		{
 			"success",
-			&EmailAlertMethodConfig{
+			&AlertMethodConfig{
 				Host: "smtp.gmail.com",
 				Port: 587,
 				From: "test@gmail.com",
@@ -44,7 +44,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 		},
 		{
 			"password-set-in-env",
-			&EmailAlertMethodConfig{
+			&AlertMethodConfig{
 				Host: "smtp.gmail.com",
 				Port: 587,
 				From: "test@gmail.com",
@@ -58,7 +58,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 		},
 		{
 			"username-set-in-env",
-			&EmailAlertMethodConfig{
+			&AlertMethodConfig{
 				Host: "smtp.gmail.com",
 				Port: 587,
 				From: "test@gmail.com",
@@ -72,12 +72,13 @@ func TestNewEmailAlertMethod(t *testing.T) {
 		},
 		{
 			"missing-required-fields",
-			&EmailAlertMethodConfig{},
+			&AlertMethodConfig{},
 			true,
 		},
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			switch tc.name {
 			case "password-set-in-env":
@@ -88,7 +89,7 @@ func TestNewEmailAlertMethod(t *testing.T) {
 				defer os.Unsetenv(EnvEmailAuthUsername)
 			default:
 			}
-			_, err := NewEmailAlertMethod(tc.config)
+			_, err := NewAlertMethod(tc.config)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -104,43 +105,43 @@ func TestNewEmailAlertMethod(t *testing.T) {
 
 func TestBuildMessage(t *testing.T) {
 	records := []*alert.Record{
-		&alert.Record{
+		{
 			Filter: "aggregations.hostname.buckets",
 			Text:   "",
 			Fields: []*alert.Field{
-				&alert.Field{
+				{
 					Key:   "foo",
 					Count: 10,
 				},
-				&alert.Field{
+				{
 					Key:   "bar",
 					Count: 8,
 				},
 			},
 		},
-		&alert.Record{
+		{
 			Filter: "aggregations.hostname.buckets.program.buckets",
 			Text:   "",
 			Fields: []*alert.Field{
-				&alert.Field{
+				{
 					Key:   "foo - bim",
 					Count: 3,
 				},
-				&alert.Field{
+				{
 					Key:   "foo - baz",
 					Count: 7,
 				},
-				&alert.Field{
+				{
 					Key:   "bar - hello",
 					Count: 6,
 				},
-				&alert.Field{
+				{
 					Key:   "bar - world",
 					Count: 2,
 				},
 			},
 		},
-		&alert.Record{
+		{
 			Filter: "hits.hits._source",
 			Text:   "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
 		},
@@ -216,7 +217,7 @@ tr:nth-child(even) {
 </body>
 </html>`
 
-	eh := &EmailAlertMethod{}
+	eh := &AlertMethod{}
 	msg, err := eh.BuildMessage("Test Error", records)
 	if err != nil {
 		t.Fatal(err)
@@ -226,51 +227,51 @@ tr:nth-child(even) {
 	}
 }
 
-func ExampleEmailAlertMethod_BuildMessage() {
+func ExampleAlertMethod_BuildMessage() {
 	records := []*alert.Record{
-		&alert.Record{
+		{
 			Filter: "aggregations.hostname.buckets",
 			Text:   "",
 			Fields: []*alert.Field{
-				&alert.Field{
+				{
 					Key:   "foo",
 					Count: 10,
 				},
-				&alert.Field{
+				{
 					Key:   "bar",
 					Count: 8,
 				},
 			},
 		},
-		&alert.Record{
+		{
 			Filter: "aggregations.hostname.buckets.program.buckets",
 			Text:   "",
 			Fields: []*alert.Field{
-				&alert.Field{
+				{
 					Key:   "foo - bim",
 					Count: 3,
 				},
-				&alert.Field{
+				{
 					Key:   "foo - baz",
 					Count: 7,
 				},
-				&alert.Field{
+				{
 					Key:   "bar - hello",
 					Count: 6,
 				},
-				&alert.Field{
+				{
 					Key:   "bar - world",
 					Count: 2,
 				},
 			},
 		},
-		&alert.Record{
+		{
 			Filter: "hits.hits._source",
 			Text:   "{\n   \"ayy\": \"lmao\"\n}\n----------------------------------------\n{\n    \"hello\": \"world\"\n}",
 		},
 	}
 
-	em := &EmailAlertMethod{}
+	em := &AlertMethod{}
 
 	msg, _ := em.BuildMessage("Test Rule", records)
 

@@ -16,7 +16,7 @@ package alert
 import (
 	"testing"
 
-	"github.com/hashicorp/go-uuid"
+	uuid "github.com/hashicorp/go-uuid"
 )
 
 func TestInventory(t *testing.T) {

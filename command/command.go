@@ -20,18 +20,21 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hashicorp/go-hclog"
+	consul "github.com/hashicorp/consul/api"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
+	"golang.org/x/xerrors"
 )
 
 // Run starts the daemon running. This function should be
 // called directly within os.Exit() in your main.main()
 // function.
-func Run() int {
+func Run() int { // nolint: gocyclo
 
 	logger := hclog.Default()
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	shutdownCh := makeShutdownCh()
 	reloadCh := makeReloadCh(ctx)
@@ -56,8 +59,8 @@ func Run() int {
 
 	controller, err := newController(&controllerConfig{
 		queryHandlers: qhs,
-		alertHandler: alert.NewAlertHandler(&alert.AlertHandlerConfig{
-			Logger: logger,
+		alertHandler: alert.NewHandler(&alert.HandlerConfig{
+			Logger: logger.Named("alert_handler"),
 		}),
 	})
 	if err != nil {
@@ -66,62 +69,9 @@ func Run() int {
 	}
 
 	syncDoneCh := make(chan struct{})
+	syncErrCh := make(chan error)
 	if cfg.Distributed {
-		consulClient, err := newConsulClient(cfg.Consul)
-		if err != nil {
-			logger.Error("Error creating Consul API client", "error", err)
-			return 1
-		}
-
-		k, ok := cfg.Consul["consul_lock_key"]
-		if !ok || k == "" {
-			logger.Error("No 'consul_lock_key' value found")
-			return 1
-		}
-
-		lock, err := consulClient.LockKey(k)
-		if err != nil {
-			logger.Error("Error creating a Consul API lock", "error", err)
-			return 1
-		}
-
-		go func(ctx context.Context) {
-			defer func() {
-				close(syncDoneCh)
-			}()
-
-			for {
-				lockCh, err := lock.Lock(ctx.Done())
-				if err != nil {
-					logger.Error("Error attempting to acquire lock, exiting", "error", err)
-					close(shutdownCh)
-					return
-				}
-
-			UnlockedLoop:
-				for {
-					select {
-					case <-ctx.Done():
-						lock.Unlock()
-						return
-					default:
-						logger.Info("This process is now the leader")
-						controller.distLock.Set(true)
-					}
-
-					select {
-					case <-ctx.Done():
-						lock.Unlock()
-						return
-					case <-lockCh:
-						logger.Info("This process is no longer the leader")
-						controller.distLock.Set(false)
-						lock.Unlock()
-						break UnlockedLoop
-					}
-				}
-			}
-		}(ctx)
+		go handleDistOp(ctx, cfg.Consul, logger, controller, syncErrCh, syncDoneCh)
 	} else {
 		close(syncDoneCh)
 		controller.distLock.Set(true)
@@ -139,12 +89,19 @@ func Run() int {
 
 	defer func() {
 		<-syncDoneCh
+		close(syncErrCh)
 		<-controller.doneCh
 		<-reloadCh
 	}()
 
 	for {
 		select {
+		case err := <-syncErrCh:
+			if err != nil {
+				logger.Error("Error in distributed operation", "error", err)
+				cancel()
+				return 1
+			}
 		case <-shutdownCh:
 			logger.Info("SIGKILL received. Cleaning up goroutines...")
 			cancel()
@@ -166,7 +123,71 @@ func Run() int {
 			controller.updateHandlersCh <- qhs
 		}
 	}
-	return 0
+}
+
+func handleDistOp(
+	ctx context.Context,
+	cfg config.ConsulConfig,
+	logger hclog.Logger,
+	ctrl *controller,
+	errCh chan<- error,
+	doneCh chan struct{},
+) {
+	defer close(doneCh)
+
+	lock, err := newConsulLock(cfg)
+	if err != nil {
+		errCh <- err
+		return
+	}
+	defer lock.Unlock()
+
+	for {
+		lockCh, err := lock.Lock(ctx.Done())
+		if err != nil {
+			errCh <- xerrors.Errorf("error attempting to acquire lock: %v", err)
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			logger.Info("This process is now the leader")
+			ctrl.distLock.Set(true)
+		}
+
+	UnlockedLoop:
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-lockCh:
+				logger.Info("This process is no longer the leader")
+				ctrl.distLock.Set(false)
+				lock.Unlock()
+				break UnlockedLoop
+			}
+		}
+	}
+}
+
+func newConsulLock(cfg config.ConsulConfig) (*consul.Lock, error) {
+	client, err := newConsulClient(cfg)
+	if err != nil {
+		return nil, xerrors.Errorf("error creating Consul API client: %v", err)
+	}
+
+	k, ok := cfg["consul_lock_key"]
+	if !ok || k == "" {
+		return nil, xerrors.Errorf("no 'consul_lock_key' value found in config")
+	}
+
+	lock, err := client.LockKey(k)
+	if err != nil {
+		return nil, xerrors.Errorf("error creating a Consul API lock: %v", err)
+	}
+	return lock, nil
 }
 
 // makeShutdownCh returns a channel that can be used for shutdown

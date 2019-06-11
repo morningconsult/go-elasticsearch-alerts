@@ -17,20 +17,21 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hashicorp/consul/api"
+	consul "github.com/hashicorp/consul/api"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
-func newConsulClient(config map[string]string) (*api.Client, error) {
+func newConsulClient(config config.ConsulConfig) (*consul.Client, error) {
 	consulEnvVars := []string{
-		api.HTTPAddrEnvName,
-		api.HTTPTokenEnvName,
-		api.HTTPSSLEnvName,
-		api.HTTPCAFile,
-		api.HTTPCAPath,
-		api.HTTPClientCert,
-		api.HTTPClientKey,
-		api.HTTPTLSServerName,
-		api.HTTPSSLVerifyEnvName,
+		consul.HTTPAddrEnvName,
+		consul.HTTPTokenEnvName,
+		consul.HTTPSSLEnvName,
+		consul.HTTPCAFile,
+		consul.HTTPCAPath,
+		consul.HTTPClientCert,
+		consul.HTTPClientKey,
+		consul.HTTPTLSServerName,
+		consul.HTTPSSLVerifyEnvName,
 	}
 
 	for _, env := range consulEnvVars {
@@ -52,7 +53,7 @@ func newConsulClient(config map[string]string) (*api.Client, error) {
 		}
 	}
 
-	client, err := api.NewClient(&api.Config{})
+	client, err := consul.NewClient(&consul.Config{})
 	if err != nil {
 		return nil, err
 	}

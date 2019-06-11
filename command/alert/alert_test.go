@@ -16,22 +16,20 @@ package alert
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"io"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/vault/helper/jsonutil"
+	hclog "github.com/hashicorp/go-hclog"
+	uuid "github.com/hashicorp/go-uuid"
+	"golang.org/x/xerrors"
 )
 
-// Ensure FileAlertMethod adheres to the AlertMethod interface
-var _ AlertMethod = (*fileAlertMethod)(nil)
+// Ensure Method adheres to the Method interface
+var _ Method = (*fileAlertMethod)(nil)
 
 type OutputJSON struct {
 	RuleName   string    `json:"rule_name"`
@@ -39,7 +37,7 @@ type OutputJSON struct {
 	Records    []*Record `json:"results"`
 }
 
-// dilealertMethod is defined here rather than importing
+// filealertMethod is defined here rather than importing
 // gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file
 // to avoid import cycle
 type fileAlertMethod struct {
@@ -47,23 +45,18 @@ type fileAlertMethod struct {
 }
 
 func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
-	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
-		return fmt.Errorf("error opening new file: %v", err)
+		return xerrors.Errorf("error opening new file: %v", err)
 	}
 	defer outfile.Close()
 
-	entry := &OutputJSON{
+	entry := OutputJSON{
 		RuleName:   rule,
 		ReceivedAt: time.Now(),
 		Records:    records,
 	}
-	data, err := jsonutil.EncodeJSON(entry)
-	if err != nil {
-		return fmt.Errorf("error JSON-encoding data: %v", err)
-	}
-
-	return write(outfile, data)
+	return json.NewEncoder(outfile).Encode(&entry)
 }
 
 // errorAlertMethod is a mock alert.AlertMethod used to simulate an
@@ -71,33 +64,15 @@ func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Rec
 type errorAlertMethod struct{}
 
 func (e *errorAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
-	return fmt.Errorf("test error")
-}
-
-func write(writer io.Writer, data []byte) error {
-	start := 0
-	for {
-		if start >= len(data) {
-			break
-		}
-
-		n, err := writer.Write(data[start:])
-		if err != nil {
-			return fmt.Errorf("error writing data: %v", err)
-		}
-
-		start += n
-	}
-	return nil
+	return xerrors.Errorf("test error")
 }
 
 func TestRun(t *testing.T) {
-	var wg sync.WaitGroup
 	outputCh := make(chan *Alert, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
-	ah := NewAlertHandler(&AlertHandlerConfig{
+	ah := NewHandler(&HandlerConfig{
 		Logger: hclog.NewNullLogger(),
 	})
 
@@ -111,23 +86,23 @@ func TestRun(t *testing.T) {
 	a := &Alert{
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
-		Methods:  []AlertMethod{fm},
+		Methods:  []Method{fm},
 		Records: []*Record{
-			&Record{
+			{
 				Filter: "test.rule.1",
 				Text:   "test text",
 				Fields: []*Field{
-					&Field{
+					{
 						Key:   "hello",
 						Count: 10,
 					},
-					&Field{
+					{
 						Key:   "world",
 						Count: 3,
 					},
 				},
 			},
-			&Record{
+			{
 				Filter: "test.rule.2",
 				Text:   "test text",
 			},
@@ -136,44 +111,40 @@ func TestRun(t *testing.T) {
 
 	outputCh <- a
 
-	wg.Add(1)
-
 	go ah.Run(ctx, outputCh)
 
 	defer func() {
 		cancel()
 		<-ah.DoneCh
 	}()
-	for {
-		select {
-		case <-ctx.Done():
-			t.Fatal("context timed out")
-		case <-time.After(500 * time.Millisecond):
-			// check for file
-			logfile, err := os.Open(filename)
-			if err != nil {
-				t.Fatal(err)
-			}
 
-			json := new(OutputJSON)
-			if err = jsonutil.DecodeJSONFromReader(logfile, json); err != nil {
-				t.Fatal(err)
-			}
+	select {
+	case <-ctx.Done():
+		t.Fatal("context timed out")
+	case <-time.After(500 * time.Millisecond):
+		// check for file
+		logfile, err := os.Open(filepath.Clean(filename))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer logfile.Close()
 
-			if json.RuleName != a.RuleName {
-				t.Fatalf("rule name mismatch (got %q, expected %q)", json.RuleName, a.RuleName)
-			}
+		data := OutputJSON{}
+		if err = json.NewDecoder(logfile).Decode(&data); err != nil {
+			t.Fatal(err)
+		}
 
-			if len(json.Records) != len(a.Records) {
-				t.Fatalf("received unexpected number of records (got %d, expected %d)", len(a.Records), len(json.Records))
-			}
-			return
+		if data.RuleName != a.RuleName {
+			t.Fatalf("rule name mismatch (got %q, expected %q)", data.RuleName, a.RuleName)
+		}
+
+		if len(data.Records) != len(a.Records) {
+			t.Fatalf("received unexpected number of records (got %d, expected %d)", len(a.Records), len(data.Records))
 		}
 	}
 }
 
 func TestRunError(t *testing.T) {
-	var wg sync.WaitGroup
 	outputCh := make(chan *Alert, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -182,7 +153,7 @@ func TestRunError(t *testing.T) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Output: buf,
 	})
-	ah := NewAlertHandler(&AlertHandlerConfig{
+	ah := NewHandler(&HandlerConfig{
 		Logger: logger,
 	})
 
@@ -191,23 +162,23 @@ func TestRunError(t *testing.T) {
 	a := &Alert{
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
-		Methods:  []AlertMethod{em},
+		Methods:  []Method{em},
 		Records: []*Record{
-			&Record{
+			{
 				Filter: "test.rule.1",
 				Text:   "test text",
 				Fields: []*Field{
-					&Field{
+					{
 						Key:   "hello",
 						Count: 10,
 					},
-					&Field{
+					{
 						Key:   "world",
 						Count: 3,
 					},
 				},
 			},
-			&Record{
+			{
 				Filter: "test.rule.2",
 				Text:   "test text",
 			},
@@ -216,8 +187,6 @@ func TestRunError(t *testing.T) {
 
 	outputCh <- a
 
-	wg.Add(1)
-
 	go ah.Run(ctx, outputCh)
 
 	defer func() {
@@ -225,10 +194,10 @@ func TestRunError(t *testing.T) {
 		<-ah.DoneCh
 	}()
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(7 * time.Second)
 
 	// Should attempt to execute Write() 3 times (see logs)
-	expected := `[ERROR] [Alert Handler] error returned by alert function: error="test error" remaining_retries=0`
+	expected := `[ERROR] error returned by alert function: error="test error" remaining_retries=0`
 	if !strings.Contains(buf.String(), expected) {
 		t.Fatalf("Expected errors to contain:\n\t%s\nGot:\n\t%s", expected, buf.String())
 	}

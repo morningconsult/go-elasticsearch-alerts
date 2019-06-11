@@ -23,20 +23,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/vault/helper/jsonutil"
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
-func TestNewSlackAlertMethod(t *testing.T) {
+func TestNewAlertMethod(t *testing.T) {
 	cases := []struct {
 		name   string
-		config *SlackAlertMethodConfig
+		config *AlertMethodConfig
 		err    bool
 	}{
 		{
 			"success",
-			&SlackAlertMethodConfig{
+			&AlertMethodConfig{
 				WebhookURL: "https://example.com",
 				Text:       "test",
 				Channel:    "#test",
@@ -51,7 +50,7 @@ func TestNewSlackAlertMethod(t *testing.T) {
 		},
 		{
 			"no-webhook",
-			&SlackAlertMethodConfig{
+			&AlertMethodConfig{
 				Text: "text",
 			},
 			true,
@@ -59,8 +58,9 @@ func TestNewSlackAlertMethod(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			s, err := NewSlackAlertMethod(tc.config)
+			a, err := NewAlertMethod(tc.config)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -69,6 +69,11 @@ func TestNewSlackAlertMethod(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatal(err)
+			}
+
+			s, ok := a.(*AlertMethod)
+			if !ok {
+				t.Fatalf("Expected type *AlertMethod")
 			}
 
 			if s.channel != tc.config.Channel {
@@ -102,7 +107,7 @@ func TestBuildPayload(t *testing.T) {
 		{
 			"pagination",
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter:    filter,
 					Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
 					BodyField: true,
@@ -110,7 +115,7 @@ func TestBuildPayload(t *testing.T) {
 			},
 			&Payload{
 				Attachments: []*Attachment{
-					&Attachment{
+					{
 						Title:      rule,
 						Text:       fmt.Sprintf("%s (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```", filter),
 						MarkdownIn: []string{"text"},
@@ -119,7 +124,7 @@ func TestBuildPayload(t *testing.T) {
 						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
 						Timestamp:  time.Now().Unix(),
 					},
-					&Attachment{
+					{
 						Title:      rule,
 						Text:       fmt.Sprintf("%s (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```", filter),
 						MarkdownIn: []string{"text"},
@@ -128,7 +133,7 @@ func TestBuildPayload(t *testing.T) {
 						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
 						Timestamp:  time.Now().Unix(),
 					},
-					&Attachment{
+					{
 						Title:      rule,
 						Text:       fmt.Sprintf("%s (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```", filter),
 						MarkdownIn: []string{"text"},
@@ -143,14 +148,14 @@ func TestBuildPayload(t *testing.T) {
 		{
 			"builds-fields",
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: filter,
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo",
 							Count: 8,
 						},
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 2,
 						},
@@ -159,7 +164,7 @@ func TestBuildPayload(t *testing.T) {
 			},
 			&Payload{
 				Attachments: []*Attachment{
-					&Attachment{
+					{
 						Title:      rule,
 						Text:       filter,
 						MarkdownIn: []string{"text"},
@@ -168,12 +173,12 @@ func TestBuildPayload(t *testing.T) {
 						Timestamp:  time.Now().Unix(),
 						Color:      defaultAttachmentColor,
 						Fields: []*Field{
-							&Field{
+							{
 								Title: "foo",
 								Value: "8",
 								Short: true,
 							},
-							&Field{
+							{
 								Title: "bar",
 								Value: "2",
 								Short: true,
@@ -185,11 +190,12 @@ func TestBuildPayload(t *testing.T) {
 		},
 	}
 
-	s := &SlackAlertMethod{
+	s := &AlertMethod{
 		textLimit: 200,
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			payload := s.BuildPayload(rule, tc.records)
 			if !reflect.DeepEqual(tc.expected.Attachments, payload.Attachments) {
@@ -214,18 +220,18 @@ func TestWrite(t *testing.T) {
 			"success",
 			200,
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "hits.hits._source",
 					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
-				&alert.Record{
+				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
-						&alert.Field{
+						{
 							Key:   "foo",
 							Count: 3,
 						},
-						&alert.Field{
+						{
 							Key:   "bar",
 							Count: 2,
 						},
@@ -244,7 +250,7 @@ func TestWrite(t *testing.T) {
 			"wrong-URL",
 			200,
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "hits.hits._source",
 					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
@@ -255,7 +261,7 @@ func TestWrite(t *testing.T) {
 			"non-200-response",
 			201,
 			[]*alert.Record{
-				&alert.Record{
+				{
 					Filter: "hits.hits._source",
 					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
@@ -265,6 +271,7 @@ func TestWrite(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := newMockSlackServer(tc.status)
 
@@ -281,7 +288,7 @@ func TestWrite(t *testing.T) {
 				url = ts.URL
 			}
 
-			s, err := NewSlackAlertMethod(&SlackAlertMethodConfig{
+			s, err := NewAlertMethod(&AlertMethodConfig{
 				WebhookURL: url,
 				Text:       "test",
 			})
@@ -315,7 +322,7 @@ func newMockSlackServer(status int) *httptest.Server {
 			}
 
 			var data map[string]interface{}
-			if err := jsonutil.DecodeJSONFromReader(r.Body, &data); err != nil {
+			if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 				http.Error(w, "Internal Server Error", 500)
 				return
 			}
@@ -326,7 +333,7 @@ func newMockSlackServer(status int) *httptest.Server {
 				return
 			}
 			w.WriteHeader(status)
-			w.Write([]byte("OK"))
+			w.Write([]byte("OK")) // nolint: errcheck
 			return
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -343,21 +350,21 @@ func prettyJSON(t *testing.T, v interface{}) string {
 	return string(data)
 }
 
-func ExampleSlackAlertMethod_BuildPayload() {
+func ExampleAlertMethod_BuildPayload() {
 	records := []*alert.Record{
-		&alert.Record{
+		{
 			Filter:    "hits.hits._source",
 			Text:      `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`,
 			BodyField: true,
 		},
-		&alert.Record{
+		{
 			Filter: "aggregation.hostname.buckets",
 			Fields: []*alert.Field{
-				&alert.Field{
+				{
 					Key:   "foo",
 					Count: 2,
 				},
-				&alert.Field{
+				{
 					Key:   "bar",
 					Count: 3,
 				},
@@ -365,7 +372,7 @@ func ExampleSlackAlertMethod_BuildPayload() {
 		},
 	}
 
-	sm, _ := NewSlackAlertMethod(&SlackAlertMethodConfig{
+	a, _ := NewAlertMethod(&AlertMethodConfig{
 		WebhookURL: "https://hooks.slack.com/services/ABCDEFG",
 		Channel:    "#alerts",
 		Text:       "New alert!",
@@ -373,11 +380,13 @@ func ExampleSlackAlertMethod_BuildPayload() {
 		TextLimit:  200,
 	})
 
+	sm := a.(*AlertMethod)
+
 	payload := sm.BuildPayload("Test rule", records)
 
 	// This loop is performed in order that tests will pass --
 	// it is not necessary to perform this
-	for i, _ := range payload.Attachments {
+	for i := range payload.Attachments {
 		payload.Attachments[i].Timestamp = 1
 	}
 	data, _ := json.MarshalIndent(payload, "", "    ")

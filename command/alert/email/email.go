@@ -16,24 +16,32 @@ package email
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/smtp"
 	"os"
 	"strings"
 
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"golang.org/x/xerrors"
 )
 
 const (
+	// EnvEmailAuthUsername sets the username with which to
+	// authenticate to the SMTP server.
 	EnvEmailAuthUsername = "GO_ELASTICSEARCH_ALERTS_SMTP_USERNAME"
+
+	// EnvEmailAuthPassword set the password with which to
+	// authenticate to the SMTP server.
 	EnvEmailAuthPassword = "GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD"
 )
 
-var _ alert.AlertMethod = (*EmailAlertMethod)(nil)
+var _ alert.Method = (*AlertMethod)(nil)
 
-type EmailAlertMethodConfig struct {
+// AlertMethodConfig is used to configure where email
+// alerts should be sent.
+type AlertMethodConfig struct {
 	Host     string   `mapstructure:"host"`
 	Port     int      `mapstructure:"port"`
 	From     string   `mapstructure:"from"`
@@ -42,28 +50,25 @@ type EmailAlertMethodConfig struct {
 	Password string   `mapstructure:"password"`
 }
 
-// NewEmailAlertMethod creates a new *EmailAlertMethod or a
+// AlertMethod implements the alert.Method interface
+// for writing new alerts to email.
+type AlertMethod struct {
+	host string
+	port int
+	from string
+	auth smtp.Auth
+	to   []string
+}
+
+// NewAlertMethod creates a new *AlertMethod or a
 // non-nil error if there was an error.
-func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, error) {
+func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config == nil {
-		return nil, errors.New("no config provided")
+		return nil, xerrors.New("no config provided")
 	}
 
-	errors := []string{}
-	if config.Host == "" {
-		errors = append(errors, "no SMTP host provided")
-	}
-
-	if config.Port == 0 {
-		errors = append(errors, "no SMTP port provided")
-	}
-
-	if config.From == "" {
-		errors = append(errors, "no sender address provided")
-	}
-
-	if len(config.To) < 1 {
-		errors = append(errors, "no recipient address(es) provided")
+	if err := validateConfig(config); err != nil {
+		return nil, err
 	}
 
 	if u := os.Getenv(EnvEmailAuthUsername); u != "" {
@@ -74,16 +79,12 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 		config.Password = p
 	}
 
-	if len(errors) > 0 {
-		return nil, fmt.Errorf("errors with your email output configuration:\n* %s", strings.Join(errors, "\n* "))
-	}
-
-	var auth smtp.Auth = nil
+	var auth smtp.Auth
 	if config.Username != "" && config.Password != "" {
 		auth = smtp.PlainAuth("", config.Username, config.Password, config.Host)
 	}
 
-	return &EmailAlertMethod{
+	return &AlertMethod{
 		host: config.Host,
 		port: config.Port,
 		from: config.From,
@@ -92,29 +93,41 @@ func NewEmailAlertMethod(config *EmailAlertMethodConfig) (*EmailAlertMethod, err
 	}, nil
 }
 
-type EmailAlertMethod struct {
-	host string
-	port int
-	from string
-	auth smtp.Auth
-	to   []string
+func validateConfig(config *AlertMethodConfig) error {
+	var allErrors *multierror.Error
+	if config.Host == "" {
+		allErrors = multierror.Append(allErrors, xerrors.New("no SMTP host provided"))
+	}
+
+	if config.Port == 0 {
+		allErrors = multierror.Append(allErrors, xerrors.New("no SMTP port provided"))
+	}
+
+	if config.From == "" {
+		allErrors = multierror.Append(allErrors, xerrors.New("no sender address provided"))
+	}
+
+	if len(config.To) < 1 {
+		allErrors = multierror.Append(allErrors, xerrors.New("no recipient address(es) provided"))
+	}
+	return allErrors.ErrorOrNil()
 }
 
 // Write creates an email message from the records and sends
 // it to the email address(es) specified at the creation of the
-// EmailAlertMethod. If there was an error sending the email,
+// AlertMethod. If there was an error sending the email,
 // it returns a non-nil error.
-func (e *EmailAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
+func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	body, err := e.BuildMessage(rule, records)
 	if err != nil {
-		return fmt.Errorf("error creating email message: %v", err)
+		return xerrors.Errorf("error creating email message: %v", err)
 	}
 	return smtp.SendMail(fmt.Sprintf("%s:%d", e.host, e.port), e.auth, e.from, e.to, []byte(body))
 }
 
 // BuildMessage creates an email message from the provided
 // records. It will return a non-nil error if an error occurs.
-func (e *EmailAlertMethod) BuildMessage(rule string, records []*alert.Record) (string, error) {
+func (e *AlertMethod) BuildMessage(rule string, records []*alert.Record) (string, error) {
 	alert := struct {
 		Name    string
 		Records []*alert.Record
@@ -125,7 +138,8 @@ func (e *EmailAlertMethod) BuildMessage(rule string, records []*alert.Record) (s
 
 	funcs := template.FuncMap{
 		"tabsAndLines": func(text string) template.HTML {
-			return template.HTML(strings.Replace(strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1), " ", "&nbsp;", -1))
+			escaped := strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1)
+			return template.HTML(strings.Replace(escaped, " ", "&nbsp;", -1)) // nolint: gosec
 		},
 	}
 
@@ -170,13 +184,13 @@ tr:nth-child(even) {
 </html>`
 	t, err := template.New("email").Funcs(funcs).Parse(tpl)
 	if err != nil {
-		return "", fmt.Errorf("error parsing email template: %v", err)
+		return "", xerrors.Errorf("error parsing email template: %v", err)
 	}
 
 	buf := &bytes.Buffer{}
 	err = t.Execute(buf, alert)
 	if err != nil {
-		return "", fmt.Errorf("error executing email template: %v", err)
+		return "", xerrors.Errorf("error executing email template: %v", err)
 	}
 	return buf.String(), nil
 }

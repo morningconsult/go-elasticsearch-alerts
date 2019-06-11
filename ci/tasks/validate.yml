@@ -1,0 +1,7 @@
+---
+platform: linux
+inputs:
+  - name: repo
+run:
+  path: ci/test/validate.sh
+  dir: repo

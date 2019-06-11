@@ -1,0 +1,55 @@
+[run]
+  deadline = "5m"
+
+[issues]
+exclude = [
+  # golint: False positives for multi-file packages
+  'should have a package comment',
+  # gosec: Duplicate of errcheck
+  'G104: Errors unhandled',
+]
+exclude-rules = [
+  {
+    path = '_test\.go',
+    linters = [
+      'dupl',
+      'goconst',
+      'gocyclo',
+      'scopelint',
+      'lll',
+      'goimports',
+    ]
+  },
+]
+exclude-use-default = false
+
+[linters]
+enable-all = true
+disable = [
+  "gochecknoglobals", # There are valid use cases for globals
+  "maligned",         # Readability is more important than saving bytes
+]
+
+[linters-settings]
+
+  [linters-settings.errcheck]
+  exclude = "./ci/lint/errcheck-exclude.txt"
+
+  [linters-settings.goconst]
+  min-len = 0
+  min-occurrences = 3
+
+  [linters-settings.gocyclo]
+  min-complexity = 10
+
+  [linters-settings.golint]
+  min-confidence = 0.0
+
+  [linters-settings.govet]
+  check-shadowing = true
+
+  [linters-settings.misspell]
+  locale = "US"
+
+  [linters-settings.nakedret]
+  max-func-lines = 0
