@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/memberlist v0.1.4 // indirect
 	github.com/miekg/dns v1.1.2 // indirect
-	github.com/mitchellh/go-homedir v1.0.0
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c // indirect
