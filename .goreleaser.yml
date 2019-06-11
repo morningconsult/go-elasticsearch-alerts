@@ -9,7 +9,7 @@ builds:
       - windows
       - darwin
       - linux
-archive:
+archives:
   name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
   replacements:
     darwin: Darwin
