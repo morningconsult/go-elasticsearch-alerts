@@ -17,7 +17,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -36,6 +35,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 	"github.com/robfig/cron"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -124,12 +124,12 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, fmt.Errorf("error getting hostname: %v", err)
+		return nil, xerrors.Errorf("error getting hostname: %v", err)
 	}
 
 	schedule, err := cron.Parse(config.Schedule)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing cron schedule: %v", err)
+		return nil, xerrors.Errorf("error parsing cron schedule: %v", err)
 	}
 
 	if config.Logger == nil {
@@ -164,25 +164,25 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 func validateConfig(config *QueryHandlerConfig) error {
 	var allErrors *multierror.Error
 	if config.Name == "" {
-		allErrors = multierror.Append(allErrors, errors.New("no rule name provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no rule name provided"))
 	}
 
 	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
 
 	if config.ESUrl == "" {
-		allErrors = multierror.Append(allErrors, errors.New("no Elasticsearch URL provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no Elasticsearch URL provided"))
 	}
 
 	if config.QueryIndex == "" {
-		allErrors = multierror.Append(allErrors, errors.New("no Elasticsearch index provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no Elasticsearch index provided"))
 	}
 
 	if len(config.AlertMethods) < 1 {
-		allErrors = multierror.Append(allErrors, errors.New("at least one alert method must be specified"))
+		allErrors = multierror.Append(allErrors, xerrors.New("at least one alert method must be specified"))
 	}
 
 	if config.QueryData == nil || len(config.QueryData) < 1 {
-		allErrors = multierror.Append(allErrors, errors.New("no query body provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no query body provided"))
 	}
 	return allErrors.ErrorOrNil()
 }
@@ -361,30 +361,30 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 		bytes.NewBufferString(payload),
 	)
 	if err != nil {
-		return fmt.Errorf("error making HTTP request: %v", err)
+		return xerrors.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("received non-200 response status (status: %q): Response body:\n%s",
+		return xerrors.Errorf("received non-200 response status (status: %q): Response body:\n%s",
 			resp.Status, q.readErrRespBody(resp))
 	}
 
 	var data map[string]interface{}
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return fmt.Errorf("error JSON-decoding response body: %v", err)
+		return xerrors.Errorf("error JSON-decoding response body: %v", err)
 	}
 
 	ackRaw, ok := data["acknowledged"]
 	if !ok {
-		return errors.New("json response has no 'acknowledged' field")
+		return xerrors.New("json response has no 'acknowledged' field")
 	}
 	ack, ok := ackRaw.(bool)
 	if !ok {
-		return errors.New("value of 'acknowledged' field of JSON response cannot be cast to boolean")
+		return xerrors.New("value of 'acknowledged' field of JSON response cannot be cast to boolean")
 	}
 	if !ack {
-		return errors.New("elasticsearch did not acknowledge creation of new template")
+		return xerrors.New("elasticsearch did not acknowledge creation of new template")
 	}
 	return nil
 }
@@ -420,7 +420,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 
 	u, err := url.Parse(q.StateAliasURL() + "/_search")
 	if err != nil {
-		return nil, fmt.Errorf("error parsing URL: %v", err)
+		return nil, xerrors.Errorf("error parsing URL: %v", err)
 	}
 	query := u.Query()
 	query.Add("filter_path", "hits.hits._source.next_query")
@@ -428,36 +428,36 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 
 	resp, err := q.makeRequest(ctx, "GET", u.String(), bytes.NewBufferString(payload))
 	if err != nil {
-		return nil, fmt.Errorf("error making HTTP request: %v", err)
+		return nil, xerrors.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("received non-200 response status (status: %q)", resp.Status)
+		return nil, xerrors.Errorf("received non-200 response status (status: %q)", resp.Status)
 	}
 
 	var data = make(map[string]interface{})
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil { // nolint: govet
-		return nil, fmt.Errorf("error JSON-decoding HTTP response: %v", err)
+		return nil, xerrors.Errorf("error JSON-decoding HTTP response: %v", err)
 	}
 
 	if len(data) < 1 {
-		return nil, errors.New("no records found for this rule")
+		return nil, xerrors.New("no records found for this rule")
 	}
 
 	nextRaw := utils.Get(data, "hits.hits[0]._source.next_query")
 	if nextRaw == nil {
-		return nil, fmt.Errorf("field 'next_query' not found")
+		return nil, xerrors.New("field 'next_query' not found")
 	}
 
 	nextString, ok := nextRaw.(string)
 	if !ok {
-		return nil, fmt.Errorf("'next_query' value could not be cast to string")
+		return nil, xerrors.New("'next_query' value could not be cast to string")
 	}
 
 	t, err := time.Parse(defaultTimestampFormat, nextString)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing time: %v", err)
+		return nil, xerrors.Errorf("error parsing time: %v", err)
 	}
 	return &t, nil
 }
@@ -484,17 +484,17 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 
 	payload := bytes.Buffer{}
 	if err := json.NewEncoder(&payload).Encode(&status); err != nil {
-		return fmt.Errorf("error JSON-encoding payload: %v", err)
+		return xerrors.Errorf("error JSON-encoding payload: %v", err)
 	}
 
 	resp, err := q.makeRequest(ctx, "POST", q.StateIndexURL()+"/_doc", &payload)
 	if err != nil {
-		return fmt.Errorf("error making HTTP request: %v", err)
+		return xerrors.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 201 {
-		return fmt.Errorf("failed to create new document (received status: %q). Response body:\n%s",
+		return xerrors.Errorf("failed to create new document (received status: %q). Response body:\n%s",
 			resp.Status, q.readErrRespBody(resp))
 	}
 	return nil
@@ -503,23 +503,23 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
 	payload := bytes.Buffer{}
 	if err := json.NewEncoder(&payload).Encode(&q.queryData); err != nil {
-		return nil, fmt.Errorf("error JSON-encoding Elasticsearch query body: %v", err)
+		return nil, xerrors.Errorf("error JSON-encoding Elasticsearch query body: %v", err)
 	}
 
 	resp, err := q.makeRequest(ctx, "GET", fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), &payload)
 	if err != nil {
-		return nil, fmt.Errorf("error making HTTP request: %v", err)
+		return nil, xerrors.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("received non-200 response status (status: %q). Response body:\n%s",
+		return nil, xerrors.Errorf("received non-200 response status (status: %q). Response body:\n%s",
 			resp.Status, q.readErrRespBody(resp))
 	}
 
 	var data = make(map[string]interface{})
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, fmt.Errorf("error JSON-decoding Elasticsearch response: %v", err)
+		return nil, xerrors.Errorf("error JSON-decoding Elasticsearch response: %v", err)
 	}
 	return data, nil
 }
@@ -531,7 +531,7 @@ func (q *QueryHandler) cleanedName() string {
 func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, data io.Reader) (*http.Response, error) {
 	req, err := q.newRequest(ctx, method, url, data)
 	if err != nil {
-		return nil, fmt.Errorf("error creating new request: %v", err)
+		return nil, xerrors.Errorf("error creating new request: %v", err)
 	}
 	return q.client.Do(req)
 }
@@ -542,7 +542,7 @@ func (q *QueryHandler) newRequest(ctx context.Context, method, url string, data 
 
 	req, err = http.NewRequest(method, url, data)
 	if err != nil {
-		return nil, fmt.Errorf("error creating new HTTP request instance: %v", err)
+		return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
 	}
 	if data != nil {
 		req.Header.Add("Content-Type", "application/json")

@@ -17,7 +17,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +25,7 @@ import (
 
 	hclog "github.com/hashicorp/go-hclog"
 	uuid "github.com/hashicorp/go-uuid"
+	"golang.org/x/xerrors"
 )
 
 // Ensure Method adheres to the Method interface
@@ -47,7 +47,7 @@ type fileAlertMethod struct {
 func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
 	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
-		return fmt.Errorf("error opening new file: %v", err)
+		return xerrors.Errorf("error opening new file: %v", err)
 	}
 	defer outfile.Close()
 
@@ -64,7 +64,7 @@ func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Rec
 type errorAlertMethod struct{}
 
 func (e *errorAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
-	return fmt.Errorf("test error")
+	return xerrors.Errorf("test error")
 }
 
 func TestRun(t *testing.T) {

@@ -16,14 +16,13 @@ package file
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"os"
 	"time"
 
 	multierror "github.com/hashicorp/go-multierror"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"golang.org/x/xerrors"
 )
 
 // Ensure AlertMethod adheres to the alert.Method interface
@@ -56,7 +55,7 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 
 	expanded, err := homedir.Expand(config.OutputFilepath)
 	if err != nil {
-		return nil, fmt.Errorf("error expanding file path %q: %v", config.OutputFilepath, err)
+		return nil, xerrors.Errorf("error expanding file path %q: %v", config.OutputFilepath, err)
 	}
 
 	return &AlertMethod{
@@ -67,11 +66,11 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 func validateConfig(config *AlertMethodConfig) error {
 	var allErrors *multierror.Error
 	if config == nil {
-		allErrors = multierror.Append(errors.New("no config provided"))
+		allErrors = multierror.Append(xerrors.New("no config provided"))
 	}
 
 	if config.OutputFilepath == "" {
-		allErrors = multierror.Append(errors.New("no file path provided"))
+		allErrors = multierror.Append(xerrors.New("no file path provided"))
 	}
 	return allErrors.ErrorOrNil()
 }
@@ -83,7 +82,7 @@ func validateConfig(config *AlertMethodConfig) error {
 func (f *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
-		return fmt.Errorf("error opening new file: %v", err)
+		return xerrors.Errorf("error opening new file: %v", err)
 	}
 	defer outfile.Close()
 

@@ -15,12 +15,12 @@ package command
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
+	"golang.org/x/xerrors"
 )
 
 type controllerConfig struct {
@@ -40,10 +40,10 @@ type controller struct {
 
 func newController(config *controllerConfig) (*controller, error) {
 	if config.alertHandler == nil {
-		return nil, errors.New("no *alert.Handler provided")
+		return nil, xerrors.New("no *alert.Handler provided")
 	}
 	if len(config.queryHandlers) < 1 {
-		return nil, errors.New("at least one *query.QueryHandler must be provided")
+		return nil, xerrors.New("at least one *query.QueryHandler must be provided")
 	}
 
 	return &controller{

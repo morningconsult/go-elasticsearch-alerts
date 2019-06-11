@@ -17,12 +17,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"golang.org/x/xerrors"
 )
 
 const defaultTextLimit = 6000
@@ -68,11 +68,11 @@ type Payload struct {
 // non-nil error if there was an error.
 func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config == nil {
-		return nil, errors.New("no config provided")
+		return nil, xerrors.New("no config provided")
 	}
 
 	if config.WebhookURL == "" {
-		return nil, fmt.Errorf("field 'output.config.webhook' must not be empty when using the Slack output method")
+		return nil, xerrors.New("field 'output.config.webhook' must not be empty when using the Slack output method")
 	}
 
 	if config.Client == nil {
@@ -162,12 +162,12 @@ func (s *AlertMethod) post(ctx context.Context, payload *Payload) error {
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error making HTTP request: %v", err)
+		return xerrors.Errorf("error making HTTP request: %v", err)
 	}
 	resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("received non-200 status code: %s", resp.Status)
+		return xerrors.Errorf("received non-200 status code: %s", resp.Status)
 	}
 
 	return err

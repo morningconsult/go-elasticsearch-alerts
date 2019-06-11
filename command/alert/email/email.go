@@ -16,7 +16,6 @@ package email
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/smtp"
@@ -25,6 +24,7 @@ import (
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -64,7 +64,7 @@ type AlertMethod struct {
 // non-nil error if there was an error.
 func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config == nil {
-		return nil, errors.New("no config provided")
+		return nil, xerrors.New("no config provided")
 	}
 
 	if err := validateConfig(config); err != nil {
@@ -96,19 +96,19 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 func validateConfig(config *AlertMethodConfig) error {
 	var allErrors *multierror.Error
 	if config.Host == "" {
-		allErrors = multierror.Append(allErrors, errors.New("no SMTP host provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no SMTP host provided"))
 	}
 
 	if config.Port == 0 {
-		allErrors = multierror.Append(allErrors, errors.New("no SMTP port provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no SMTP port provided"))
 	}
 
 	if config.From == "" {
-		allErrors = multierror.Append(allErrors, errors.New("no sender address provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no sender address provided"))
 	}
 
 	if len(config.To) < 1 {
-		allErrors = multierror.Append(allErrors, errors.New("no recipient address(es) provided"))
+		allErrors = multierror.Append(allErrors, xerrors.New("no recipient address(es) provided"))
 	}
 	return allErrors.ErrorOrNil()
 }
@@ -120,7 +120,7 @@ func validateConfig(config *AlertMethodConfig) error {
 func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	body, err := e.BuildMessage(rule, records)
 	if err != nil {
-		return fmt.Errorf("error creating email message: %v", err)
+		return xerrors.Errorf("error creating email message: %v", err)
 	}
 	return smtp.SendMail(fmt.Sprintf("%s:%d", e.host, e.port), e.auth, e.from, e.to, []byte(body))
 }
@@ -184,13 +184,13 @@ tr:nth-child(even) {
 </html>`
 	t, err := template.New("email").Funcs(funcs).Parse(tpl)
 	if err != nil {
-		return "", fmt.Errorf("error parsing email template: %v", err)
+		return "", xerrors.Errorf("error parsing email template: %v", err)
 	}
 
 	buf := &bytes.Buffer{}
 	err = t.Execute(buf, alert)
 	if err != nil {
-		return "", fmt.Errorf("error executing email template: %v", err)
+		return "", xerrors.Errorf("error executing email template: %v", err)
 	}
 	return buf.String(), nil
 }

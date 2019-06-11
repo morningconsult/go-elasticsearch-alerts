@@ -24,6 +24,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
+	"golang.org/x/xerrors"
 )
 
 // Run starts the daemon running. This function should be
@@ -144,7 +145,7 @@ func handleDistOp(
 	for {
 		lockCh, err := lock.Lock(ctx.Done())
 		if err != nil {
-			errCh <- fmt.Errorf("error attempting to acquire lock: %v", err)
+			errCh <- xerrors.Errorf("error attempting to acquire lock: %v", err)
 			return
 		}
 
@@ -174,17 +175,17 @@ func handleDistOp(
 func newConsulLock(cfg config.ConsulConfig) (*consul.Lock, error) {
 	client, err := newConsulClient(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Consul API client: %v", err)
+		return nil, xerrors.Errorf("error creating Consul API client: %v", err)
 	}
 
 	k, ok := cfg["consul_lock_key"]
 	if !ok || k == "" {
-		return nil, fmt.Errorf("no 'consul_lock_key' value found in config")
+		return nil, xerrors.Errorf("no 'consul_lock_key' value found in config")
 	}
 
 	lock, err := client.LockKey(k)
 	if err != nil {
-		return nil, fmt.Errorf("error creating a Consul API lock: %v", err)
+		return nil, xerrors.Errorf("error creating a Consul API lock: %v", err)
 	}
 	return lock, nil
 }

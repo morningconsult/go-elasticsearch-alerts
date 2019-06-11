@@ -71,6 +71,7 @@ set_pipeline: check_fly
 		--config ci/pipeline.yml \
 		--pipeline $(CONCOURSE_PIPELINE) \
 		--non-interactive \
+		--check-creds \
 		-v github-repo="$$(git config remote.origin.url)" \
 		-v github-actor="Dilan Bellinghoven" \
 		-v github-email="dbellinghoven@morningconsult.com"

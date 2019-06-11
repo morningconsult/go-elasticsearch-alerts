@@ -14,8 +14,6 @@
 package command
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 
 	hclog "github.com/hashicorp/go-hclog"
@@ -26,6 +24,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/slack"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
+	"golang.org/x/xerrors"
 )
 
 func buildQueryHandlers(
@@ -35,16 +34,16 @@ func buildQueryHandlers(
 	logger hclog.Logger,
 ) ([]*query.QueryHandler, error) {
 	if len(rules) < 1 {
-		return nil, errors.New("at least one rule must be provided")
+		return nil, xerrors.New("at least one rule must be provided")
 	}
 	if logger == nil {
-		return nil, errors.New("no logger provided")
+		return nil, xerrors.New("no logger provided")
 	}
 	if esClient == nil {
-		return nil, errors.New("no HTTP client provided")
+		return nil, xerrors.New("no HTTP client provided")
 	}
 	if esURL == "" {
-		return nil, errors.New("no URL provided")
+		return nil, xerrors.New("no URL provided")
 	}
 
 	queryHandlers := make([]*query.QueryHandler, 0, len(rules))
@@ -53,7 +52,7 @@ func buildQueryHandlers(
 		for _, output := range rule.Outputs {
 			method, err := buildMethod(output)
 			if err != nil {
-				return nil, fmt.Errorf("error creating alert.AlertMethod: %v", err)
+				return nil, xerrors.Errorf("error creating alert.AlertMethod: %v", err)
 			}
 			methods = append(methods, method)
 		}
@@ -70,7 +69,7 @@ func buildQueryHandlers(
 			Filters:      rule.Filters,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error creating new *query.QueryHandler: %v", err)
+			return nil, xerrors.Errorf("error creating new *query.QueryHandler: %v", err)
 		}
 		queryHandlers = append(queryHandlers, handler)
 	}
@@ -85,26 +84,26 @@ func buildMethod(output *config.OutputConfig) (alert.Method, error) {
 	case "slack":
 		slackConfig := new(slack.AlertMethodConfig)
 		if err = mapstructure.Decode(output.Config, slackConfig); err != nil {
-			return nil, fmt.Errorf("error decoding Slack output configuration: %v", err)
+			return nil, xerrors.Errorf("error decoding Slack output configuration: %v", err)
 		}
 		method, err = slack.NewAlertMethod(slackConfig)
 	case "file":
 		fileConfig := new(file.AlertMethodConfig)
 		if err = mapstructure.Decode(output.Config, fileConfig); err != nil {
-			return nil, fmt.Errorf("error decoding file output configuration: %v", err)
+			return nil, xerrors.Errorf("error decoding file output configuration: %v", err)
 		}
 		method, err = file.NewAlertMethod(fileConfig)
 	case "email":
 		emailConfig := new(email.AlertMethodConfig)
 		if err = mapstructure.Decode(output.Config, emailConfig); err != nil {
-			return nil, fmt.Errorf("error decoding email output configuration: %v", err)
+			return nil, xerrors.Errorf("error decoding email output configuration: %v", err)
 		}
 		method, err = email.NewAlertMethod(emailConfig)
 	default:
-		return nil, fmt.Errorf("output type %q is not supported", output.Type)
+		return nil, xerrors.Errorf("output type %q is not supported", output.Type)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("error creating new %s output method: %v", output.Type, err)
+		return nil, xerrors.Errorf("error creating new %s output method: %v", output.Type, err)
 	}
 	return method, nil
 }
