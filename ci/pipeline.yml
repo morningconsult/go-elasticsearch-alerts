@@ -24,37 +24,45 @@ resource_types:
 resources:
 - name: go-elasticsearch-alerts-pr
   type: pull-request
+  icon: github-circle
   source:
     repository: morningconsult/go-elasticsearch-alerts
     access_token: ((github-access-token))
 
 - name: go-elasticsearch-alerts
   type: git
+  icon: github-circle
   source:
     uri: ((github-repo))
+    private_key: ((github-private-key))
     branch: master
     clean_tags: true
 
 - name: go-elasticsearch-alerts-bumped
   type: git
+  icon: github-circle
   source:
     uri: ((github-repo))
+    private_key: ((github-private-key))
     branch: master
 
 - name: golang
   type: registry-image
+  icon: golf
   source:
     repository: golang
     tag: 1.12-alpine3.9
 
 - name: python
   type: registry-image
+  icon: language-python
   source:
     repository: python
     tag: 3.7.3-alpine3.9
 
 - name: slack
   type: slack-alert
+  icon: slack
   source:
     url: ((slack-webhook))
     channel: '#build'
