@@ -22,40 +22,40 @@ import (
 	"testing"
 )
 
-func TestParseConfig_MainConfig(t *testing.T) {
+func TestParseConfig_MainConfig(t *testing.T) { // nolint: gocyclo
 	cases := []struct {
 		name string
 		path string
-		data interface{}
+		data string
 		err  bool
 	}{
 		{
 			"success",
 			"testdata/config.json",
-			map[string]interface{}{
-				"elasticsearch": map[string]interface{}{
-					"server": map[string]interface{}{
-						"url": "http://127.0.0.1:9200",
-					},
-				},
-				"distributed": true,
-				"consul": map[string]string{
-					"consul_http_addr": "http://127.0.0.1:8500",
-					"consul_lock_key":  "go-elasticsearch-alerts/leader",
-				},
-			},
+			`{
+  "elasticsearch": {
+    "server": {
+      "url": "http://127.0.0.1:9200"
+    }
+  },
+  "distributed": true,
+  "consul": {
+    "consul_http_addr": "http://127.0.0.1:8500",
+    "consul_lock_key": "go-elasticsearch-alerts/leader"
+  }
+}`,
 			false,
 		},
 		{
 			"homedir-error",
 			"~testdata",
-			map[string]interface{}{},
+			"",
 			true,
 		},
 		{
 			"file-doesnt-exist",
 			"testdata/config.json",
-			map[string]interface{}{},
+			"",
 			true,
 		},
 		{
@@ -67,79 +67,63 @@ func TestParseConfig_MainConfig(t *testing.T) {
 		{
 			"no-elasticsearch-stanza",
 			"testdata/config.json",
-			map[string]interface{}{},
+			"",
 			true,
 		},
 		{
 			"no-elasticsearch-server-field",
 			"testdata/config.json",
-			map[string]interface{}{
-				"elasticsearch": map[string]interface{}{
-					"client": map[string]interface{}{
-						"tls_enabled": false,
-					},
-				},
-			},
+			`{"elasticsearch":{"client":{"tls_enabled":false}}}`,
 			true,
 		},
 		{
 			"no-elasticsearch-server-url-field",
 			"testdata/config.json",
-			map[string]interface{}{
-				"elasticsearch": map[string]interface{}{
-					"server": map[string]interface{}{},
-				},
-			},
+			`{"elasticsearch":{"server":{}}}`,
 			true,
 		},
 		{
 			"no-consul-field-when-distributed",
 			"testdata/config.json",
-			map[string]interface{}{
-				"elasticsearch": map[string]interface{}{
-					"server": map[string]interface{}{
-						"url": "http://127.0.0.1:9200",
-					},
-				},
-				"distributed": true,
-			},
+			`{"elasticsearch":{"server":{"url": "http://127.0.0.1:9200"}},"distributed": true}`,
 			true,
 		},
 		{
 			"no-consul-addr-field-when-distributed",
 			"testdata/config.json",
-			map[string]interface{}{
-				"elasticsearch": map[string]interface{}{
-					"server": map[string]interface{}{
-						"url": "http://127.0.0.1:9200",
-					},
-				},
-				"distributed": true,
-				"consul": map[string]string{
-					"irrelevant": "key",
-				},
-			},
+			`{
+  "elasticsearch": {
+    "server": {
+      "url": "http://127.0.0.1:9200"
+    }
+  },
+  "distributed": true,
+  "consul": {
+    "irrelevant": "key"
+  }
+}`,
 			true,
 		},
 		{
 			"no-consul-lock-field-when-distributed",
 			"testdata/config.json",
-			map[string]interface{}{
-				"elasticsearch": map[string]interface{}{
-					"server": map[string]interface{}{
-						"url": "http://127.0.0.1:9200",
-					},
-				},
-				"distributed": true,
-				"consul": map[string]string{
-					"consul_http_addr": "http://127.0.0.1:8500",
-				},
-			},
+			`{
+  "elasticsearch": {
+    "server": {
+      "url": "http://127.0.0.1:9200"
+    }
+  },
+  "distributed": true,
+  "consul": {
+    "consul_http_addr": "http://127.0.0.1:8500"
+  }
+}`,
 			true,
 		},
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			os.Setenv(envConfigFile, tc.path)
 			defer os.Unsetenv(envConfigFile)
@@ -150,7 +134,9 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			}
 
 			if tc.name != "homedir-error" && tc.name != "file-doesnt-exist" {
-				writeJSONToFile(t, tc.path, tc.data)
+				if err := ioutil.WriteFile(tc.path, []byte(tc.data), 0666); err != nil {
+					t.Fatal(err)
+				}
 				defer os.Remove(tc.path)
 			}
 
@@ -187,16 +173,16 @@ func TestParseConfig_MainConfig(t *testing.T) {
 				t.Fatal("config.Consul does not have key \"consul_lock_key\"")
 			}
 			if l != "go-elasticsearch-alerts/leader" {
-				t.Fatalf("config.Consul[\"consul_lock_key\"] unexpected value (got %q, expected \"go-elasticsearch-alerts/leader\")", l)
+				t.Fatalf("config.Consul[\"consul_lock_key\"] unexpected value (got %q, expected \"go-elasticsearch-alerts/leader\")", l) // nolint: lll
 			}
 		})
 	}
 }
 
-func TestParseConfig_Rules(t *testing.T) {
+func TestParseConfig_Rules(t *testing.T) { // nolint: gocyclo
 	type ruleFile struct {
 		filename string
-		data     interface{}
+		data     string
 	}
 
 	cases := []struct {
@@ -215,7 +201,7 @@ func TestParseConfig_Rules(t *testing.T) {
 			"not-a-json",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
 					"not a json!",
 				},
@@ -232,11 +218,9 @@ func TestParseConfig_Rules(t *testing.T) {
 			"malformed-json-string",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"body": `{{"bad": "json"}}`,
-					},
+					`{"body": {{"bad": "json"}`,
 				},
 			},
 			true,
@@ -245,22 +229,22 @@ func TestParseConfig_Rules(t *testing.T) {
 			"valid-json-string",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test",
-						"body":     `{"ayy": "lmao"}`,
-						"index":    "test-*",
-						"schedule": "* * * * * *",
-						"outputs": []interface{}{
-							map[string]interface{}{
-								"type": "file",
-								"config": map[string]string{
-									"file": "test.log",
-								},
-							},
-						},
-					},
+					`{
+  "name": "test",
+  "body": {"ayy": "lmao"},
+  "index": "test-*",
+  "schedule": "* * * * * *",
+  "outputs": [
+    {
+      "type": "file",
+      "config": {
+        "file": "test.log"
+      }
+    }
+  ]
+}`,
 				},
 			},
 			false,
@@ -269,11 +253,9 @@ func TestParseConfig_Rules(t *testing.T) {
 			"unsupported-body-type",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"body": 123,
-					},
+					`{"body": 123}`,
 				},
 			},
 			true,
@@ -282,17 +264,9 @@ func TestParseConfig_Rules(t *testing.T) {
 			"no-rule-name",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-					},
+					`{"body":{"query":{"term":{"hostname":"test"}}}}`,
 				},
 			},
 			true,
@@ -301,18 +275,9 @@ func TestParseConfig_Rules(t *testing.T) {
 			"no-index",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name": "test-rule",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-					},
+					`{"name":"test-rule","body":{"query":{"term":{"hostname":"test"}}}}`,
 				},
 			},
 			true,
@@ -321,19 +286,9 @@ func TestParseConfig_Rules(t *testing.T) {
 			"no-schedule",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":  "test-rule",
-						"index": "testindex",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-					},
+					`{"name":"test-rule","index":"testindex","body":{"query":{"term":{"hostname":"test"}}}}`,
 				},
 			},
 			true,
@@ -342,20 +297,20 @@ func TestParseConfig_Rules(t *testing.T) {
 			"no-output-field",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test-rule",
-						"index":    "testindex",
-						"schedule": "@every 1m",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-					},
+					`{
+  "name": "test-rule",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  }
+}`,
 				},
 			},
 			true,
@@ -364,21 +319,21 @@ func TestParseConfig_Rules(t *testing.T) {
 			"no-outputs",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test-rule",
-						"index":    "testindex",
-						"schedule": "@every 1m",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-						"outputs": []interface{}{},
-					},
+					`{
+  "name": "test-rule",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "outputs": []
+}`,
 				},
 			},
 			true,
@@ -387,25 +342,21 @@ func TestParseConfig_Rules(t *testing.T) {
 			"output-missing-type",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test-rule",
-						"index":    "testindex",
-						"schedule": "@every 1m",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-						"outputs": []interface{}{
-							map[string]interface{}{
-								"type": "",
-							},
-						},
-					},
+					`{
+  "name": "test-rule",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "outputs": [{"type": ""}]
+}`,
 				},
 			},
 			true,
@@ -414,55 +365,51 @@ func TestParseConfig_Rules(t *testing.T) {
 			"output-missing-config",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test-rule",
-						"index":    "testindex",
-						"schedule": "@every 1m",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-						"outputs": []interface{}{
-							map[string]interface{}{
-								"type": "file",
-							},
-						},
-					},
+					`{
+  "name": "test-rule",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "outputs": [{"type": "file"}]
+}`,
 				},
 			},
 			true,
 		},
 		{
-			"success",
+			"single-rule",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test-rule",
-						"index":    "testindex",
-						"schedule": "@every 1m",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-						"outputs": []interface{}{
-							map[string]interface{}{
-								"type": "file",
-								"config": map[string]string{
-									"file": "test.log",
-								},
-							},
-						},
-					},
+					`{
+  "name": "test-rule",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "outputs": [
+    {
+      "type": "file",
+      "config": {
+        "file": "test.log"
+      }
+    }
+  ]
+}`,
 				},
 			},
 			false,
@@ -471,55 +418,55 @@ func TestParseConfig_Rules(t *testing.T) {
 			"multiple-rules",
 			"testdata/rules",
 			[]*ruleFile{
-				&ruleFile{
+				{
 					"testrule-1.json",
-					map[string]interface{}{
-						"name":     "test-rule",
-						"index":    "testindex",
-						"schedule": "@every 1m",
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test",
-								},
-							},
-						},
-						"outputs": []interface{}{
-							map[string]interface{}{
-								"type": "file",
-								"config": map[string]string{
-									"file": "test.log",
-								},
-							},
-						},
-					},
+					`{
+  "name": "test-rule-1",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "outputs": [
+    {
+      "type": "file",
+      "config": {
+        "file": "test.log"
+      }
+    }
+  ]
+}`,
 				},
-				&ruleFile{
+				{
 					"testrule-2.json",
-					map[string]interface{}{
-						"name":     "test-rule-2",
-						"index":    "testindex",
-						"schedule": "@every 2m",
-						"filters": []string{
-							"aggregations.hostname.buckets",
-							"aggregations.hostname.buckets.program.buckets",
-						},
-						"body": map[string]interface{}{
-							"query": map[string]interface{}{
-								"term": map[string]interface{}{
-									"hostname": "test-2",
-								},
-							},
-						},
-						"outputs": []interface{}{
-							map[string]interface{}{
-								"type": "file",
-								"config": map[string]string{
-									"file": "test-2.log",
-								},
-							},
-						},
-					},
+					`{
+  "name": "test-rule-2",
+  "index": "testindex",
+  "schedule": "@every 2m",
+  "filters": [
+    "aggregations.hostname.buckets",
+    "aggregations.hostname.buckets.program.buckets"
+  ],
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test-2"
+      }
+    }
+  },
+  "outputs": [
+    {
+      "type": "file",
+      "config": {
+        "file": "test-2.log"
+      }
+    }
+  ]
+}`,
 				},
 			},
 			false,
@@ -527,13 +474,16 @@ func TestParseConfig_Rules(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			os.Setenv(envRulesDir, tc.path)
 			defer os.Unsetenv(envRulesDir)
 
 			for _, file := range tc.files {
 				fname := filepath.Join(tc.path, file.filename)
-				writeJSONToFile(t, fname, file.data)
+				if err := ioutil.WriteFile(fname, []byte(file.data), 0666); err != nil {
+					t.Fatal(err)
+				}
 				defer os.Remove(fname)
 			}
 
@@ -555,9 +505,9 @@ func TestParseConfig_Rules(t *testing.T) {
 			}
 
 			for i, file := range tc.files {
-				contents, ok := file.data.(map[string]interface{})
-				if !ok {
-					continue
+				var contents map[string]interface{}
+				if err := json.Unmarshal([]byte(file.data), &contents); err != nil {
+					t.Fatal(err)
 				}
 
 				name, ok := contents["name"].(string)
@@ -626,16 +576,5 @@ func TestParseConfig_Rules(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func writeJSONToFile(t *testing.T, path string, contents interface{}) {
-	data, err := json.Marshal(contents)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err = ioutil.WriteFile(path, data, 0666); err != nil {
-		t.Fatal(err)
 	}
 }

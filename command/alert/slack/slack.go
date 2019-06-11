@@ -21,16 +21,18 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/go-cleanhttp"
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 const defaultTextLimit = 6000
 
-// Ensure SlackAlertMethod adheres to the alert.AlertMethod interface
-var _ alert.AlertMethod = (*SlackAlertMethod)(nil)
+// Ensure AlertMethod adheres to the alert.Method interface
+var _ alert.Method = (*AlertMethod)(nil)
 
-type SlackAlertMethodConfig struct {
+// AlertMethodConfig configures where Slack alerts should be
+// created and what they should look like.
+type AlertMethodConfig struct {
 	WebhookURL string `mapstructure:"webhook"`
 	Channel    string `mapstructure:"channel"`
 	Username   string `mapstructure:"username"`
@@ -40,7 +42,9 @@ type SlackAlertMethodConfig struct {
 	Client     *http.Client
 }
 
-type SlackAlertMethod struct {
+// AlertMethod implements the alert.AlertMethod interface
+// for writing new alerts to Slack.
+type AlertMethod struct {
 	webhookURL string
 	client     *http.Client
 	channel    string
@@ -50,6 +54,8 @@ type SlackAlertMethod struct {
 	textLimit  int
 }
 
+// Payload represents the JSON data needed to create a
+// new Slack message.
 type Payload struct {
 	Channel     string        `json:"channel,omitempty"`
 	Username    string        `json:"username,omitempty"`
@@ -58,9 +64,9 @@ type Payload struct {
 	Attachments []*Attachment `json:"attachments,omitempty"`
 }
 
-// NewSlackAlertMethod creates a new *SlackAlertMethod or a
+// NewAlertMethod creates a new *AlertMethod or a
 // non-nil error if there was an error.
-func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, error) {
+func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config == nil {
 		return nil, errors.New("no config provided")
 	}
@@ -77,7 +83,7 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, err
 		config.TextLimit = defaultTextLimit
 	}
 
-	return &SlackAlertMethod{
+	return &AlertMethod{
 		channel:    config.Channel,
 		webhookURL: config.WebhookURL,
 		client:     config.Client,
@@ -89,9 +95,9 @@ func NewSlackAlertMethod(config *SlackAlertMethodConfig) (*SlackAlertMethod, err
 
 // Write creates a properly-formatted Slack message from the
 // records and posts it to the webhook defined at the creation
-// of the SlackAlertMethod. If there was an error making the
+// of the AlertMethod. If there was an error making the
 // HTTP request, it returns a non-nil error.
-func (s *SlackAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
+func (s *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	if records == nil || len(records) < 1 {
 		return nil
 	}
@@ -102,7 +108,7 @@ func (s *SlackAlertMethod) Write(ctx context.Context, rule string, records []*al
 // records. After being JSON-encoded it can be included in a
 // POST request to a Slack webhook in order to create a new
 // Slack message.
-func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *Payload {
+func (s *AlertMethod) BuildPayload(rule string, records []*alert.Record) *Payload {
 	payload := &Payload{
 		Channel:  s.channel,
 		Username: s.username,
@@ -142,7 +148,7 @@ func (s *SlackAlertMethod) BuildPayload(rule string, records []*alert.Record) *P
 	return payload
 }
 
-func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
+func (s *AlertMethod) post(ctx context.Context, payload *Payload) error {
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
 		return err
@@ -169,29 +175,35 @@ func (s *SlackAlertMethod) post(ctx context.Context, payload *Payload) error {
 
 // preprocess breaks attachments with text greater than s.textLimit
 // into multiple attachments in order to prevent trucation
-func (s *SlackAlertMethod) preprocess(records []*alert.Record) []*alert.Record {
-	var output []*alert.Record
-	for _, record := range records {
-		n := len(record.Text) / s.textLimit
+func (s *AlertMethod) preprocess(records []*alert.Record) []*alert.Record {
+	output := make([]*alert.Record, 0)
+	for _, rawRecord := range records {
+		n := len(rawRecord.Text) / s.textLimit
 		if n < 1 {
-			output = append(output, record)
+			output = append(output, rawRecord)
 			continue
 		}
 		var i int
 		for i = 0; i < n; i++ {
-			chopped := fmt.Sprintf("(part %d of %d)\n\n%s\n\n(continued)", i+1, n+1, record.Text[s.textLimit*i:s.textLimit*(i+1)])
+			chopped := fmt.Sprintf(
+				"(part %d of %d)\n\n%s\n\n(continued)",
+				i+1, n+1, rawRecord.Text[s.textLimit*i:s.textLimit*(i+1)],
+			)
 			record := &alert.Record{
-				Filter:    fmt.Sprintf("%s (%d of %d)", record.Filter, i+1, n+1),
+				Filter:    fmt.Sprintf("%s (%d of %d)", rawRecord.Filter, i+1, n+1),
 				Text:      chopped,
-				BodyField: record.BodyField,
+				BodyField: rawRecord.BodyField,
 			}
 			output = append(output, record)
 		}
-		chopped := fmt.Sprintf("(part %d of %d)\n\n%s", i+1, n+1, record.Text[s.textLimit*i:])
+		chopped := fmt.Sprintf(
+			"(part %d of %d)\n\n%s", i+1, n+1,
+			rawRecord.Text[s.textLimit*i:],
+		)
 		record := &alert.Record{
-			Filter:    fmt.Sprintf("%s (%d of %d)", record.Filter, i+1, n+1),
+			Filter:    fmt.Sprintf("%s (%d of %d)", rawRecord.Filter, i+1, n+1),
 			Text:      chopped,
-			BodyField: record.BodyField,
+			BodyField: rawRecord.BodyField,
 		}
 		output = append(output, record)
 	}

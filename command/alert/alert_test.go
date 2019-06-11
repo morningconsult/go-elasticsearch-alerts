@@ -24,12 +24,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-uuid"
+	hclog "github.com/hashicorp/go-hclog"
+	uuid "github.com/hashicorp/go-uuid"
 )
 
-// Ensure FileAlertMethod adheres to the AlertMethod interface
-var _ AlertMethod = (*fileAlertMethod)(nil)
+// Ensure Method adheres to the Method interface
+var _ Method = (*fileAlertMethod)(nil)
 
 type OutputJSON struct {
 	RuleName   string    `json:"rule_name"`
@@ -37,7 +37,7 @@ type OutputJSON struct {
 	Records    []*Record `json:"results"`
 }
 
-// dilealertMethod is defined here rather than importing
+// filealertMethod is defined here rather than importing
 // gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file
 // to avoid import cycle
 type fileAlertMethod struct {
@@ -45,7 +45,7 @@ type fileAlertMethod struct {
 }
 
 func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
-	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return fmt.Errorf("error opening new file: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
-	ah := NewAlertHandler(&AlertHandlerConfig{
+	ah := NewHandler(&HandlerConfig{
 		Logger: hclog.NewNullLogger(),
 	})
 
@@ -86,23 +86,23 @@ func TestRun(t *testing.T) {
 	a := &Alert{
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
-		Methods:  []AlertMethod{fm},
+		Methods:  []Method{fm},
 		Records: []*Record{
-			&Record{
+			{
 				Filter: "test.rule.1",
 				Text:   "test text",
 				Fields: []*Field{
-					&Field{
+					{
 						Key:   "hello",
 						Count: 10,
 					},
-					&Field{
+					{
 						Key:   "world",
 						Count: 3,
 					},
 				},
 			},
-			&Record{
+			{
 				Filter: "test.rule.2",
 				Text:   "test text",
 			},
@@ -123,7 +123,7 @@ func TestRun(t *testing.T) {
 		t.Fatal("context timed out")
 	case <-time.After(500 * time.Millisecond):
 		// check for file
-		logfile, err := os.Open(filename)
+		logfile, err := os.Open(filepath.Clean(filename))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -141,7 +141,6 @@ func TestRun(t *testing.T) {
 		if len(data.Records) != len(a.Records) {
 			t.Fatalf("received unexpected number of records (got %d, expected %d)", len(a.Records), len(data.Records))
 		}
-		return
 	}
 }
 
@@ -154,7 +153,7 @@ func TestRunError(t *testing.T) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Output: buf,
 	})
-	ah := NewAlertHandler(&AlertHandlerConfig{
+	ah := NewHandler(&HandlerConfig{
 		Logger: logger,
 	})
 
@@ -163,23 +162,23 @@ func TestRunError(t *testing.T) {
 	a := &Alert{
 		ID:       randomUUID(t),
 		RuleName: "test-rule",
-		Methods:  []AlertMethod{em},
+		Methods:  []Method{em},
 		Records: []*Record{
-			&Record{
+			{
 				Filter: "test.rule.1",
 				Text:   "test text",
 				Fields: []*Field{
-					&Field{
+					{
 						Key:   "hello",
 						Count: 10,
 					},
-					&Field{
+					{
 						Key:   "world",
 						Count: 3,
 					},
 				},
 			},
-			&Record{
+			{
 				Filter: "test.rule.2",
 				Text:   "test text",
 			},
@@ -198,7 +197,7 @@ func TestRunError(t *testing.T) {
 	time.Sleep(7 * time.Second)
 
 	// Should attempt to execute Write() 3 times (see logs)
-	expected := `[ERROR] [Alert Handler] error returned by alert function: error="test error" remaining_retries=0`
+	expected := `[ERROR] error returned by alert function: error="test error" remaining_retries=0`
 	if !strings.Contains(buf.String(), expected) {
 		t.Fatalf("Expected errors to contain:\n\t%s\nGot:\n\t%s", expected, buf.String())
 	}

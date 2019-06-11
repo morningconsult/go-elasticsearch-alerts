@@ -17,6 +17,7 @@ exclude-rules = [
       'gocyclo',
       'scopelint',
       'lll',
+      'goimports',
     ]
   },
 ]

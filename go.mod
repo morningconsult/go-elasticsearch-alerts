@@ -1,10 +1,12 @@
 module github.com/morningconsult/go-elasticsearch-alerts
 
 require (
+	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/consul/api v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-hclog v0.0.0-20190109152822-4783caec6f2e
 	github.com/hashicorp/go-msgpack v0.5.4 // indirect
+	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/memberlist v0.1.4 // indirect
 	github.com/miekg/dns v1.1.2 // indirect

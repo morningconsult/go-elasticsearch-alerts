@@ -85,7 +85,7 @@ func GetAll(json map[string]interface{}, path string) []interface{} {
 	return []interface{}{raw}
 }
 
-func getall(i int, stack []string, elem interface{}, keychain string) interface{} {
+func getall(i int, stack []string, elem interface{}, keychain string) interface{} { // nolint: gocyclo
 	if i > len(stack)-1 {
 		if list, ok := elem.([]interface{}); ok {
 			var mod []interface{}
@@ -107,7 +107,7 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 		if !ok {
 			return nil
 		}
-		i += 1
+		i++
 		return getall(i, stack, v, keychain)
 	}
 

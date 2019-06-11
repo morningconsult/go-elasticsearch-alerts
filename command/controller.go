@@ -24,7 +24,7 @@ import (
 )
 
 type controllerConfig struct {
-	alertHandler  *alert.AlertHandler
+	alertHandler  *alert.Handler
 	queryHandlers []*query.QueryHandler
 }
 
@@ -34,13 +34,13 @@ type controller struct {
 	updateHandlersCh chan []*query.QueryHandler
 	distLock         *lock.Lock
 	queryHandlerWG   *sync.WaitGroup
-	alertHandler     *alert.AlertHandler
+	alertHandler     *alert.Handler
 	queryHandlers    []*query.QueryHandler
 }
 
 func newController(config *controllerConfig) (*controller, error) {
 	if config.alertHandler == nil {
-		return nil, errors.New("no *alert.AlertHandler provided")
+		return nil, errors.New("no *alert.Handler provided")
 	}
 	if len(config.queryHandlers) < 1 {
 		return nil, errors.New("at least one *query.QueryHandler must be provided")

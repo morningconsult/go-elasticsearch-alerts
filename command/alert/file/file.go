@@ -21,37 +21,37 @@ import (
 	"os"
 	"time"
 
-	"github.com/mitchellh/go-homedir"
+	multierror "github.com/hashicorp/go-multierror"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
-// Ensure FileAlertMethod adheres to the alert.AlertMethod interface
-var _ alert.AlertMethod = (*FileAlertMethod)(nil)
+// Ensure AlertMethod adheres to the alert.Method interface
+var _ alert.Method = (*AlertMethod)(nil)
 
-type OutputJSON struct {
+type outputJSON struct {
 	RuleName   string          `json:"rule_name"`
 	ReceivedAt time.Time       `json:"received_at"`
 	Records    []*alert.Record `json:"results"`
 }
 
-type FileAlertMethodConfig struct {
+// AlertMethodConfig configures to what file alerts will be written.
+type AlertMethodConfig struct {
 	// OutputFilepath is the file where logs will be written
 	OutputFilepath string `mapstructure:"file"`
 }
 
-type FileAlertMethod struct {
+// AlertMethod implements the alert.AlertMethod interface
+// for writing new alerts to a file.
+type AlertMethod struct {
 	outputFilepath string
 }
 
-// NewFileAlertMethod returns a new *FileAlertMethod or a non-nil
+// NewAlertMethod returns a new *AlertMethod or a non-nil
 // error if there was an error.
-func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error) {
-	if config == nil {
-		return nil, errors.New("no config provided")
-	}
-
-	if config.OutputFilepath == "" {
-		return nil, errors.New("no file path provided")
+func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
+	if err := validateConfig(config); err != nil {
+		return nil, err
 	}
 
 	expanded, err := homedir.Expand(config.OutputFilepath)
@@ -59,23 +59,35 @@ func NewFileAlertMethod(config *FileAlertMethodConfig) (*FileAlertMethod, error)
 		return nil, fmt.Errorf("error expanding file path %q: %v", config.OutputFilepath, err)
 	}
 
-	return &FileAlertMethod{
+	return &AlertMethod{
 		outputFilepath: expanded,
 	}, nil
 }
 
+func validateConfig(config *AlertMethodConfig) error {
+	var allErrors *multierror.Error
+	if config == nil {
+		allErrors = multierror.Append(errors.New("no config provided"))
+	}
+
+	if config.OutputFilepath == "" {
+		allErrors = multierror.Append(errors.New("no file path provided"))
+	}
+	return allErrors.ErrorOrNil()
+}
+
 // Write creates JSON-formatted logs from the records and writes
-// them to the file specified at the creation of the FileAlertMethod.
+// them to the file specified at the creation of the AlertMethod.
 // If there was an error writing logs to disk, it returns a
 // non-nil error.
-func (f *FileAlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
-	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+func (f *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
+	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		return fmt.Errorf("error opening new file: %v", err)
 	}
 	defer outfile.Close()
 
-	entry := OutputJSON{
+	entry := outputJSON{
 		RuleName:   rule,
 		ReceivedAt: time.Now(),
 		Records:    records,

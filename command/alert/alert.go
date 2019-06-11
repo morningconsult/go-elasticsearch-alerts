@@ -19,7 +19,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hashicorp/go-hclog"
+	hclog "github.com/hashicorp/go-hclog"
 )
 
 // Field represents a summary of the query results that
@@ -77,23 +77,26 @@ type Alert struct {
 	// Method is a set of alert.AlertMethod instances
 	// which that the AlertHAndler will use to send
 	// alerts
-	Methods []AlertMethod
+	Methods []Method
 
 	// Records are the processed response data from an
 	// Elasticsearch query
 	Records []*Record
 }
 
-type AlertMethod interface {
+// Method is used to send alerts to some output.
+type Method interface {
 	Write(context.Context, string, []*Record) error
 }
 
-type AlertHandlerConfig struct {
+// HandlerConfig is used to provide the logger
+// with which the alert handlers will log messages.
+type HandlerConfig struct { // nolint: golint
 	Logger hclog.Logger
 }
 
-// AlertHandler is used to send alerts to various outputs
-type AlertHandler struct {
+// Handler is used to send alerts to various outputs.
+type Handler struct { // nolint: golint
 	logger hclog.Logger
 	rand   *rand.Rand
 
@@ -105,9 +108,9 @@ type AlertHandler struct {
 	DoneCh chan struct{}
 }
 
-// NewAlertHandler creates a new *AlertHandler instance.
-func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
-	return &AlertHandler{
+// NewHandler creates a new *Handler instance.
+func NewHandler(config *HandlerConfig) *Handler {
+	return &Handler{
 		logger: config.Logger,
 		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))),
 		StopCh: make(chan struct{}),
@@ -125,7 +128,7 @@ func NewAlertHandler(config *AlertHandlerConfig) *AlertHandler {
 // ctx.Done() or StopCh becomes unblocked. Before returning,
 // it will close the DoneCh. Once DoneCh is closed, Run
 // should not be called again.
-func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
+func (a *Handler) Run(ctx context.Context, outputCh <-chan *Alert) { // nolint: gocyclo
 	defer func() {
 		close(a.DoneCh)
 	}()
@@ -135,7 +138,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
 	alertCh := make(chan func() (int, error), 8)
 	active := newInventory()
 
-	alertFunc := func(ctx context.Context, alertID, rule string, method AlertMethod, records []*Record) func() (int, error) {
+	alertFunc := func(ctx context.Context, alertID, rule string, method Method, records []*Record) func() (int, error) {
 		return func() (int, error) {
 			if active.remaining(alertID) < 1 {
 				active.deregister(alertID)
@@ -154,7 +157,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
 		case <-a.StopCh:
 			return
 		case alert := <-outputCh:
-			a.logger.Info(fmt.Sprintf("[Alert Handler] new query results received from rule %q", alert.RuleName))
+			a.logger.Info(fmt.Sprintf("new query results received from rule %q", alert.RuleName))
 			for i, method := range alert.Methods {
 				alertMethodID := fmt.Sprintf("%d|%s", i, alert.ID)
 				active.register(alertMethodID)
@@ -170,7 +173,7 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
 			n, err := writeAlert()
 			if err != nil {
 				backoff := a.newBackoff()
-				a.logger.Error("[Alert Handler] error returned by alert function", "error", err,
+				a.logger.Error("error returned by alert function", "error", err,
 					"remaining_retries", n, "backoff", backoff.String())
 				select {
 				case <-ctx.Done():
@@ -183,6 +186,6 @@ func (a *AlertHandler) Run(ctx context.Context, outputCh <-chan *Alert) {
 	}
 }
 
-func (a *AlertHandler) newBackoff() time.Duration {
+func (a *Handler) newBackoff() time.Duration {
 	return 2*time.Second + time.Duration(a.rand.Int63()%int64(time.Second*2)-int64(time.Second))
 }

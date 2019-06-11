@@ -28,9 +28,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-uuid"
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
+	hclog "github.com/hashicorp/go-hclog"
+	multierror "github.com/hashicorp/go-multierror"
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
@@ -45,14 +46,14 @@ const (
 )
 
 // QueryHandlerConfig is passed as an argument to NewQueryHandler()
-type QueryHandlerConfig struct {
+type QueryHandlerConfig struct { // nolint: golint
 	// Name is the name of the rule. This should come from
 	// the 'name' field of the rule configuration file
 	Name string
 
 	// AlertMethods will be passed along with any results returned
 	// by a query to the alert handler via the outputCh
-	AlertMethods []alert.AlertMethod
+	AlertMethods []alert.Method
 
 	// Client is an *http.Client instance that will be used to
 	// query Elasticsearch
@@ -94,14 +95,14 @@ type QueryHandlerConfig struct {
 // QueryHandler performs the defined Elasticsearch query at the
 // specified interval and sends results to the AlertHandler if
 // there are any.
-type QueryHandler struct {
+type QueryHandler struct { // nolint: golint
 	// StopCh terminates the Run() method when closed
 	StopCh chan struct{}
 
 	name         string
 	hostname     string
 	logger       hclog.Logger
-	alertMethods []alert.AlertMethod
+	alertMethods []alert.Method
 	client       *http.Client
 	esURL        string
 	queryIndex   string
@@ -117,26 +118,8 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		config = &QueryHandlerConfig{}
 	}
 
-	if config.Name == "" {
-		return nil, errors.New("no rule name provided")
-	}
-
-	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
-
-	if config.ESUrl == "" {
-		return nil, errors.New("no Elasticsearch URL provided")
-	}
-
-	if config.QueryIndex == "" {
-		return nil, errors.New("no Elasticsearch index provided")
-	}
-
-	if len(config.AlertMethods) < 1 {
-		return nil, errors.New("at least one alert method must be specified")
-	}
-
-	if config.QueryData == nil || len(config.QueryData) < 1 {
-		return nil, errors.New("no query body provided")
+	if err := validateConfig(config); err != nil {
+		return nil, err
 	}
 
 	hostname, err := os.Hostname()
@@ -178,6 +161,32 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	}, nil
 }
 
+func validateConfig(config *QueryHandlerConfig) error {
+	var allErrors *multierror.Error
+	if config.Name == "" {
+		allErrors = multierror.Append(allErrors, errors.New("no rule name provided"))
+	}
+
+	config.ESUrl = strings.TrimRight(config.ESUrl, "/")
+
+	if config.ESUrl == "" {
+		allErrors = multierror.Append(allErrors, errors.New("no Elasticsearch URL provided"))
+	}
+
+	if config.QueryIndex == "" {
+		allErrors = multierror.Append(allErrors, errors.New("no Elasticsearch index provided"))
+	}
+
+	if len(config.AlertMethods) < 1 {
+		allErrors = multierror.Append(allErrors, errors.New("at least one alert method must be specified"))
+	}
+
+	if config.QueryData == nil || len(config.QueryData) < 1 {
+		allErrors = multierror.Append(allErrors, errors.New("no query body provided"))
+	}
+	return allErrors.ErrorOrNil()
+}
+
 // Run starts the QueryHandler. It first attempts to get the "state"
 // document for this rule from Elasticsearch in order to schedule
 // the next execution at the last scheduled time. If it does not find
@@ -187,7 +196,12 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 // equals the next time the query shall be executed per the provided
 // cron schedule. It will only execute the query if distLock.Acquired()
 // is true.
-func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *sync.WaitGroup, distLock *lock.Lock) {
+func (q *QueryHandler) Run( // nolint: gocyclo
+	ctx context.Context,
+	outputCh chan *alert.Alert,
+	wg *sync.WaitGroup,
+	distLock *lock.Lock,
+) {
 	var (
 		now           = time.Now()
 		next          = now
@@ -200,8 +214,14 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 
 	t, err := q.getNextQuery(ctx)
 	if err != nil {
-		q.logger.Error(fmt.Sprintf("[Rule: %q] error looking up next scheduled query in Elasticsearch, running query now instead", q.name),
-			"error", err)
+		q.logger.Error(
+			fmt.Sprintf(
+				"[Rule: %q] error looking up next scheduled query in Elasticsearch, running query now instead",
+				q.name,
+			),
+			"error",
+			err,
+		)
 		select {
 		case <-ctx.Done():
 			return
@@ -213,7 +233,13 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 	}
 
 	if distLock.Acquired() {
-		q.logger.Info(fmt.Sprintf("[Rule: %q] scheduling query now (next execution at: %s)", q.name, next.Format(time.RFC822)))
+		q.logger.Info(
+			fmt.Sprintf(
+				"[Rule: %q] scheduling query now (next execution at: %s)",
+				q.name,
+				next.Format(time.RFC822),
+			),
+		)
 	}
 
 	for {
@@ -272,16 +298,75 @@ func (q *QueryHandler) Run(ctx context.Context, outputCh chan *alert.Alert, wg *
 // will be named 'go-es-alerts-status-{date}'; therefore, this template
 // enables searching all state indices via this alias
 func (q *QueryHandler) PutTemplate(ctx context.Context) error {
-	payload := fmt.Sprintf(`{"index_patterns":["%s-status-%s-*"],"order":0,"aliases":{%q:{}},"settings":{"index":{"number_of_shards":1,"number_of_replicas":1,"auto_expand_replicas":"0-3","codec":"best_compression","translog":{"flush_threshold_size":"752mb"},"sort":{"field":["next_query","rule_name","hostname"],"order":["desc","desc","desc"]}}},"mappings":{"_doc":{"dynamic_templates":[{"strings_as_keywords":{"match_mapping_type":"string","mapping":{"type":"keyword"}}}],"properties":{"@timestamp":{"type":"date"},"rule_name":{"type":"keyword"},"next_query":{"type":"date"},"hostname":{"type":"keyword"},"hits_count":{"type":"long","null_value":0},"hits":{"enabled":false}}}}}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
+	payload := fmt.Sprintf(`{
+  "index_patterns": ["%s-status-%s-*"],
+  "order": 0,
+  "aliases": {%q:{}},
+  "settings":{
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "auto_expand_replicas": "0-3",
+      "codec": "best_compression",
+      "translog": {
+	"flush_threshold_size": "752mb"
+      },
+      "sort": {
+	"field": ["next_query","rule_name","hostname"],
+	"order": ["desc","desc","desc"]
+      }
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "dynamic_templates": [
+        {
+          "strings_as_keywords": {
+	    "match_mapping_type": "string",
+	    "mapping": {
+	      "type": "keyword"
+	    }
+	  }
+	}
+      ],
+      "properties": {
+        "@timestamp": {
+	  "type": "date"
+	},
+	"rule_name": {
+	  "type": "keyword"
+	},
+	"next_query": {
+	  "type": "date"
+	},
+	"hostname": {
+	  "type": "keyword"
+	},
+	"hits_count": {
+	  "type": "long",
+	  "null_value": 0
+	},
+	"hits": {
+	  "enabled": false
+	}
+      }
+    }
+  }
+}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
 
-	resp, err := q.makeRequest(ctx, "PUT", fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()), bytes.NewBufferString(payload))
+	resp, err := q.makeRequest(
+		ctx,
+		http.MethodPut,
+		fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()),
+		bytes.NewBufferString(payload),
+	)
 	if err != nil {
 		return fmt.Errorf("error making HTTP request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("received non-200 response status (status: %q). Response body:\n%s",
+		return fmt.Errorf("received non-200 response status (status: %q): Response body:\n%s",
 			resp.Status, q.readErrRespBody(resp))
 	}
 
@@ -292,14 +377,14 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 
 	ackRaw, ok := data["acknowledged"]
 	if !ok {
-		return errors.New("JSON response has no 'acknowledged' field")
+		return errors.New("json response has no 'acknowledged' field")
 	}
 	ack, ok := ackRaw.(bool)
 	if !ok {
 		return errors.New("value of 'acknowledged' field of JSON response cannot be cast to boolean")
 	}
 	if !ack {
-		return errors.New("Elasticsearch did not acknowledge creation of new template")
+		return errors.New("elasticsearch did not acknowledge creation of new template")
 	}
 	return nil
 }
@@ -309,7 +394,29 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 // parse the 'next_query' field in order to inform the Run() loop
 // when to next execute the query.
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
-	payload := fmt.Sprintf(`{"query":{"bool":{"must":[{"term":{"rule_name":{"value":%q}}}]}},"sort":[{"next_query":{"order":"desc"}}],"size":1}`, q.cleanedName())
+	payload := fmt.Sprintf(`{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "rule_name": {
+	      "value": %q
+	    }
+	  }
+	}
+      ]
+    }
+  },
+  "sort": [
+    {
+      "next_query": {
+	"order": "desc"
+      }
+    }
+  ],
+  "size": 1
+}`, q.cleanedName())
 
 	u, err := url.Parse(q.StateAliasURL() + "/_search")
 	if err != nil {
@@ -326,11 +433,11 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("received non-200 response status (status: %q).", resp.Status)
+		return nil, fmt.Errorf("received non-200 response status (status: %q)", resp.Status)
 	}
 
 	var data = make(map[string]interface{})
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil { // nolint: govet
 		return nil, fmt.Errorf("error JSON-decoding HTTP response: %v", err)
 	}
 
@@ -475,7 +582,14 @@ func (q *QueryHandler) StateAliasURL() string {
 // StateIndexURL returns the URL of the Elasticsearch
 // index where state records are stored
 func (q *QueryHandler) StateIndexURL() string {
-	return fmt.Sprintf("%s/%s", q.esURL, url.PathEscape(fmt.Sprintf("<%s-status-%s-{now/d}>", defaultStateIndexAlias, templateVersion)))
+	escaped := url.PathEscape(
+		fmt.Sprintf(
+			"<%s-status-%s-{now/d}>",
+			defaultStateIndexAlias,
+			templateVersion,
+		),
+	)
+	return fmt.Sprintf("%s/%s", q.esURL, escaped)
 }
 
 // TemplateName returns the name of the Elasticsearch

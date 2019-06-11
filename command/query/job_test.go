@@ -27,15 +27,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-uuid"
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
+	hclog "github.com/hashicorp/go-hclog"
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 )
 
 const ElasticsearchURL string = "http://127.0.0.1:9200"
+const badURL string = "bad-url"
 
 func TestNewQueryHandler(t *testing.T) {
 	cases := []struct {
@@ -50,7 +51,7 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
@@ -64,42 +65,42 @@ func TestNewQueryHandler(t *testing.T) {
 			&QueryHandlerConfig{
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
 			},
 			true,
-			"no rule name provided",
+			"1 error occurred:\n\t* no rule name provided\n\n",
 		},
 		{
 			"no-es-url",
 			&QueryHandlerConfig{
 				Name:         "Test Errors",
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
 			},
 			true,
-			"no Elasticsearch URL provided",
+			"1 error occurred:\n\t* no Elasticsearch URL provided\n\n",
 		},
 		{
 			"no-query-index",
 			&QueryHandlerConfig{
 				Name:         "Test Errors",
 				ESUrl:        ElasticsearchURL,
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
 			},
 			true,
-			"no Elasticsearch index provided",
+			"1 error occurred:\n\t* no Elasticsearch index provided\n\n",
 		},
 		{
 			"no-alert-methods",
@@ -107,14 +108,14 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{},
+				AlertMethods: []alert.Method{},
 				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
 			},
 			true,
-			"at least one alert method must be specified",
+			"1 error occurred:\n\t* at least one alert method must be specified\n\n",
 		},
 		{
 			"cron-parse-error",
@@ -122,7 +123,7 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"ayy": "lmao",
 				},
@@ -134,6 +135,7 @@ func TestNewQueryHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := NewQueryHandler(tc.config)
 			if tc.err {
@@ -152,58 +154,23 @@ func TestNewQueryHandler(t *testing.T) {
 	}
 }
 
-func TestPutTemplate(t *testing.T) {
+func TestPutTemplate(t *testing.T) { // nolint: gocyclo
 	cases := []struct {
 		name   string
 		status int
 		data   interface{}
 		err    bool
 	}{
-		{
-			"bad-url",
-			200,
-			"lol",
-			true,
-		},
-		{
-			"non-200-response",
-			500,
-			"",
-			true,
-		},
-		{
-			"non-json-response",
-			200,
-			"not a json!!",
-			true,
-		},
-		{
-			"no-acknowledged-field",
-			200,
-			map[string]interface{}{
-				"ayy": "lmao",
-			},
-			true,
-		},
-		{
-			"non-bool-acknowledged-field",
-			200,
-			map[string]interface{}{
-				"acknowledged": "true",
-			},
-			true,
-		},
-		{
-			"success",
-			200,
-			map[string]interface{}{
-				"acknowledged": true,
-			},
-			false,
-		},
+		{badURL, 200, "lol", true},
+		{"non-200-response", 500, "", true},
+		{"non-json-response", 200, "not a json!!", true},
+		{"no-acknowledged-field", 200, map[string]interface{}{"ayy": "lmao"}, true},
+		{"non-bool-acknowledged-field", 200, map[string]interface{}{"acknowledged": "true"}, true},
+		{"success", 200, map[string]interface{}{"acknowledged": true}, false},
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -236,7 +203,7 @@ func TestPutTemplate(t *testing.T) {
 			defer ts.Close()
 
 			u := ts.URL
-			if tc.name == "bad-url" {
+			if tc.name == badURL {
 				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
 			}
 			qh := &QueryHandler{
@@ -258,7 +225,7 @@ func TestPutTemplate(t *testing.T) {
 	}
 }
 
-func TestGetNextQuery(t *testing.T) {
+func TestGetNextQuery(t *testing.T) { // nolint: gocyclo
 	expected := time.Now().Add(2 * time.Hour).Format(time.RFC3339)
 	cases := []struct {
 		name   string
@@ -267,7 +234,7 @@ func TestGetNextQuery(t *testing.T) {
 		err    bool
 	}{
 		{
-			"bad-url",
+			badURL,
 			200,
 			"lol",
 			true,
@@ -345,6 +312,7 @@ func TestGetNextQuery(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -377,14 +345,14 @@ func TestGetNextQuery(t *testing.T) {
 			defer ts.Close()
 
 			u := ts.URL
-			if tc.name == "bad-url" {
+			if tc.name == badURL {
 				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
 			}
 			qh, err := NewQueryHandler(&QueryHandlerConfig{
 				Name:         "Test Errors",
 				ESUrl:        u,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"hello": "world",
 				},
@@ -412,7 +380,7 @@ func TestGetNextQuery(t *testing.T) {
 	}
 }
 
-func TestRun(t *testing.T) {
+func TestRun(t *testing.T) { // nolint: gocyclo
 	queryIndex := randomUUID(t)
 	expected := map[string]interface{}{
 		"hits": map[string]interface{}{
@@ -437,7 +405,10 @@ func TestRun(t *testing.T) {
 
 		// Mocks successful response to QueryHandler.getNextQuery()
 		if r.URL.Path == fmt.Sprintf("/%s-%s/_search", defaultStateIndexAlias, templateVersion) {
-			payload := fmt.Sprintf(`{"hits":{"hits":[{"_source":{"next_query":%q}}]}}`, time.Now().Add(-1*time.Hour).Format(time.RFC3339))
+			payload := fmt.Sprintf(
+				`{"hits":{"hits":[{"_source":{"next_query":%q}}]}}`,
+				time.Now().Add(-1*time.Hour).Format(time.RFC3339),
+			)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
 			w.Write([]byte(payload)) // nolint: errcheck
@@ -463,7 +434,7 @@ func TestRun(t *testing.T) {
 	defer ts.Close()
 
 	filename := filepath.Join("testdata", "testfile.log")
-	fileAM, err := file.NewFileAlertMethod(&file.FileAlertMethodConfig{
+	fileAM, err := file.NewAlertMethod(&file.AlertMethodConfig{
 		OutputFilepath: filename,
 	})
 	if err != nil {
@@ -476,7 +447,7 @@ func TestRun(t *testing.T) {
 		Logger:       hclog.NewNullLogger(),
 		ESUrl:        ts.URL,
 		QueryIndex:   queryIndex,
-		AlertMethods: []alert.AlertMethod{fileAM},
+		AlertMethods: []alert.Method{fileAM},
 		QueryData: map[string]interface{}{
 			"query": map[string]interface{}{
 				"term": map[string]interface{}{
@@ -513,8 +484,8 @@ func TestRun(t *testing.T) {
 		if len(a.Methods) != 1 {
 			t.Fatal("alert should have just one alert method (file)")
 		}
-		if _, ok := a.Methods[0].(*file.FileAlertMethod); !ok {
-			t.Fatalf("alert method should be of the FileAlertMethod type (got type: %T)", a.Methods[0])
+		if _, ok := a.Methods[0].(*file.AlertMethod); !ok {
+			t.Fatalf("alert method should be of the AlertMethod type (got type: %T)", a.Methods[0])
 		}
 		if len(a.Records) != 1 {
 			t.Fatalf("expected only one alert.Record (got %d records)", len(a.Records))
@@ -546,6 +517,7 @@ func TestSetNextQuery(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -564,7 +536,7 @@ func TestSetNextQuery(t *testing.T) {
 				Logger:       hclog.NewNullLogger(),
 				ESUrl:        ts.URL,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"query": "test",
 				},
@@ -596,73 +568,27 @@ func TestQuery(t *testing.T) {
 		data   interface{}
 		err    bool
 	}{
-		{
-			"bad-url",
-			200,
-			"lol",
-			true,
-		},
-		{
-			"non-200-response",
-			500,
-			"",
-			true,
-		},
-		{
-			"non-json-response",
-			200,
-			"not a json!!",
-			true,
-		},
-		{
-			"success",
-			200,
-			expected,
-			false,
-		},
+		{badURL, 200, "lol", true},
+		{"non-200-response", 500, "", true},
+		{"non-json-response", 200, "not a json!!", true},
+		{"success", 200, expected, false},
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				switch r.Method {
-				case "GET":
-					if tc.status-200 > 3 {
-						http.Error(w, http.StatusText(tc.status), tc.status)
-						return
-					}
-					w.WriteHeader(tc.status)
-					var data []byte
-					var err error
-					switch v := tc.data.(type) {
-					case map[string]interface{}:
-						data, err = json.Marshal(v)
-						if err != nil {
-							t.Fatal(err)
-						}
-					case string:
-						data = []byte(v)
-					case []byte:
-						data = v
-					default:
-						t.Fatalf("unsupported data type: %T", v)
-					}
-					w.Write(data) // nolint: errcheck
-				default:
-					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-				}
-			}))
+			ts := newTestServer(tc.status, tc.data)
 			defer ts.Close()
 
 			u := ts.URL
-			if tc.name == "bad-url" {
+			if tc.name == badURL {
 				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
 			}
 			qh, err := NewQueryHandler(&QueryHandlerConfig{
 				Name:         "Test Errors",
 				ESUrl:        u,
 				QueryIndex:   "test-*",
-				AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+				AlertMethods: []alert.Method{&file.AlertMethod{}},
 				QueryData: map[string]interface{}{
 					"hello": "world",
 				},
@@ -696,21 +622,12 @@ func TestNewRequestErrors(t *testing.T) {
 		payload []byte
 		err     bool
 	}{
-		{
-			"bad-method-with-data",
-			"ASDFASDF ASD",
-			[]byte("some data"),
-			true,
-		},
-		{
-			"bad-method-without-data",
-			"ASDFADS FASD ",
-			nil,
-			true,
-		},
+		{"bad-method-with-data", "ASDFASDF ASD", []byte("some data"), true},
+		{"bad-method-without-data", "ASDFADS FASD ", nil, true},
 	}
 
 	for _, tc := range cases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{}
 			_, err := qh.newRequest(context.Background(), tc.method, "http://example.com", bytes.NewBuffer(tc.payload))
@@ -733,7 +650,7 @@ func TestCanceledContext(t *testing.T) {
 		Logger:       hclog.NewNullLogger(),
 		ESUrl:        "http://example.com",
 		QueryIndex:   "test-*",
-		AlertMethods: []alert.AlertMethod{&file.FileAlertMethod{}},
+		AlertMethods: []alert.Method{&file.AlertMethod{}},
 		QueryData: map[string]interface{}{
 			"hello": "world",
 		},
@@ -773,4 +690,37 @@ func randomUUID(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return id
+}
+
+func newTestServer(status int, payload interface{}) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			if status-200 > 3 {
+				http.Error(w, http.StatusText(status), status)
+				return
+			}
+			w.WriteHeader(status)
+			var data []byte
+			var err error
+			switch v := payload.(type) {
+			case map[string]interface{}:
+				data, err = json.Marshal(v)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+			case string:
+				data = []byte(v)
+			case []byte:
+				data = v
+			default:
+				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+				return
+			}
+			w.Write(data) // nolint: errcheck
+		default:
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		}
+	}))
 }

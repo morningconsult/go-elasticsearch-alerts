@@ -16,12 +16,15 @@ set -eu
 
 readonly GOLANGCI_LINT_VERSION="v1.16.0"
 
+ROOT=$( cd "$( dirname "${0}" )/../.." && pwd )
+cd "${ROOT}"
+
 apk add -qU --no-cache --no-progress \
     curl \
     git
 
 curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin "${GOLANGCI_LINT_VERSION}"
 
-golangci-lint run
+CGO_ENABLED=0 golangci-lint run ./...
 
 CGO_ENABLED=0 GO111MODULE=on go test ./...

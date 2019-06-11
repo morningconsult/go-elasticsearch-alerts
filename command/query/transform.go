@@ -31,39 +31,23 @@ const hitsDelimiter = "\n----------------------------------------\n"
 // If Transform returns a non-nil error, the other returned values will
 // be nil.
 func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, []map[string]interface{}, error) {
-	var records []*alert.Record
+	records := make([]*alert.Record, 0)
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
 		if elems == nil || len(elems) < 1 {
 			continue
 		}
-
-		record := &alert.Record{
-			Filter: filter,
-		}
-
-		var fields []*alert.Field
-		for _, elem := range elems {
-			obj, ok := elem.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			field := new(alert.Field)
-			if err := mapstructure.Decode(obj, field); err != nil {
-				return nil, nil, err
-			}
-
-			if field.Key == "" || field.Count < 1 {
-				continue
-			}
-
-			fields = append(fields, field)
+		fields, err := q.gatherFields(elems)
+		if err != nil {
+			return nil, nil, err
 		}
 		if len(fields) < 1 {
 			continue
 		}
-		record.Fields = fields
+		record := &alert.Record{
+			Filter: filter,
+			Fields: fields,
+		}
 		records = append(records, record)
 	}
 
@@ -73,8 +57,25 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 		return records, nil, nil
 	}
 
-	var stringifiedHits []string
-	var hits []map[string]interface{}
+	stringifiedHits, hits, err := q.gatherHits(body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(stringifiedHits) > 0 {
+		record := &alert.Record{
+			Filter:    q.bodyField,
+			Text:      strings.Join(stringifiedHits, hitsDelimiter),
+			BodyField: true,
+		}
+		records = append(records, record)
+	}
+	return records, hits, nil
+}
+
+func (q *QueryHandler) gatherHits(body []interface{}) ([]string, []map[string]interface{}, error) {
+	stringifiedHits := make([]string, 0, len(body))
+	hits := make([]map[string]interface{}, 0, len(body))
 	for _, elem := range body {
 		hit, ok := elem.(map[string]interface{})
 		if !ok {
@@ -89,14 +90,27 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 		}
 		stringifiedHits = append(stringifiedHits, string(data))
 	}
+	return stringifiedHits, hits, nil
+}
 
-	if len(stringifiedHits) > 0 {
-		record := &alert.Record{
-			Filter:    q.bodyField,
-			Text:      strings.Join(stringifiedHits, hitsDelimiter),
-			BodyField: true,
+func (q *QueryHandler) gatherFields(elems []interface{}) ([]*alert.Field, error) {
+	fields := make([]*alert.Field, 0, len(elems))
+	for _, elem := range elems {
+		obj, ok := elem.(map[string]interface{})
+		if !ok {
+			continue
 		}
-		records = append(records, record)
+
+		field := new(alert.Field)
+		if err := mapstructure.Decode(obj, field); err != nil {
+			return nil, err
+		}
+
+		if field.Key == "" || field.Count < 1 {
+			continue
+		}
+
+		fields = append(fields, field)
 	}
-	return records, hits, nil
+	return fields, nil
 }
