@@ -1,7 +1,11 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.6"></a>
+## [v0.1.6] - 2019-06-11
 ### Chore
+- Bump version and update changelog [ci skip]
 - Update deprecated field in .goreleaser.yml
 
 
@@ -234,7 +238,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.5...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.6...HEAD
+[v0.1.6]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.5...v0.1.6
 [v0.1.5]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...v0.1.5
 [v0.1.4]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.2...v0.1.4
 [v0.1.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.1...v0.1.2
