@@ -1,7 +1,14 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Ci
+- Fix missing secrets [ci skip]
+
+
+<a name="0.0.2"></a>
+## [0.0.2] - 2019-06-11
 ### Chore
+- Bump version and update changelog [ci skip]
 - Add golang.org/x/xerrors and enforce authentication when setting pipeline
 - Fix linting issues
 - Removed github.com/hashicorp/helper/jsonutil as a dependency and general housekeeping
@@ -227,7 +234,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/0.0.2...HEAD
+[0.0.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...0.0.2
 [v0.1.4]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.2...v0.1.4
 [v0.1.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.0...v0.1.1
