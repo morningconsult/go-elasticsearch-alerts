@@ -307,7 +307,8 @@ The :code-no-background:`outputs` parameter of the rule file specifies where
 the results of the queries should be sent. Each rule should have at least one
 output. Currently, three output types are supported:
 `Slack <#slack-output-parameters>`__, `email <#email-output-parameters>`__,
-and `file <#file-output-parameters>`__. The exact specifications of this field
+`Amazon AWS SNS <#aws-sns-output-parameters>`__, and 
+`file <#file-output-parameters>`__. The exact specifications of this field
 will depend on the output type.
 
 - :code-no-background:`type` (string: ``""``) - The type of output. Currently,
@@ -351,6 +352,113 @@ Email Output Parameters
 
 You can find an example of what the email message looks like
 `here <#email-output-example>`__.
+
+AWS SNS Output Parameters
+~~~~~~~~~~~~~~~~~~~~~
+- :code-no-background:`region` (string: ``""``) - The Amazon AWS region to send
+  where your SNS topic exists. This field is required.
+- :code-no-background:`topic_arn` (string: ``""``) - The SNS topic to which new
+  alerts will be published. This field is required.
+- :code-no-background:`template` (string: ``""``) - The message template that will
+  define what alert messages will look like. This template is based on `Go templates
+  <https://golang.org/pkg/text/template/>`__. It allows you to interpolate an array
+  of `alert records
+  <https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts/command/alert#Record>`__ 
+  into the template to expose custom message formatting for your alerts. This field is
+  required.
+
+**IMPORTANT**: If sending SMS messages with your SMS topic, a strict 140-character
+limit is enforced. Please take this into consideration when writing your message
+template.
+
+As an example, let's say you have this output method in one of your rule files:
+
+.. code-block:: json
+
+  {
+    "name": "Filebeat Errors",
+    ...
+    "outputs:" [
+      {
+        "type": "sns",
+        "config": {
+          "region": "us-east-1",
+          "topic_arn": "AWS::SNS::Topic",
+          "template": "{{range .}}{{.Filter}}:\n{{range .Fields}}* {{.Key}}: {{.Count}}\n{{end}}\n{{end}}"
+        }
+      }
+    ]
+  }
+
+Let's then say that a new alert comes in that matches this alert's filter.
+It would pass the following struct to the alert method:
+
+.. code-block:: golang
+
+  []*alert.Record{
+      {
+          Filter: "foo.bar.bim",
+          Fields: []*alert.Field{
+              {
+                  Key: "test-1",
+                  Count: 2,
+              },
+              {
+                  Key: "test-2",
+                  Count: 4,
+              },
+          },
+      },
+      {
+          Filter: "abc.def.ghi",
+          Fields: []*alert.Field{
+              {
+                  Key: "foo",
+                  Count: 10,
+              },
+              {
+                  Key: "bar",
+                  Count: 11,
+              },
+          },
+      },
+	}
+
+The alert handler would then render your template using this struct, resulting
+in the following message being published to your SNS Topic:
+
+.. code-block:: text
+
+  [Filebeat Errors]
+  foo.bar.bim:
+  * test-1: 2
+  * test-2: 4
+
+  abc.def.ghi
+  * foo: 10
+  * bar: 11
+
+
+As a note, you do not have to have any templating logic in the ``message`` field
+of your output configuration. For example, if you want all messages to be the
+same when a new alert comes in, you can make a configuration like:
+
+.. code-block:: json
+
+  {
+    "name": "Filebeat Errors",
+    ...
+    "outputs:" [
+      {
+        "type": "sns",
+        "config": {
+          "region": "us-east-1",
+          "topic_arn": "AWS::SNS::Topic",
+          "template": "New errors found"
+        }
+      }
+    ]
+  }
 
 File Output Parameters
 ~~~~~~~~~~~~~~~~~~~~~~

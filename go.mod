@@ -1,6 +1,7 @@
 module github.com/morningconsult/go-elasticsearch-alerts
 
 require (
+	github.com/aws/aws-sdk-go v1.20.3
 	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/consul/api v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
@@ -16,6 +17,6 @@ require (
 	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c // indirect
 	golang.org/x/net v0.0.0-20190403144856-b630fd6fe46b // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
-	golang.org/x/sys v0.0.0-20190403152447-81d4e9dc473e // indirect
+	golang.org/x/sys v0.0.0-20190422165155-953cdadca894 // indirect
 	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
 )
