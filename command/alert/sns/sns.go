@@ -31,7 +31,7 @@ import (
 type AlertMethodConfig struct {
 	Region   string `mapstructure:"region"`
 	TopicARN string `mapstructure:"topic_arn"`
-	Message  string `mapstructure:"message"`
+	Template string `mapstructure:"template"`
 }
 
 // AlertMethod implements the alert.AlertMethod interface
@@ -54,10 +54,10 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config.TopicARN == "" {
 		return nil, xerrors.New("field 'output.config.topic_arn' must not be empty when using the SNS output method")
 	}
-	if config.Message == "" {
-		return nil, xerrors.New("field 'output.config.message' must not be empty when using the SNS output method")
+	if config.Template == "" {
+		return nil, xerrors.New("field 'output.config.template' must not be empty when using the SNS output method")
 	}
-	tmpl, err := template.New("sns").Parse(config.Message)
+	tmpl, err := template.New("sns").Parse(config.Template)
 	if err != nil {
 		return nil, xerrors.Errorf("error parsing SNS message template: %w", err)
 	}
