@@ -429,7 +429,7 @@ It would pass the following struct to the alert method:</p>
             },
         },
     },
-      }
+}
 </pre></div>
 </div>
 <p>The alert handler would then render your template using this struct, resulting
@@ -444,7 +444,7 @@ abc.def.ghi
 * bar: 11
 </pre></div>
 </div>
-<p>As a note, you do not have to have any templating logic in the <code class="docutils literal"><span class="pre">message</span></code> field
+<p>As a note, you do not have to have any templating logic in the <code class="docutils literal"><span class="pre">template</span></code> field
 of your output configuration. For example, if you want all messages to be the
 same when a new alert comes in, you can make a configuration like:</p>
 <div class="highlight-json"><div class="highlight"><pre>{

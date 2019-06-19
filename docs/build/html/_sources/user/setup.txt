@@ -422,7 +422,8 @@ It would pass the following struct to the alert method:
               },
           },
       },
-	}
+  }
+
 
 The alert handler would then render your template using this struct, resulting
 in the following message being published to your SNS Topic:
@@ -439,7 +440,7 @@ in the following message being published to your SNS Topic:
   * bar: 11
 
 
-As a note, you do not have to have any templating logic in the ``message`` field
+As a note, you do not have to have any templating logic in the ``template`` field
 of your output configuration. For example, if you want all messages to be the
 same when a new alert comes in, you can make a configuration like:
 
