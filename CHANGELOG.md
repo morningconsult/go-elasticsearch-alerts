@@ -1,6 +1,12 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.8"></a>
+## [v0.1.8] - 2019-06-19
+### Chore
+- Bump version and update changelog [ci skip]
+
 ### Feat
 - Implement SNS output method
 
@@ -247,7 +253,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.7...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.8...HEAD
+[v0.1.8]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.7...v0.1.8
 [v0.1.7]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.6...v0.1.7
 [v0.1.6]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.5...v0.1.6
 [v0.1.5]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...v0.1.5
