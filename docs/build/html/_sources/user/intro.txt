@@ -13,7 +13,7 @@ and flexibility in mind. While similar alternatives exist (e.g.
 has several distinct features:
 
 - Greater query flexibility
-- Multiple output methods (including Slack, email, and disk)
+- Multiple output methods (including Slack, SNS, email, and disk)
 - Distributed operation via `Consul lock <https://www.consul.io/docs/commands/lock.html>`_
 - Live rule updates
 - Custom filters

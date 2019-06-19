@@ -1,43 +1,48 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Setup &#8212; Go Elasticsearch Alerts v0.0.22 documentation</title>
+    
+    <title>Setup &mdash; Go Elasticsearch Alerts  documentation</title>
+    
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
+    <link rel="top" title="Go Elasticsearch Alerts  documentation" href="../index.html" />
     <link rel="next" title="Usage" href="usage.html" />
     <link rel="prev" title="Installation" href="install.html" />
    
-  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head><body>
-  
+  </head>
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <div class="section" id="setup">
 <span id="id1"></span><h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h1>
 <p>Before reading further, make sure that Go Elasticsearch Alerts is
-<a class="reference internal" href="install.html#install"><span class="std std-ref">installed</span></a>.</p>
+<a class="reference internal" href="install.html#install"><span>installed</span></a>.</p>
 <div class="section" id="configuration-files">
 <h2>Configuration Files<a class="headerlink" href="#configuration-files" title="Permalink to this headline">¶</a></h2>
 <p>This program requires some configuration files: a <a class="reference internal" href="#main-configuration-file">main configuration file</a>
@@ -50,12 +55,12 @@ general behavior of the program. Specifically, it is used to configure
 communication with Elasticsearch and distributed operation. The program
 will not operate without this file.</p>
 <p>The program will look for the main configuration file at
-<code class="docutils literal notranslate"><span class="pre">/etc/go-elasticsearch-alerts/config.json</span></code> by default. If you wish to keep
+<code class="docutils literal"><span class="pre">/etc/go-elasticsearch-alerts/config.json</span></code> by default. If you wish to keep
 this file elsewhere, you can specify its location with the
-<code class="docutils literal notranslate"><span class="pre">GO_ELASTICSEARCH_ALERTS_CONFIG_FILE</span></code> environment variable.</p>
+<code class="docutils literal"><span class="pre">GO_ELASTICSEARCH_ALERTS_CONFIG_FILE</span></code> environment variable.</p>
 <div class="section" id="example">
 <h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
   <span class="nt">&quot;elasticsearch&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="nt">&quot;server&quot;</span><span class="p">:</span> <span class="p">{</span>
       <span class="nt">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://my.elasticsearch.com&quot;</span>
@@ -79,68 +84,68 @@ this file elsewhere, you can specify its location with the
 <div class="section" id="main-file-parameters">
 <h3>Main File Parameters<a class="headerlink" href="#main-file-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">elasticsearch</span> (<a class="reference external" href="#elasticsearch-parameters">Elasticsearch</a>: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>) - Configures how the program
+<li><span class="code-no-background">elasticsearch</span> (<a class="reference external" href="#elasticsearch-parameters">Elasticsearch</a>: <code class="docutils literal"><span class="pre">&lt;nil&gt;</span></code>) - Configures how the program
 communcates with Elasticsearch. See the
 <a class="reference external" href="#elasticsearch-parameters">Elasticsearch</a> section for more details.
 This field is required.</li>
-<li><span class="code-no-background">distributed</span> (bool: <code class="docutils literal notranslate"><span class="pre">false</span></code>) - Whether this
+<li><span class="code-no-background">distributed</span> (bool: <code class="docutils literal"><span class="pre">false</span></code>) - Whether this
 application will be run in a distributed fashion. If this is set to
-<code class="docutils literal notranslate"><span class="pre">true</span></code> then the <code class="docutils literal notranslate"><span class="pre">consul</span></code> field will also be required since this
-application uses the <a class="reference external" href="https://www.consul.io/docs/commands/lock.html">lock feature</a> of HashiCorp’s <a class="reference external" href="https://www.consul.io/">Consul</a> service for synchronization between nodes.
+<code class="docutils literal"><span class="pre">true</span></code> then the <code class="docutils literal"><span class="pre">consul</span></code> field will also be required since this
+application uses the <a class="reference external" href="https://www.consul.io/docs/commands/lock.html">lock feature</a> of HashiCorp&#8217;s <a class="reference external" href="https://www.consul.io/">Consul</a> service for synchronization between nodes.
 This field is optional. For more information on distributed operation,
-see the <a class="reference internal" href="usage.html#distributed"><span class="std std-ref">distributed usage</span></a> section.</li>
-<li><span class="code-no-background">consul</span> (<a class="reference external" href="#consul-parameters">Consul</a>: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>)
+see the <a class="reference internal" href="usage.html#distributed"><span>distributed usage</span></a> section.</li>
+<li><span class="code-no-background">consul</span> (<a class="reference external" href="#consul-parameters">Consul</a>: <code class="docutils literal"><span class="pre">&lt;nil&gt;</span></code>)
 - Configures the Consul client. The program will use this client to
 communicate with your Consul server for synchronization between nodes. This
-field is required if <code class="docutils literal notranslate"><span class="pre">distributed</span></code> is <code class="docutils literal notranslate"><span class="pre">true</span></code>.</li>
+field is required if <code class="docutils literal"><span class="pre">distributed</span></code> is <code class="docutils literal"><span class="pre">true</span></code>.</li>
 </ul>
 </div>
 <div class="section" id="elasticsearch-parameters">
-<h3><code class="docutils literal notranslate"><span class="pre">elasticsearch</span></code> Parameters<a class="headerlink" href="#elasticsearch-parameters" title="Permalink to this headline">¶</a></h3>
+<h3><code class="docutils literal"><span class="pre">elasticsearch</span></code> Parameters<a class="headerlink" href="#elasticsearch-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">server</span> (<a class="reference external" href="#server-parameters">Server</a>: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>)
+<li><span class="code-no-background">server</span> (<a class="reference external" href="#server-parameters">Server</a>: <code class="docutils literal"><span class="pre">&lt;nil&gt;</span></code>)
 - Specifies information pertaining to your Elasticsearch server. See the
 <a class="reference external" href="#server-parameters">Server</a> section for more information. This field
 is always required.</li>
-<li><span class="code-no-background">client</span> (<a class="reference external" href="#client-parameters">Client</a>: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>)
+<li><span class="code-no-background">client</span> (<a class="reference external" href="#client-parameters">Client</a>: <code class="docutils literal"><span class="pre">&lt;nil&gt;</span></code>)
 - Configures the HTTP client with which the program will communicate with
 Elasticsearch. See the <a class="reference external" href="#client-parameters">Client</a> section for more
 information. This field is always required.</li>
 </ul>
 </div>
 <div class="section" id="consul-parameters">
-<h3><code class="docutils literal notranslate"><span class="pre">consul</span></code> Parameters<a class="headerlink" href="#consul-parameters" title="Permalink to this headline">¶</a></h3>
+<h3><code class="docutils literal"><span class="pre">consul</span></code> Parameters<a class="headerlink" href="#consul-parameters" title="Permalink to this headline">¶</a></h3>
 <p>Note: All of these values should be strings. For example, even if the value
-is technically a Boolean field such as <code class="docutils literal notranslate"><span class="pre">true</span></code>, you should provide a string
-(e.g. <code class="docutils literal notranslate"><span class="pre">&quot;true&quot;</span></code>).</p>
+is technically a Boolean field such as <code class="docutils literal"><span class="pre">true</span></code>, you should provide a string
+(e.g. <code class="docutils literal"><span class="pre">&quot;true&quot;</span></code>).</p>
 <ul class="simple">
-<li><span class="code-no-background">consul_lock_key</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The name of the key to be assigned
+<li><span class="code-no-background">consul_lock_key</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The name of the key to be assigned
 to the Consul lock. This field is always required.</li>
-<li><code class="docutils literal notranslate"><span class="pre">consul_http_addr</span></code> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The URL of your Consul server.
+<li><code class="docutils literal"><span class="pre">consul_http_addr</span></code> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The URL of your Consul server.
 This field is always required.</li>
-<li><span class="code-no-background">consul_http_token</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The API access token required
+<li><span class="code-no-background">consul_http_token</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The API access token required
 when access control lists (ACLs) are enabled. This field is
 optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_http_ssl</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;false&quot;</span></code>) - A boolean
+<li><span class="code-no-background">consul_http_ssl</span> (string: <code class="docutils literal"><span class="pre">&quot;false&quot;</span></code>) - A boolean
 value (default is false) that enables the HTTPS URI scheme and SSL
 connections to the HTTP API. This field is optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_http_ssl_verify</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - A boolean
+<li><span class="code-no-background">consul_http_ssl_verify</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - A boolean
 value (default true) to specify SSL certificate verification; setting this
 value to false is not recommended for production use. This field is
 optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_cacert</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to a CA file to
+<li><span class="code-no-background">consul_cacert</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to a CA file to
 use for TLS when communicating with Consul. This field is
 optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_capath</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to a directory
+<li><span class="code-no-background">consul_capath</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to a directory
 of CA certificates to use for TLS when communicating with Consul. This
 field is optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_client_cert</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to a client
+<li><span class="code-no-background">consul_client_cert</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to a client
 cert file to use for TLS when verify_incoming is enabled. This field is
 optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_client_key</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to a client
+<li><span class="code-no-background">consul_client_key</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to a client
 key file to use for TLS when verify_incoming is enabled. This field is
 optional.<span class="red">*</span></li>
-<li><span class="code-no-background">consul_tls_server_name</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The server
+<li><span class="code-no-background">consul_tls_server_name</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The server
 name to use as the SNI host when connecting via TLS. This field is
 optional.<span class="red">*</span></li>
 </ul>
@@ -149,28 +154,28 @@ variable</a>
 instead. The environment variable takes precedence.</p>
 </div>
 <div class="section" id="server-parameters">
-<h3><code class="docutils literal notranslate"><span class="pre">server</span></code> Parameters<a class="headerlink" href="#server-parameters" title="Permalink to this headline">¶</a></h3>
+<h3><code class="docutils literal"><span class="pre">server</span></code> Parameters<a class="headerlink" href="#server-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">url</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The URL of your Elasticsearch
+<li><span class="code-no-background">url</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The URL of your Elasticsearch
 instance. This field is always required.</li>
 </ul>
 </div>
 <div class="section" id="client-parameters">
-<h3><code class="docutils literal notranslate"><span class="pre">client</span></code> Parameters<a class="headerlink" href="#client-parameters" title="Permalink to this headline">¶</a></h3>
+<h3><code class="docutils literal"><span class="pre">client</span></code> Parameters<a class="headerlink" href="#client-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">tls_enabled</span> (bool: <code class="docutils literal notranslate"><span class="pre">false</span></code>) - Whether the application
+<li><span class="code-no-background">tls_enabled</span> (bool: <code class="docutils literal"><span class="pre">false</span></code>) - Whether the application
 should use TLS when communicating with your Elasticsearch server. This field
 is optional.</li>
-<li><span class="code-no-background">ca_cert</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to a PEM-encoded CA
+<li><span class="code-no-background">ca_cert</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to a PEM-encoded CA
 certificate file on the local disk. This file is used to verify the
-Elasticsearch server’s SSL certificate.</li>
-<li><span class="code-no-background">client_cert</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to a PEM-encoded
+Elasticsearch server&#8217;s SSL certificate.</li>
+<li><span class="code-no-background">client_cert</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to a PEM-encoded
 client certificate on the local disk. This file is used for TLS
 communication with the Elasticsearch server.</li>
-<li><span class="code-no-background">client_key</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Path to an unencrypted,
+<li><span class="code-no-background">client_key</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Path to an unencrypted,
 PEM-encoded private key on disk which corresponds to the matching client
 certificate.</li>
-<li><span class="code-no-background">server_name</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Name to use as the SNI
+<li><span class="code-no-background">server_name</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Name to use as the SNI
 host when connecting via TLS.</li>
 </ul>
 </div>
@@ -179,14 +184,14 @@ host when connecting via TLS.</li>
 <span id="id2"></span><h2>Rule Configuration File<a class="headerlink" href="#rule-configuration-file" title="Permalink to this headline">¶</a></h2>
 <p>The rule configuration files are JSON files which define your alerts. The
 program will look for the rule configuration files in the
-<code class="docutils literal notranslate"><span class="pre">/etc/go-elasticsearch-alerts/rules</span></code> directory by default. If you wish to
+<code class="docutils literal"><span class="pre">/etc/go-elasticsearch-alerts/rules</span></code> directory by default. If you wish to
 keep these files in a different directory, you can specify this directory
-with the <code class="docutils literal notranslate"><span class="pre">GO_ELASTICSEARCH_ALERTS_RULES_DIR</span></code> environment variable. All of
-these files should be valid JSON and their file names should have a <code class="docutils literal notranslate"><span class="pre">.json</span></code>
+with the <code class="docutils literal"><span class="pre">GO_ELASTICSEARCH_ALERTS_RULES_DIR</span></code> environment variable. All of
+these files should be valid JSON and their file names should have a <code class="docutils literal"><span class="pre">.json</span></code>
 extension. There must be at least one rule for the program to operate.</p>
 <div class="section" id="rule-example">
 <span id="id3"></span><h3>Example<a class="headerlink" href="#rule-example" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
   <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Filebeat Errors&quot;</span><span class="p">,</span>
   <span class="nt">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;filebeat-*&quot;</span><span class="p">,</span>
   <span class="nt">&quot;schedule&quot;</span><span class="p">:</span> <span class="s2">&quot;@every 10m&quot;</span><span class="p">,</span>
@@ -241,11 +246,11 @@ extension. There must be at least one rule for the program to operate.</p>
 </pre></div>
 </div>
 <p>In the example above, the application would execute the following query
-(illustrated as a <code class="docutils literal notranslate"><span class="pre">cURL</span></code> request below) to Elasticsearch every ten minutes,
-group by <code class="docutils literal notranslate"><span class="pre">hits.hits._source</span></code>, <code class="docutils literal notranslate"><span class="pre">aggregations.service_name.buckets</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">aggregations.service_name.buckets.program.buckets</span></code>, and write the results
+(illustrated as a <code class="docutils literal"><span class="pre">cURL</span></code> request below) to Elasticsearch every ten minutes,
+group by <code class="docutils literal"><span class="pre">hits.hits._source</span></code>, <code class="docutils literal"><span class="pre">aggregations.service_name.buckets</span></code>, and
+<code class="docutils literal"><span class="pre">aggregations.service_name.buckets.program.buckets</span></code>, and write the results
 to Slack and local disk.</p>
-<div class="highlight-shell notranslate" id="curl-request"><div class="highlight"><pre><span></span>$ curl http://https://my.elasticsearch.com/filebeat-*/_search <span class="se">\</span>
+<div class="highlight-shell" id="curl-request"><div class="highlight"><pre>$ curl http://https://my.elasticsearch.com/filebeat-*/_search <span class="se">\</span>
   --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
   --data <span class="s1">&#39;{</span>
 <span class="s1">    &quot;query&quot;: {</span>
@@ -275,62 +280,63 @@ to Slack and local disk.</p>
 <div class="section" id="rule-file-parameters">
 <h3>Rule File Parameters<a class="headerlink" href="#rule-file-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">name</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The name of the rule (e.g.
-<code class="docutils literal notranslate"><span class="pre">&quot;Filebeat</span> <span class="pre">Errors&quot;</span></code>). This field is required.</li>
-<li><span class="code-no-background">index</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The index to be queried.
+<li><span class="code-no-background">name</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The name of the rule (e.g.
+<code class="docutils literal"><span class="pre">&quot;Filebeat</span> <span class="pre">Errors&quot;</span></code>). This field is required.</li>
+<li><span class="code-no-background">index</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The index to be queried.
 This field is required.</li>
-<li><span class="code-no-background">schedule</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - When the query should be
+<li><span class="code-no-background">schedule</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - When the query should be
 executed. This should be a <a class="reference external" href="https://en.wikipedia.org/wiki/Cron">cron</a>
 string. This program uses <a class="reference external" href="https://godoc.org/github.com/robfig/cron">github.com/robfig/cron</a> to parse the cron schedule,
 so please refer to it for specifics on how to write a proper cron schedule.</li>
-<li><span class="code-no-background">body</span> (JSON object: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>) - The body of the
+<li><span class="code-no-background">body</span> (JSON object: <code class="docutils literal"><span class="pre">&lt;nil&gt;</span></code>) - The body of the
 <a class="reference external" href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-body.html">search query</a>
 request. When the job is triggered, the program will pass this exact JSON as
-data in the request to the <code class="docutils literal notranslate"><span class="pre">&lt;index&gt;/_search</span></code> endpoint. The value of this
+data in the request to the <code class="docutils literal"><span class="pre">&lt;index&gt;/_search</span></code> endpoint. The value of this
 field will dictate the structure of the Elasticsearch response data and
-therefore will dictate the set of potential values for the <code class="docutils literal notranslate"><span class="pre">filters</span></code> and
-<code class="docutils literal notranslate"><span class="pre">body_field</span></code> sections. It is recommendeded that you manually run this
-query (for an example, see the <a class="reference internal" href="#curl-request"><span class="std std-ref">cURL request</span></a> above)
+therefore will dictate the set of potential values for the <code class="docutils literal"><span class="pre">filters</span></code> and
+<code class="docutils literal"><span class="pre">body_field</span></code> sections. It is recommendeded that you manually run this
+query (for an example, see the <a class="reference internal" href="#curl-request"><span>cURL request</span></a> above)
 and understand the structure of the response data before setting the
-<code class="docutils literal notranslate"><span class="pre">filters</span></code> and <code class="docutils literal notranslate"><span class="pre">body_field</span></code> sections.</li>
-<li><span class="code-no-background">filters</span> ([]string: <code class="docutils literal notranslate"><span class="pre">[]</span></code>) - How the response to this
+<code class="docutils literal"><span class="pre">filters</span></code> and <code class="docutils literal"><span class="pre">body_field</span></code> sections.</li>
+<li><span class="code-no-background">filters</span> ([]string: <code class="docutils literal"><span class="pre">[]</span></code>) - How the response to this
 query should be grouped. How the group data will be presented depends on
 the output method(s) used. More information on this field is provided in the
 <a class="reference internal" href="#filters">filters</a> section.</li>
-<li><span class="code-no-background">body_field</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;hits.hits._source&quot;</span></code>) - The
+<li><span class="code-no-background">body_field</span> (string: <code class="docutils literal"><span class="pre">&quot;hits.hits._source&quot;</span></code>) - The
 field on which to group the response. The elements of the response data
 that match the value of this field will be stringified and concatenated
 before being sent to the provided output(s). This field is optional. If
-not specified, the program will group by the field <code class="docutils literal notranslate"><span class="pre">hits.hits._source</span></code>
+not specified, the program will group by the field <code class="docutils literal"><span class="pre">hits.hits._source</span></code>
 by default. More information on this field is provided in the <a class="reference internal" href="#filters">filters</a>
 section.</li>
-<li><span class="code-no-background">outputs</span> ([]<a class="reference external" href="#outputs-parameters">Output</a>: <code class="docutils literal notranslate"><span class="pre">[]</span></code>)
+<li><span class="code-no-background">outputs</span> ([]<a class="reference external" href="#outputs-parameters">Output</a>: <code class="docutils literal"><span class="pre">[]</span></code>)
 - The media by which alerts should be sent. See the <a class="reference external" href="#outputs-parameters">Output</a> section for more details. At least one output must
 be specified.</li>
 </ul>
 </div>
 <div class="section" id="outputs-parameters">
-<h3><code class="docutils literal notranslate"><span class="pre">outputs</span></code> Parameters<a class="headerlink" href="#outputs-parameters" title="Permalink to this headline">¶</a></h3>
+<h3><code class="docutils literal"><span class="pre">outputs</span></code> Parameters<a class="headerlink" href="#outputs-parameters" title="Permalink to this headline">¶</a></h3>
 <p>The <span class="code-no-background">outputs</span> parameter of the rule file specifies where
 the results of the queries should be sent. Each rule should have at least one
 output. Currently, three output types are supported:
 <a class="reference external" href="#slack-output-parameters">Slack</a>, <a class="reference external" href="#email-output-parameters">email</a>,
-and <a class="reference external" href="#file-output-parameters">file</a>. The exact specifications of this field
+<a class="reference external" href="#aws-sns-output-parameters">Amazon AWS SNS</a>, and
+<a class="reference external" href="#file-output-parameters">file</a>. The exact specifications of this field
 will depend on the output type.</p>
 <ul class="simple">
-<li><span class="code-no-background">type</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The type of output. Currently,
-only <code class="docutils literal notranslate"><span class="pre">&quot;slack&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;file&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;email&quot;</span></code> are supported. This field is
+<li><span class="code-no-background">type</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The type of output. Currently,
+only <code class="docutils literal"><span class="pre">&quot;slack&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;file&quot;</span></code>, and <code class="docutils literal"><span class="pre">&quot;email&quot;</span></code> are supported. This field is
 always required.</li>
-<li><span class="code-no-background">config</span> (JSON object: <code class="docutils literal notranslate"><span class="pre">&lt;nil&gt;</span></code>) - Configurations
+<li><span class="code-no-background">config</span> (JSON object: <code class="docutils literal"><span class="pre">&lt;nil&gt;</span></code>) - Configurations
 specific to the output type. This field is alwyas required.</li>
 </ul>
 </div>
 <div class="section" id="slack-output-parameters">
 <h3>Slack Output Parameters<a class="headerlink" href="#slack-output-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">webhook</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The Slack webhook where
+<li><span class="code-no-background">webhook</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The Slack webhook where
 error alerts will be sent. This field is required.</li>
-<li><span class="code-no-background">text</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - Text to be sent with the
+<li><span class="code-no-background">text</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - Text to be sent with the
 Slack message.</li>
 </ul>
 <p>You can find an example of what the Slack message looks like
@@ -339,32 +345,126 @@ Slack message.</li>
 <div class="section" id="email-output-parameters">
 <h3>Email Output Parameters<a class="headerlink" href="#email-output-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">host</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The SMTP server host (e.g.
-<code class="docutils literal notranslate"><span class="pre">smtp.gmail.com</span></code>). This field is required.</li>
-<li><span class="code-no-background">port</span> (int: <code class="docutils literal notranslate"><span class="pre">0</span></code>) - The SMTP server port (e.g. <code class="docutils literal notranslate"><span class="pre">587</span></code>
+<li><span class="code-no-background">host</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The SMTP server host (e.g.
+<code class="docutils literal"><span class="pre">smtp.gmail.com</span></code>). This field is required.</li>
+<li><span class="code-no-background">port</span> (int: <code class="docutils literal"><span class="pre">0</span></code>) - The SMTP server port (e.g. <code class="docutils literal"><span class="pre">587</span></code>
 for Gmail). This field is required.</li>
-<li><span class="code-no-background">from</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The “from” email address. This
+<li><span class="code-no-background">from</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The &#8220;from&#8221; email address. This
 field is required.</li>
-<li><span class="code-no-background">to</span> ([]string: <code class="docutils literal notranslate"><span class="pre">[]</span></code>) - The “to” addresses to which
+<li><span class="code-no-background">to</span> ([]string: <code class="docutils literal"><span class="pre">[]</span></code>) - The &#8220;to&#8221; addresses to which
 email alerts will be sent. At least one address is required.</li>
-<li><span class="code-no-background">username</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The username with which
+<li><span class="code-no-background">username</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The username with which
 the SMTP client will authenticate to the host. If you do not wish to specify
 the username in the configuration file, you can set the password using the
-<code class="docutils literal notranslate"><span class="pre">GO_ELASTICSEARCH_ALERTS_SMTP_USERNAME</span></code> environment variable. This field
+<code class="docutils literal"><span class="pre">GO_ELASTICSEARCH_ALERTS_SMTP_USERNAME</span></code> environment variable. This field
 is optional.</li>
-<li><span class="code-no-background">password</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The password with which the
+<li><span class="code-no-background">password</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The password with which the
 SMTP client will authenticate to the host. If you do not wish to specify the
 password in the configuration file, you can set the password using the
-<code class="docutils literal notranslate"><span class="pre">GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD</span></code> environment variable. This field is
+<code class="docutils literal"><span class="pre">GO_ELASTICSEARCH_ALERTS_SMTP_PASSWORD</span></code> environment variable. This field is
 optional.</li>
 </ul>
 <p>You can find an example of what the email message looks like
 <a class="reference external" href="#email-output-example">here</a>.</p>
 </div>
+<div class="section" id="aws-sns-output-parameters">
+<h3>AWS SNS Output Parameters<a class="headerlink" href="#aws-sns-output-parameters" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><span class="code-no-background">region</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The Amazon AWS region to send
+where your SNS topic exists. This field is required.</li>
+<li><span class="code-no-background">topic_arn</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The SNS topic to which new
+alerts will be published. This field is required.</li>
+<li><span class="code-no-background">template</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The message template that will
+define what alert messages will look like. This template is based on <a class="reference external" href="https://golang.org/pkg/text/template/">Go templates</a>. It allows you to interpolate an array
+of <a class="reference external" href="https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts/command/alert#Record">alert records</a>
+into the template to expose custom message formatting for your alerts. This field is
+required.</li>
+</ul>
+<p>As an example, let&#8217;s say you have this output method in one of your rule files:</p>
+<div class="highlight-json"><div class="highlight"><pre>{
+  &quot;name&quot;: &quot;Filebeat Errors&quot;,
+  ...
+  &quot;outputs:&quot; [
+    {
+      &quot;type&quot;: &quot;sns&quot;,
+      &quot;config&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;topic_arn&quot;: &quot;AWS::SNS::Topic&quot;,
+        &quot;template&quot;: &quot;{{range .}}{{.Filter}}:\n{{range .Fields}}* {{.Key}}: {{.Count}}\n{{end}}\n{{end}}&quot;
+      }
+    }
+  ]
+}
+</pre></div>
+</div>
+<p>Let&#8217;s then say that a new alert comes in that matches this alert&#8217;s filter.
+It would pass the following struct to the alert method:</p>
+<div class="highlight-golang"><div class="highlight"><pre>[]*alert.Record{
+    {
+        Filter: &quot;foo.bar.bim&quot;,
+        Fields: []*alert.Field{
+            {
+                Key: &quot;test-1&quot;,
+                Count: 2,
+            },
+            {
+                Key: &quot;test-2&quot;,
+                Count: 4,
+            },
+        },
+    },
+    {
+        Filter: &quot;abc.def.ghi&quot;,
+        Fields: []*alert.Field{
+            {
+                Key: &quot;foo&quot;,
+                Count: 10,
+            },
+            {
+                Key: &quot;bar&quot;,
+                Count: 11,
+            },
+        },
+    },
+      }
+</pre></div>
+</div>
+<p>The alert handler would then render your template using this struct, resulting
+in the following message being published to your SNS Topic:</p>
+<div class="highlight-text"><div class="highlight"><pre>[Filebeat Errors]
+foo.bar.bim:
+* test-1: 2
+* test-2: 4
+
+abc.def.ghi
+* foo: 10
+* bar: 11
+</pre></div>
+</div>
+<p>As a note, you do not have to have any templating logic in the <code class="docutils literal"><span class="pre">message</span></code> field
+of your output configuration. For example, if you want all messages to be the
+same when a new alert comes in, you can make a configuration like:</p>
+<div class="highlight-json"><div class="highlight"><pre>{
+  &quot;name&quot;: &quot;Filebeat Errors&quot;,
+  ...
+  &quot;outputs:&quot; [
+    {
+      &quot;type&quot;: &quot;sns&quot;,
+      &quot;config&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;topic_arn&quot;: &quot;AWS::SNS::Topic&quot;,
+        &quot;template&quot;: &quot;New errors found&quot;
+      }
+    }
+  ]
+}
+</pre></div>
+</div>
+</div>
 <div class="section" id="file-output-parameters">
 <h3>File Output Parameters<a class="headerlink" href="#file-output-parameters" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><span class="code-no-background">file</span> (string: <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>) - The file to which alerts will
+<li><span class="code-no-background">file</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The file to which alerts will
 be written. This field is required.</li>
 </ul>
 </div>
@@ -373,10 +473,10 @@ be written. This field is required.</li>
 <h2>Filters<a class="headerlink" href="#filters" title="Permalink to this headline">¶</a></h2>
 <p>Filters are used to group the data that Elasticsearch responds to a query with.
 They are used to provide a brief summary of the response data.</p>
-<p>For example, given the <a class="reference internal" href="#rule-example"><span class="std std-ref">example</span></a> above, assume that after
+<p>For example, given the <a class="reference internal" href="#rule-example"><span>example</span></a> above, assume that after
 the job triggers and executes the query Elasticsearch responds with the
 following data:</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
   <span class="nt">&quot;hits&quot;</span><span class="p">:</span> <span class="p">{</span>
     <span class="nt">&quot;hits&quot;</span><span class="p">:</span> <span class="p">[</span>
       <span class="p">{</span>
@@ -435,9 +535,9 @@ following data:</p>
 </pre></div>
 </div>
 <p>Upon receiving this JSON data, the program will group the data by
-<code class="docutils literal notranslate"><span class="pre">&quot;aggregations.service_name.buckets&quot;</span></code> and
-<code class="docutils literal notranslate"><span class="pre">&quot;aggregations.service_name.buckets.program.buckets&quot;</span></code>. Additionally, it will
-group the data by <code class="docutils literal notranslate"><span class="pre">&quot;hits.hits._source&quot;</span></code> (the default <code class="docutils literal notranslate"><span class="pre">body_field</span></code> value)
+<code class="docutils literal"><span class="pre">&quot;aggregations.service_name.buckets&quot;</span></code> and
+<code class="docutils literal"><span class="pre">&quot;aggregations.service_name.buckets.program.buckets&quot;</span></code>. Additionally, it will
+group the data by <code class="docutils literal"><span class="pre">&quot;hits.hits._source&quot;</span></code> (the default <code class="docutils literal"><span class="pre">body_field</span></code> value)
 and then stringify and concatenate the matched hits. After these steps, it will
 send the results via Slack and email as shown below.</p>
 <div class="section" id="slack-output-example">
@@ -453,7 +553,6 @@ send the results via Slack and email as shown below.</p>
 
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -482,25 +581,26 @@ send the results via Slack and email as shown below.</p>
     <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/issues">Issue Tracker</a></li>
     <li><a href="https://github.com/morningconsult/go-elasticsearch-alerts/releases">Releases</a></li>
   </ul>
-  <h3><a href="../index.html">Table of Contents</a></h3>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Setup</a><ul>
 <li><a class="reference internal" href="#configuration-files">Configuration Files</a></li>
 <li><a class="reference internal" href="#main-configuration-file">Main Configuration File</a><ul>
 <li><a class="reference internal" href="#example">Example</a></li>
 <li><a class="reference internal" href="#main-file-parameters">Main File Parameters</a></li>
-<li><a class="reference internal" href="#elasticsearch-parameters"><code class="docutils literal notranslate"><span class="pre">elasticsearch</span></code> Parameters</a></li>
-<li><a class="reference internal" href="#consul-parameters"><code class="docutils literal notranslate"><span class="pre">consul</span></code> Parameters</a></li>
-<li><a class="reference internal" href="#server-parameters"><code class="docutils literal notranslate"><span class="pre">server</span></code> Parameters</a></li>
-<li><a class="reference internal" href="#client-parameters"><code class="docutils literal notranslate"><span class="pre">client</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#elasticsearch-parameters"><code class="docutils literal"><span class="pre">elasticsearch</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#consul-parameters"><code class="docutils literal"><span class="pre">consul</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#server-parameters"><code class="docutils literal"><span class="pre">server</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#client-parameters"><code class="docutils literal"><span class="pre">client</span></code> Parameters</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#rule-configuration-file">Rule Configuration File</a><ul>
 <li><a class="reference internal" href="#rule-example">Example</a></li>
 <li><a class="reference internal" href="#rule-file-parameters">Rule File Parameters</a></li>
-<li><a class="reference internal" href="#outputs-parameters"><code class="docutils literal notranslate"><span class="pre">outputs</span></code> Parameters</a></li>
+<li><a class="reference internal" href="#outputs-parameters"><code class="docutils literal"><span class="pre">outputs</span></code> Parameters</a></li>
 <li><a class="reference internal" href="#slack-output-parameters">Slack Output Parameters</a></li>
 <li><a class="reference internal" href="#email-output-parameters">Email Output Parameters</a></li>
+<li><a class="reference internal" href="#aws-sns-output-parameters">AWS SNS Output Parameters</a></li>
 <li><a class="reference internal" href="#file-output-parameters">File Output Parameters</a></li>
 </ul>
 </li>
@@ -515,14 +615,15 @@ send the results via Slack and email as shown below.</p>
 
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
-    <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    </div>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -533,11 +634,11 @@ send the results via Slack and email as shown below.</p>
       &copy;2018, Morning Consult.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
       
       |
-      <a href="../_sources/user/setup.rst.txt"
+      <a href="../_sources/user/setup.txt"
           rel="nofollow">Page source</a>
     </div>
 

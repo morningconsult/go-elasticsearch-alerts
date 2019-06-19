@@ -16,6 +16,7 @@ package sns
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"text/template"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -79,14 +80,25 @@ func (a *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 	if records == nil || len(records) < 1 {
 		return nil
 	}
-	out := bytes.Buffer{}
-	if err := a.template.Execute(&out, records); err != nil {
-		return xerrors.Errorf("error executing SNS message template: %w", err)
+	msg, err := a.renderTemplate(rule, records)
+	if err != nil {
+		return err
 	}
 	input := &sns.PublishInput{
-		Message:  aws.String(out.String()),
+		Message:  aws.String(msg),
 		TopicArn: aws.String(a.topicARN),
 	}
-	_, err := a.client.PublishWithContext(ctx, input)
-	return err
+	_, err = a.client.PublishWithContext(ctx, input)
+	if err != nil {
+		return xerrors.Errorf("error publishing alert to SNS: %w", err)
+	}
+	return nil
+}
+
+func (a *AlertMethod) renderTemplate(rule string, records []*alert.Record) (string, error) {
+	out := bytes.Buffer{}
+	if err := a.template.Execute(&out, records); err != nil {
+		return "", xerrors.Errorf("error executing SNS message template: %w", err)
+	}
+	return fmt.Sprintf("[%s]\n%s", rule, out.String()), nil
 }

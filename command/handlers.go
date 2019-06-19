@@ -22,6 +22,7 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/email"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/slack"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/sns"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
 	"golang.org/x/xerrors"
@@ -76,7 +77,7 @@ func buildQueryHandlers(
 	return queryHandlers, nil
 }
 
-func buildMethod(output *config.OutputConfig) (alert.Method, error) {
+func buildMethod(output *config.OutputConfig) (alert.Method, error) { // nolint: gocyclo
 	var method alert.Method
 	var err error
 
@@ -99,6 +100,12 @@ func buildMethod(output *config.OutputConfig) (alert.Method, error) {
 			return nil, xerrors.Errorf("error decoding email output configuration: %v", err)
 		}
 		method, err = email.NewAlertMethod(emailConfig)
+	case "sns":
+		snsConfig := new(sns.AlertMethodConfig)
+		if err = mapstructure.Decode(output.Config, snsConfig); err != nil {
+			return nil, xerrors.Errorf("error decoding SNS output configuration: %v", err)
+		}
+		method, err = sns.NewAlertMethod(snsConfig)
 	default:
 		return nil, xerrors.Errorf("output type %q is not supported", output.Type)
 	}
