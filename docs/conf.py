@@ -32,6 +32,7 @@ version = u''
 
 # The full version, including alpha/beta/rc tags
 proc = subprocess.Popen(["git", "describe", "--abbrev=0", "--tags"], stdout=subprocess.PIPE)
+release = proc.stdout.read().decode('utf-8').strip("\n")
 
 # -- General configuration ---------------------------------------------------
 
