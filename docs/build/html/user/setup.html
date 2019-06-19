@@ -380,6 +380,9 @@ of <a class="reference external" href="https://godoc.org/github.com/morningconsu
 into the template to expose custom message formatting for your alerts. This field is
 required.</li>
 </ul>
+<p><strong>IMPORTANT</strong>: If sending SMS messages with your SMS topic, a strict 140-character
+limit is enforced. Please take this into consideration when writing your message
+template.</p>
 <p>As an example, let&#8217;s say you have this output method in one of your rule files:</p>
 <div class="highlight-json"><div class="highlight"><pre>{
   &quot;name&quot;: &quot;Filebeat Errors&quot;,

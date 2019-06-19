@@ -362,10 +362,14 @@ AWS SNS Output Parameters
 - :code-no-background:`template` (string: ``""``) - The message template that will
   define what alert messages will look like. This template is based on `Go templates
   <https://golang.org/pkg/text/template/>`__. It allows you to interpolate an array
-  of `alert records 
+  of `alert records
   <https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts/command/alert#Record>`__ 
   into the template to expose custom message formatting for your alerts. This field is
   required.
+
+**IMPORTANT**: If sending SMS messages with your SMS topic, a strict 140-character
+limit is enforced. Please take this into consideration when writing your message
+template.
 
 As an example, let's say you have this output method in one of your rule files:
 
