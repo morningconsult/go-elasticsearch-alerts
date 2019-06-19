@@ -7,7 +7,7 @@ Go Elasticsearch Alerts
 =======================
 Release |release|. (:ref:`Installation <install>`)
 
-.. image:: https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/build-release/badge
+.. image:: https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/publish-release/badge
     :target: https://ci.morningconsultintelligence.com/teams/oss/pipelines/go-elasticsearch-alerts
 
 .. image:: https://img.shields.io/badge/godoc-reference-blue.svg
