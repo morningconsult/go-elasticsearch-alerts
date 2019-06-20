@@ -1,7 +1,7 @@
 module github.com/morningconsult/go-elasticsearch-alerts
 
 require (
-	github.com/aws/aws-sdk-go v1.20.3
+	github.com/aws/aws-sdk-go v1.20.4
 	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/consul/api v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
