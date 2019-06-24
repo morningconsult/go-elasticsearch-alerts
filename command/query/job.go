@@ -306,7 +306,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
     "index": {
       "number_of_shards": 1,
       "number_of_replicas": 1,
-      "auto_expand_replicas": "0-3",
+      "auto_expand_replicas": "0-2",
       "codec": "best_compression",
       "translog": {
 	"flush_threshold_size": "752mb"
@@ -357,7 +357,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 	resp, err := q.makeRequest(
 		ctx,
 		http.MethodPut,
-		fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()),
+		fmt.Sprintf("%s/_template/%s?include_type_name=true", q.esURL, q.TemplateName()),
 		bytes.NewBufferString(payload),
 	)
 	if err != nil {
