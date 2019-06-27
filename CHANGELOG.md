@@ -1,6 +1,18 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- Make better default alert message for SNS
+
+### Feat
+- Expose github.com/Masterminds/sprig to template
+
+
+<a name="v0.1.10"></a>
+## [v0.1.10] - 2019-06-24
+### Chore
+- Bump version and update changelog [ci skip]
+
 
 <a name="v0.1.9"></a>
 ## [v0.1.9] - 2019-06-19
@@ -259,7 +271,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.9...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.10...HEAD
+[v0.1.10]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.9...v0.1.10
 [v0.1.9]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.8...v0.1.9
 [v0.1.8]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.7...v0.1.8
 [v0.1.7]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.6...v0.1.7
