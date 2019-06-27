@@ -102,7 +102,7 @@ func (a *AlertMethod) renderTemplate(rule string, records []*alert.Record) (stri
 		return "", xerrors.Errorf("error executing SNS message template: %w", err)
 	}
 	if out.String() == "" {
-		out.WriteString("New records matching alert detected. See logs.")
+		out.WriteString("New alerts detected. See logs.")
 	}
 	return fmt.Sprintf("[%s]\n%s", rule, out.String()), nil
 }

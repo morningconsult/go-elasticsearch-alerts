@@ -157,7 +157,7 @@ func TestAlertMethod_renderTemplate(t *testing.T) {
 			"{{range .}}{{if ne .Text \"\"}}{{range $_, $v := regexFindAll \"\\\\[ERROR\\\\].*\" .Text -1 | uniq }}* {{$v | trimAll \"\\\",\"}}\n{{end}}{{end}}{{end}}",
 			defaultRecords,
 			false,
-			"[TEST ERROR ALERT]\nNew records matching alert detected. See logs.",
+			"[TEST ERROR ALERT]\nNew alerts detected. See logs.",
 		},
 	}
 
