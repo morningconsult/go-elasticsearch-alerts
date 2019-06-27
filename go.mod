@@ -1,8 +1,12 @@
 module github.com/morningconsult/go-elasticsearch-alerts
 
 require (
+	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/semver v1.4.2 // indirect
+	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/aws/aws-sdk-go v1.20.3
 	github.com/google/go-cmp v0.3.0
+	github.com/google/uuid v1.1.1 // indirect
 	github.com/hashicorp/consul/api v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-hclog v0.0.0-20190109152822-4783caec6f2e
@@ -10,6 +14,8 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/memberlist v0.1.4 // indirect
+	github.com/huandu/xstrings v1.2.0 // indirect
+	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/miekg/dns v1.1.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
@@ -19,4 +25,5 @@ require (
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
 	golang.org/x/sys v0.0.0-20190422165155-953cdadca894 // indirect
 	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )

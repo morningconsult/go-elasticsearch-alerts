@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/Masterminds/sprig"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -57,7 +58,7 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config.Template == "" {
 		return nil, xerrors.New("field 'output.config.template' must not be empty when using the SNS output method")
 	}
-	tmpl, err := template.New("sns").Parse(config.Template)
+	tmpl, err := template.New("sns").Funcs(template.FuncMap(sprig.FuncMap())).Parse(config.Template)
 	if err != nil {
 		return nil, xerrors.Errorf("error parsing SNS message template: %w", err)
 	}
@@ -99,6 +100,9 @@ func (a *AlertMethod) renderTemplate(rule string, records []*alert.Record) (stri
 	out := bytes.Buffer{}
 	if err := a.template.Execute(&out, records); err != nil {
 		return "", xerrors.Errorf("error executing SNS message template: %w", err)
+	}
+	if out.String() == "" {
+		out.WriteString("New alerts detected. See logs.")
 	}
 	return fmt.Sprintf("[%s]\n%s", rule, out.String()), nil
 }
