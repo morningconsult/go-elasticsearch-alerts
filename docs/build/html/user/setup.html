@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Setup &mdash; Go Elasticsearch Alerts v0.1.8 documentation</title>
+    <title>Setup &mdash; Go Elasticsearch Alerts v0.1.10 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     'v0.1.8',
+        VERSION:     'v0.1.10',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Go Elasticsearch Alerts v0.1.8 documentation" href="../index.html" />
+    <link rel="top" title="Go Elasticsearch Alerts v0.1.10 documentation" href="../index.html" />
     <link rel="next" title="Usage" href="usage.html" />
     <link rel="prev" title="Installation" href="install.html" />
    
@@ -377,8 +377,9 @@ alerts will be published. This field is required.</li>
 <li><span class="code-no-background">template</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The message template that will
 define what alert messages will look like. This template is based on <a class="reference external" href="https://golang.org/pkg/text/template/">Go templates</a>. It allows you to interpolate an array
 of <a class="reference external" href="https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts/command/alert#Record">alert records</a>
-into the template to expose custom message formatting for your alerts. This field is
-required.</li>
+into the template to expose custom message formatting for your alerts. Note that
+<a class="reference external" href="https://masterminds.github.io/sprig/">Sprig template functions</a> are available
+for use in your template. This field is required.</li>
 </ul>
 <p><strong>IMPORTANT</strong>: If sending SMS messages with your SMS topic, a strict 140-character
 limit is enforced. Please take this into consideration when writing your message

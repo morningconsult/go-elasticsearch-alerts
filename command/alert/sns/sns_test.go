@@ -17,6 +17,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/Masterminds/sprig"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -52,6 +53,92 @@ func TestAlertMethod_renderTemplate(t *testing.T) {
 			"[TEST ERROR ALERT]\nfoo.bar.bim:\n* test-1: 2\n* test-2: 4\n\n",
 		},
 		{
+			"more-custom-templating",
+			"{{range .}}{{if ne .Text \"\"}}{{range $_, $v := regexFindAll \"\\\\[ERROR\\\\].*\" .Text -1 | uniq }}* {{$v | trimAll \"\\\",\"}}\n{{end}}{{end}}{{end}}",
+			[]*alert.Record{
+				{
+					Filter: "aggregations.programs.buckets",
+					Fields: []*alert.Field{
+						{
+							Key:   "test-1",
+							Count: 2,
+						},
+						{
+							Key:   "test-2",
+							Count: 4,
+						},
+					},
+				},
+				{
+					Filter: "hits.hits._source",
+					Text: `
+{
+  "system" : {
+    "syslog" : {
+      "hostname" : "ip-172-31-71-249",
+      "pid" : "1317",
+      "program" : "update",
+      "message" : """2019-06-27T17:30:05.710Z#011test/main.go:10#011[ERROR] Error launching: bad stuff happened""",
+      "timestamp" : "Jun 27 17:30:05"
+    }
+  },
+    "host" : {
+    "name" : "ip-172-31-71-249"
+  }
+}
+----------------------------------------
+{
+  "system" : {
+    "syslog" : {
+      "hostname" : "ip-172-31-71-249",
+      "pid" : "1317",
+      "program" : "update",
+      "message" : """2019-06-27T17:30:05.710Z#011test/main.go:10#011[ERROR] Error launching: more bad stuff happened""",
+      "timestamp" : "Jun 27 17:30:05"
+    }
+  },
+    "host" : {
+    "name" : "ip-172-31-71-249"
+  }
+}
+----------------------------------------
+{
+  "system" : {
+    "syslog" : {
+      "hostname" : "ip-172-31-71-249",
+      "pid" : "1317",
+      "program" : "update",
+      "message" : """2019-06-27T17:30:05.710Z#011test/main.go:10#011[ERROR] Error launching: more bad stuff happened""",
+      "timestamp" : "Jun 27 17:30:05"
+    }
+  },
+    "host" : {
+    "name" : "ip-172-31-71-249"
+  }
+}
+----------------------------------------
+{
+    "host": {
+        "name": "ip-172-31-54-5"
+    },
+    "system": {
+        "syslog": {
+            "hostname": "ip-172-31-54-5",
+            "message": "2019-06-27T07:01:02.395Z#011warn#011test/main.go:256#011[WARN ] Not gonna do anything.",
+            "pid": "1267",
+            "program": "close",
+            "timestamp": "Jun 27 07:01:02"
+        }
+    }
+}
+`,
+					BodyField: true,
+				},
+			},
+			false,
+			"[TEST ERROR ALERT]\n* [ERROR] Error launching: bad stuff happened\n* [ERROR] Error launching: more bad stuff happened\n",
+		},
+		{
 			"invalid-template",
 			"Filter: {{.Filter}}", // this will cause template.Execute to fail
 			defaultRecords,
@@ -65,13 +152,20 @@ func TestAlertMethod_renderTemplate(t *testing.T) {
 			false,
 			"[TEST ERROR ALERT]\nHit the deck!",
 		},
+		{
+			"no-records-matching-template-logic",
+			"{{range .}}{{if ne .Text \"\"}}{{range $_, $v := regexFindAll \"\\\\[ERROR\\\\].*\" .Text -1 | uniq }}* {{$v | trimAll \"\\\",\"}}\n{{end}}{{end}}{{end}}",
+			defaultRecords,
+			false,
+			"[TEST ERROR ALERT]\nNew records matching alert detected. See logs.",
+		},
 	}
 
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			a := &AlertMethod{
-				template: template.Must(template.New("test").Parse(tc.template)),
+				template: template.Must(template.New("test").Funcs(template.FuncMap(sprig.FuncMap())).Parse(tc.template)),
 			}
 			msg, err := a.renderTemplate("TEST ERROR ALERT", tc.records)
 			if tc.expectErr {
