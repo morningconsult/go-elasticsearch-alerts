@@ -1,7 +1,11 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.11"></a>
+## [v0.1.11] - 2019-06-27
 ### Chore
+- Bump version and update changelog [ci skip]
 - Make better default alert message for SNS
 
 ### Feat
@@ -271,7 +275,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.10...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.11...HEAD
+[v0.1.11]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.10...v0.1.11
 [v0.1.10]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.9...v0.1.10
 [v0.1.9]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.8...v0.1.9
 [v0.1.8]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.7...v0.1.8
