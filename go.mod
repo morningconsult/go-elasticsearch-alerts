@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.20.3
 	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1 // indirect
-	github.com/hashicorp/consul/api v1.1.0
+	github.com/hashicorp/consul/api v1.2.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-hclog v0.0.0-20190109152822-4783caec6f2e
 	github.com/hashicorp/go-msgpack v0.5.4 // indirect
