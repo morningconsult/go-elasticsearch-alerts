@@ -5,7 +5,7 @@ require (
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig v2.20.0+incompatible
 	github.com/aws/aws-sdk-go v1.20.3
-	github.com/google/go-cmp v0.3.0
+	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/hashicorp/consul/api v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
