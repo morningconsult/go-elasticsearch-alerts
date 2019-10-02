@@ -3,7 +3,7 @@ module github.com/morningconsult/go-elasticsearch-alerts
 require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.4.2 // indirect
-	github.com/Masterminds/sprig v2.21.0+incompatible
+	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/aws/aws-sdk-go v1.20.3
 	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1 // indirect
