@@ -40,6 +40,8 @@ import (
 
 const (
 	templateVersion        string = "0.0.2"
+	envESBasicAuthUsername string = "GO_ELASTICSEARCH_ALERTS_ES_USERNAME"
+	envESBasicAuthPassword string = "GO_ELASTICSEARCH_ALERTS_ES_PASSWORD"
 	defaultStateIndexAlias string = "go-es-alerts"
 	defaultTimestampFormat string = time.RFC3339
 	defaultBodyField       string = "hits.hits._source"
@@ -110,6 +112,7 @@ type QueryHandler struct { // nolint: golint
 	schedule     cron.Schedule
 	bodyField    string
 	filters      []string
+	newRequest   func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error)
 }
 
 // NewQueryHandler creates a new *QueryHandler instance
@@ -130,6 +133,11 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	schedule, err := cron.Parse(config.Schedule)
 	if err != nil {
 		return nil, xerrors.Errorf("error parsing cron schedule: %v", err)
+	}
+
+	reqFunc, err := buildHTTPRequestFunc()
+	if err != nil {
+		return nil, err
 	}
 
 	if config.Logger == nil {
@@ -158,6 +166,7 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		schedule:     schedule,
 		bodyField:    config.BodyField,
 		filters:      config.Filters,
+		newRequest:   reqFunc,
 	}, nil
 }
 
@@ -185,6 +194,46 @@ func validateConfig(config *QueryHandlerConfig) error {
 		allErrors = multierror.Append(allErrors, xerrors.New("no query body provided"))
 	}
 	return allErrors.ErrorOrNil()
+}
+
+func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*http.Request, error), error) {
+	reqFunc := func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
+		req, err := http.NewRequest(method, url, data)
+		if err != nil {
+			return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
+		}
+		if data != nil {
+			req.Header.Add("Content-Type", "application/json")
+		}
+		req = req.WithContext(ctx)
+		return req, nil
+	}
+
+	username := os.Getenv(envESBasicAuthUsername)
+	password := os.Getenv(envESBasicAuthPassword)
+
+	if username != "" || password != "" {
+		if !(username != "" && password != "") {
+			return nil, xerrors.Errorf(
+				"both %s and %s should be set when using basic auth",
+				envESBasicAuthUsername,
+				envESBasicAuthPassword,
+			)
+		}
+		reqFunc = func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
+			req, err := http.NewRequest(method, url, data)
+			if err != nil {
+				return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
+			}
+			req.SetBasicAuth(username, password)
+			if data != nil {
+				req.Header.Add("Content-Type", "application/json")
+			}
+			req = req.WithContext(ctx)
+			return req, nil
+		}
+	}
+	return reqFunc, nil
 }
 
 // Run starts the QueryHandler. It first attempts to get the "state"
@@ -534,21 +583,6 @@ func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, data
 		return nil, xerrors.Errorf("error creating new request: %v", err)
 	}
 	return q.client.Do(req)
-}
-
-func (q *QueryHandler) newRequest(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
-	var req *http.Request
-	var err error
-
-	req, err = http.NewRequest(method, url, data)
-	if err != nil {
-		return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
-	}
-	if data != nil {
-		req.Header.Add("Content-Type", "application/json")
-	}
-	req = req.WithContext(ctx)
-	return req, nil
 }
 
 func (q *QueryHandler) readErrRespBody(resp *http.Response) string {

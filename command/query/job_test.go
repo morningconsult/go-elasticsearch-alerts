@@ -155,6 +155,10 @@ func TestNewQueryHandler(t *testing.T) {
 }
 
 func TestPutTemplate(t *testing.T) { // nolint: gocyclo
+	reqFunc, err := buildHTTPRequestFunc()
+	if err != nil {
+		t.Fatal(err)
+	}
 	cases := []struct {
 		name   string
 		status int
@@ -207,8 +211,9 @@ func TestPutTemplate(t *testing.T) { // nolint: gocyclo
 				u = fmt.Sprintf("http://example.%s.co.nz", randomUUID(t))
 			}
 			qh := &QueryHandler{
-				client: cleanhttp.DefaultClient(),
-				esURL:  u,
+				client:     cleanhttp.DefaultClient(),
+				esURL:      u,
+				newRequest: reqFunc,
 			}
 
 			err := qh.PutTemplate(context.Background())
@@ -616,6 +621,10 @@ func TestQuery(t *testing.T) {
 }
 
 func TestNewRequestErrors(t *testing.T) {
+	reqFunc, err := buildHTTPRequestFunc()
+	if err != nil {
+		t.Fatal(err)
+	}
 	cases := []struct {
 		name    string
 		method  string
@@ -629,7 +638,7 @@ func TestNewRequestErrors(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			qh := &QueryHandler{}
+			qh := &QueryHandler{newRequest: reqFunc}
 			_, err := qh.newRequest(context.Background(), tc.method, "http://example.com", bytes.NewBuffer(tc.payload))
 			if tc.err {
 				if err == nil {
