@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Setup &mdash; Go Elasticsearch Alerts v0.1.10 documentation</title>
+    <title>Setup &mdash; Go Elasticsearch Alerts v0.1.14 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     'v0.1.10',
+        VERSION:     'v0.1.14',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Go Elasticsearch Alerts v0.1.10 documentation" href="../index.html" />
+    <link rel="top" title="Go Elasticsearch Alerts v0.1.14 documentation" href="../index.html" />
     <link rel="next" title="Usage" href="usage.html" />
     <link rel="prev" title="Installation" href="install.html" />
    
@@ -159,6 +159,11 @@ instead. The environment variable takes precedence.</p>
 <li><span class="code-no-background">url</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The URL of your Elasticsearch
 instance. This field is always required.</li>
 </ul>
+<p>Additionally, if you need to authenticate Elasticsearch requests, you can set
+the username and password with the <code class="docutils literal"><span class="pre">GO_ELASTICSEARCH_ALERTS_ES_USERNAME</span></code> and
+<code class="docutils literal"><span class="pre">GO_ELASTICSEARCH_ALERTS_ES_PASSWORD</span></code> environment variables, respectively.
+These will be included in a basic authentication header with every request
+sent to your Elasticsearch server.</p>
 </div>
 <div class="section" id="client-parameters">
 <h3><code class="docutils literal"><span class="pre">client</span></code> Parameters<a class="headerlink" href="#client-parameters" title="Permalink to this headline">¶</a></h3>

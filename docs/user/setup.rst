@@ -135,6 +135,12 @@ instead. The environment variable takes precedence.
 - :code-no-background:`url` (string: ``""``) - The URL of your Elasticsearch
   instance. This field is always required.
 
+Additionally, if you need to authenticate Elasticsearch requests, you can set
+the username and password with the ``GO_ELASTICSEARCH_ALERTS_ES_USERNAME`` and
+``GO_ELASTICSEARCH_ALERTS_ES_PASSWORD`` environment variables, respectively.
+These will be included in a basic authentication header with every request
+sent to your Elasticsearch server.
+
 ``client`` Parameters
 ~~~~~~~~~~~~~~~~~~~~~
 
