@@ -154,6 +154,66 @@ func TestNewQueryHandler(t *testing.T) {
 	}
 }
 
+func TestBuildHTTPRequestFunc(t *testing.T) {
+	t.Run("basic-auth", func(t *testing.T) {
+		username := "foo@bar.com"
+		password := "baz"
+
+		oldUser := os.Getenv(envESBasicAuthUsername)
+		defer os.Setenv(envESBasicAuthUsername, oldUser)
+		os.Setenv(envESBasicAuthUsername, username)
+
+		oldPassword := os.Getenv(envESBasicAuthPassword)
+		defer os.Setenv(envESBasicAuthPassword, oldPassword)
+		os.Setenv(envESBasicAuthPassword, password)
+
+		reqFunc, err := buildHTTPRequestFunc()
+		if err != nil {
+			t.Fatal(err)
+		}
+		req, err := reqFunc(context.Background(), http.MethodGet, "http://example.com", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		gotUsername, gotPassword, ok := req.BasicAuth()
+		if !ok {
+			t.Fatal("Basic auth should be enabled")
+		}
+		if gotUsername != username {
+			t.Errorf("Expected basic auth username %q, got username %q", username, gotUsername)
+		}
+		if gotPassword != password {
+			t.Errorf("Expected basic auth password %q, got password %q", password, gotPassword)
+		}
+	})
+
+	t.Run("username-and-password-not-both-set", func(t *testing.T) {
+		username := "foo@bar.com"
+
+		oldUser := os.Getenv(envESBasicAuthUsername)
+		defer os.Setenv(envESBasicAuthUsername, oldUser)
+		os.Setenv(envESBasicAuthUsername, username)
+
+		oldPassword := os.Getenv(envESBasicAuthPassword)
+		defer os.Setenv(envESBasicAuthPassword, oldPassword)
+		os.Unsetenv(envESBasicAuthPassword)
+
+		_, err := buildHTTPRequestFunc()
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		gotError := err.Error()
+		expectError := fmt.Sprintf(
+			"both %s and %s should be set when using basic auth",
+			envESBasicAuthUsername,
+			envESBasicAuthPassword,
+		)
+		if gotError != expectError {
+			t.Errorf("Expected error:\n%s\nGot error:\n%s", expectError, gotError)
+		}
+	})
+}
+
 func TestPutTemplate(t *testing.T) { // nolint: gocyclo
 	reqFunc, err := buildHTTPRequestFunc()
 	if err != nil {
