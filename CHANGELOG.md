@@ -1,6 +1,18 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- Add unit test for basic auth
+
+### Feat
+- Enable basic authentication for elasticsearch requests
+
+
+<a name="v0.1.14"></a>
+## [v0.1.14] - 2019-10-15
+### Chore
+- Bump version and update changelog [ci skip]
+
 
 <a name="v0.1.13"></a>
 ## [v0.1.13] - 2019-09-19
@@ -287,7 +299,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.13...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.14...HEAD
+[v0.1.14]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.13...v0.1.14
 [v0.1.13]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.12...v0.1.13
 [v0.1.12]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.11...v0.1.12
 [v0.1.11]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.10...v0.1.11
