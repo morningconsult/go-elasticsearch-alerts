@@ -87,7 +87,10 @@ cat <<EOF > /tmp/gea-payload-2.json
   "system": {
     "syslog": {
       "hostname": "ip-172-32-0-1",
-      "message": "Another error!"
+      "message": "Another error!",
+      "queue_size": {
+        "value": 60
+      }
     }
   }
 }

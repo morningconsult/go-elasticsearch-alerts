@@ -471,6 +471,80 @@ func TestParseConfig_Rules(t *testing.T) { // nolint: gocyclo
 			},
 			false,
 		},
+		{
+			"bad-condition",
+			"testdata/rules",
+			[]*ruleFile{
+				{
+					"testrule-1.json",
+					`{
+  "name": "test-rule-1",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "conditions": [
+    {
+      "field": "foo.bar.bim.baz",
+      "quantifier": "any",
+      "gt": "tomato"
+    }
+  ],
+  "outputs": [
+    {
+      "type": "file",
+      "config": {
+        "file": "test.log"
+      }
+    }
+  ]
+}`,
+				},
+			},
+			true,
+		},
+		{
+			"good-condition",
+			"testdata/rules",
+			[]*ruleFile{
+				{
+					"testrule-1.json",
+					`{
+  "name": "test-rule-1",
+  "index": "testindex",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "term": {
+        "hostname": "test"
+      }
+    }
+  },
+  "conditions": [
+    {
+      "field": "foo.bar.bim.baz",
+      "quantifier": "any",
+      "gt": 10
+    }
+  ],
+  "outputs": [
+    {
+      "type": "file",
+      "config": {
+        "file": "test.log"
+      }
+    }
+  ]
+}`,
+				},
+			},
+			false,
+		},
 	}
 
 	for _, tc := range cases {
@@ -500,7 +574,7 @@ func TestParseConfig_Rules(t *testing.T) { // nolint: gocyclo
 			}
 
 			if len(rules) != len(tc.files) {
-				t.Fatalf("ParseRules() should have created one *RuleConfig per rule file (got %d, expected %d)",
+				t.Fatalf("ParseRules() should have created one RuleConfig per rule file (got %d, expected %d)",
 					len(rules), len(tc.files))
 			}
 

@@ -29,7 +29,7 @@ import (
 )
 
 func buildQueryHandlers(
-	rules []*config.RuleConfig,
+	rules []config.RuleConfig,
 	esURL string,
 	esClient *http.Client,
 	logger hclog.Logger,
@@ -68,6 +68,7 @@ func buildQueryHandlers(
 			Schedule:     rule.CronSchedule,
 			BodyField:    rule.BodyField,
 			Filters:      rule.Filters,
+			Conditions:   rule.Conditions,
 		})
 		if err != nil {
 			return nil, xerrors.Errorf("error creating new *query.QueryHandler: %v", err)
@@ -77,7 +78,7 @@ func buildQueryHandlers(
 	return queryHandlers, nil
 }
 
-func buildMethod(output *config.OutputConfig) (alert.Method, error) { // nolint: gocyclo
+func buildMethod(output config.OutputConfig) (alert.Method, error) { // nolint: gocyclo
 	var method alert.Method
 	var err error
 

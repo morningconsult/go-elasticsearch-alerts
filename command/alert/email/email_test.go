@@ -218,7 +218,7 @@ tr:nth-child(even) {
 </html>`
 
 	eh := &AlertMethod{}
-	msg, err := eh.BuildMessage("Test Error", records)
+	msg, err := eh.buildMessage("Test Error", records)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,7 +227,7 @@ tr:nth-child(even) {
 	}
 }
 
-func ExampleAlertMethod_BuildMessage() {
+func ExampleAlertMethod_buildMessage() {
 	records := []*alert.Record{
 		{
 			Filter: "aggregations.hostname.buckets",
@@ -273,7 +273,7 @@ func ExampleAlertMethod_BuildMessage() {
 
 	em := &AlertMethod{}
 
-	msg, _ := em.BuildMessage("Test Rule", records)
+	msg, _ := em.buildMessage("Test Rule", records)
 
 	fmt.Println(msg)
 

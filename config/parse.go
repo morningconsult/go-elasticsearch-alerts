@@ -16,6 +16,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -45,12 +46,12 @@ type OutputConfig struct {
 	Config map[string]interface{} `json:"config"`
 }
 
-func (o *OutputConfig) validate() error {
+func (o OutputConfig) validate() error {
 	if o.Type == "" {
-		return xerrors.New("all outputs must have a type specified ('output.type')")
+		return errors.New("all outputs must have a type specified ('output.type')")
 	}
 	if o.Config == nil || len(o.Config) < 1 {
-		return xerrors.New("all outputs must have a config field ('output.config')")
+		return errors.New("all outputs must have a config field ('output.config')")
 	}
 	return nil
 }
@@ -61,13 +62,13 @@ type ConsulConfig map[string]string
 
 func (cc ConsulConfig) validate() error {
 	if len(cc) < 1 {
-		return xerrors.New("field 'consul' is empty (required when 'distributed' is true)")
+		return errors.New("field 'consul' is empty (required when 'distributed' is true)")
 	}
 	if _, ok := cc["consul_http_addr"]; !ok {
-		return xerrors.New("field 'consul.consul_http_addr' is empty (required when 'distributed' is true)")
+		return errors.New("field 'consul.consul_http_addr' is empty (required when 'distributed' is true)")
 	}
 	if _, ok := cc["consul_lock_key"]; !ok {
-		return xerrors.New("field 'consul.consul_lock_key' is empty (required when 'distributed' is true)")
+		return errors.New("field 'consul.consul_lock_key' is empty (required when 'distributed' is true)")
 	}
 	return nil
 }
@@ -112,33 +113,50 @@ type RuleConfig struct {
 	Filters []string `json:"filters"`
 
 	// Outputs are the methods by which alerts should be sent
-	Outputs []*OutputConfig `json:"outputs"`
+	Outputs []OutputConfig `json:"outputs"`
+
+	// Conditions are optional parameters that can be used to
+	// limit when alerts are triggered
+	Conditions []Condition
 }
 
-func (rule *RuleConfig) validate() error {
+func (rule *RuleConfig) validate() error { // nolint: gocyclo
 	if rule.Name == "" {
-		return xerrors.New("no 'name' field found")
+		return errors.New("no 'name' field found")
 	}
+
 	if rule.ElasticsearchIndex == "" {
-		return xerrors.New("no 'index' field found")
+		return errors.New("no 'index' field found")
 	}
+
 	if rule.CronSchedule == "" {
-		return xerrors.New("no 'schedule' field found")
+		return errors.New("no 'schedule' field found")
 	}
+
 	if rule.Filters == nil {
 		rule.Filters = []string{}
 	}
+
 	if rule.Outputs == nil {
-		return xerrors.New("no 'output' field found")
+		return errors.New("no 'output' field found")
 	}
+
 	if len(rule.Outputs) < 1 {
-		return xerrors.New("at least one output must be specified ('outputs')")
+		return errors.New("at least one output must be specified ('outputs')")
 	}
+
 	for i, output := range rule.Outputs {
 		if err := output.validate(); err != nil {
 			return xerrors.Errorf("error in output %d of rule %s: %v", i+1, rule.Name, err)
 		}
 	}
+
+	for i, condition := range rule.Conditions {
+		if err := condition.validate(); err != nil {
+			return xerrors.Errorf("error in condition %d of rule %s: %v", i+1, rule.Name, err)
+		}
+	}
+
 	return nil
 }
 
@@ -165,10 +183,10 @@ type ESConfig struct {
 
 func (es *ESConfig) validate() error {
 	if es.Server == nil {
-		return xerrors.New("no 'elasticsearch.server' field found")
+		return errors.New("no 'elasticsearch.server' field found")
 	}
 	if es.Server.ElasticsearchURL == "" {
-		return xerrors.New("no 'elasticsearch.server.url' field found")
+		return errors.New("no 'elasticsearch.server.url' field found")
 	}
 	return nil
 }
@@ -192,7 +210,7 @@ type Config struct {
 	Consul ConsulConfig `json:"consul"`
 
 	// Rules are the definitions of the alerts
-	Rules []*RuleConfig `json:"-"`
+	Rules []RuleConfig `json:"-"`
 }
 
 func decodeConfigFile(f string) (*Config, error) {
@@ -244,7 +262,7 @@ func ParseConfig() (*Config, error) {
 		return nil, err
 	}
 	if len(rules) < 1 {
-		return nil, xerrors.New("at least one rule must be specified")
+		return nil, errors.New("at least one rule must be specified")
 	}
 	cfg.Rules = rules
 	return cfg, nil
@@ -252,7 +270,7 @@ func ParseConfig() (*Config, error) {
 
 // ParseRules parses the rule configuration files and returns an
 // array of *RuleConfig or a non-nil error if there was an error.
-func ParseRules() ([]*RuleConfig, error) { // nolint: gocyclo
+func ParseRules() ([]RuleConfig, error) { // nolint: gocyclo
 	rulesDir := defaultRulesDir
 	if v := os.Getenv(envRulesDir); v != "" {
 		d, err := homedir.Expand(v)
@@ -267,7 +285,7 @@ func ParseRules() ([]*RuleConfig, error) { // nolint: gocyclo
 		return nil, xerrors.Errorf("error globbing rules dir: %v", err)
 	}
 
-	rules := make([]*RuleConfig, 0, len(ruleFiles))
+	rules := make([]RuleConfig, 0, len(ruleFiles))
 	for _, ruleFile := range ruleFiles {
 		file, err := os.Open(filepath.Clean(ruleFile))
 		if err != nil {
@@ -277,8 +295,11 @@ func ParseRules() ([]*RuleConfig, error) { // nolint: gocyclo
 			return nil, xerrors.Errorf("error opening file %s: %v", file.Name(), err)
 		}
 
-		rule := new(RuleConfig)
-		if err = json.NewDecoder(file).Decode(rule); err != nil {
+		dec := json.NewDecoder(file)
+		dec.UseNumber()
+
+		var rule RuleConfig
+		if err = dec.Decode(&rule); err != nil {
 			file.Close()
 			return nil, xerrors.Errorf("error JSON-decoding rule file %s: %v", file.Name(), err)
 		}
@@ -310,6 +331,6 @@ func parseBody(v interface{}) (map[string]interface{}, error) {
 		}
 		return body, nil
 	default:
-		return nil, xerrors.New("'body' field must be valid JSON")
+		return nil, errors.New("'body' field must be valid JSON")
 	}
 }

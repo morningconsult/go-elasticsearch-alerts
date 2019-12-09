@@ -49,5 +49,4 @@ func TestInventory(t *testing.T) {
 	if _, ok := active.alerts[id]; ok {
 		t.Fatal("inventory.deregister() did not delete id from inventory")
 	}
-
 }

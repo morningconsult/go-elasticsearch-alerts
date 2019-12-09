@@ -91,7 +91,6 @@ func TestNewAlertMethod(t *testing.T) {
 			if s.emoji != tc.config.Emoji {
 				t.Fatalf("got unexpected emoji value (got %q, expected %q)", s.emoji, tc.config.Emoji)
 			}
-
 		})
 	}
 }
@@ -102,7 +101,7 @@ func TestBuildPayload(t *testing.T) {
 	cases := []struct {
 		name     string
 		records  []*alert.Record
-		expected *Payload
+		expected payload
 	}{
 		{
 			"pagination",
@@ -113,8 +112,8 @@ func TestBuildPayload(t *testing.T) {
 					BodyField: true,
 				},
 			},
-			&Payload{
-				Attachments: []*Attachment{
+			payload{
+				Attachments: []attachment{
 					{
 						Title:      rule,
 						Text:       fmt.Sprintf("%s (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```", filter),
@@ -162,8 +161,8 @@ func TestBuildPayload(t *testing.T) {
 					},
 				},
 			},
-			&Payload{
-				Attachments: []*Attachment{
+			payload{
+				Attachments: []attachment{
 					{
 						Title:      rule,
 						Text:       filter,
@@ -172,7 +171,7 @@ func TestBuildPayload(t *testing.T) {
 						FooterIcon: "https://www.elastic.co/static/images/elastic-logo-200.png",
 						Timestamp:  time.Now().Unix(),
 						Color:      defaultAttachmentColor,
-						Fields: []*Field{
+						Fields: []field{
 							{
 								Title: "foo",
 								Value: "8",
@@ -197,7 +196,7 @@ func TestBuildPayload(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			payload := s.BuildPayload(rule, tc.records)
+			payload := s.buildPayload(rule, tc.records)
 			if !reflect.DeepEqual(tc.expected.Attachments, payload.Attachments) {
 				t.Fatalf("Got Payload.Attachments:\n%+v\n\nExpected Payload.Attachments:\n%+v\n",
 					prettyJSON(t, payload.Attachments),
@@ -206,7 +205,6 @@ func TestBuildPayload(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestWrite(t *testing.T) {
@@ -350,7 +348,7 @@ func prettyJSON(t *testing.T, v interface{}) string {
 	return string(data)
 }
 
-func ExampleAlertMethod_BuildPayload() {
+func ExampleAlertMethod_buildPayload() {
 	records := []*alert.Record{
 		{
 			Filter:    "hits.hits._source",
@@ -382,7 +380,7 @@ func ExampleAlertMethod_BuildPayload() {
 
 	sm := a.(*AlertMethod)
 
-	payload := sm.BuildPayload("Test rule", records)
+	payload := sm.buildPayload("Test rule", records)
 
 	// This loop is performed in order that tests will pass --
 	// it is not necessary to perform this

@@ -14,7 +14,7 @@
 
 set -eu
 
-readonly GOLANGCI_LINT_VERSION="v1.17.0"
+readonly GOLANGCI_LINT_VERSION="v1.21.0"
 
 ROOT=$( cd "$( dirname "${0}" )/../.." && pwd )
 cd "${ROOT}"

@@ -26,8 +26,12 @@
       { "@timestamp": "desc" }
     ]
   },
-  "filters": [
-    "aggregations.hostname.buckets"
+  "conditions": [
+    {
+      "field": "hits.hits._source.system.syslog.queue_size.value",
+      "quantifier": "any",
+      "gt": 50
+    }
   ],
   "outputs": [
     {

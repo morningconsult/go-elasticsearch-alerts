@@ -494,7 +494,6 @@ func TestRun(t *testing.T) { // nolint: gocyclo
 				http.Error(w, err.Error(), 500)
 			}
 		}
-
 	}))
 	defer ts.Close()
 
@@ -528,6 +527,8 @@ func TestRun(t *testing.T) { // nolint: gocyclo
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	outputCh := make(chan *alert.Alert, 1)
 	lock := lock.NewLock()
 	lock.Set(true)

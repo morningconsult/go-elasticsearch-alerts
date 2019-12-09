@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
@@ -33,13 +34,14 @@ var _ alert.Method = (*AlertMethod)(nil)
 // AlertMethodConfig configures where Slack alerts should be
 // created and what they should look like.
 type AlertMethodConfig struct {
-	WebhookURL string `mapstructure:"webhook"`
-	Channel    string `mapstructure:"channel"`
-	Username   string `mapstructure:"username"`
-	Text       string `mapstructure:"text"`
-	Emoji      string `mapstructure:"emoji"`
-	TextLimit  int    `mapstructure:"text_limit"`
-	Client     *http.Client
+	WebhookURL  string `mapstructure:"webhook"`
+	Channel     string `mapstructure:"channel"`
+	Username    string `mapstructure:"username"`
+	Text        string `mapstructure:"text"`
+	Emoji       string `mapstructure:"emoji"`
+	TextLimit   int    `mapstructure:"text_limit"`
+	IncludeData bool   `mapstructure:"include_data"`
+	Client      *http.Client
 }
 
 // AlertMethod implements the alert.AlertMethod interface
@@ -54,14 +56,14 @@ type AlertMethod struct {
 	textLimit  int
 }
 
-// Payload represents the JSON data needed to create a
+// payload represents the JSON data needed to create a
 // new Slack message.
-type Payload struct {
-	Channel     string        `json:"channel,omitempty"`
-	Username    string        `json:"username,omitempty"`
-	Text        string        `json:"text,omitempty"`
-	Emoji       string        `json:"icon_emoji,omitempty"`
-	Attachments []*Attachment `json:"attachments,omitempty"`
+type payload struct {
+	Channel     string       `json:"channel,omitempty"`
+	Username    string       `json:"username,omitempty"`
+	Text        string       `json:"text,omitempty"`
+	Emoji       string       `json:"icon_emoji,omitempty"`
+	Attachments []attachment `json:"attachments,omitempty"`
 }
 
 // NewAlertMethod creates a new *AlertMethod or a
@@ -101,15 +103,15 @@ func (s *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 	if records == nil || len(records) < 1 {
 		return nil
 	}
-	return s.post(ctx, s.BuildPayload(rule, records))
+	return s.post(ctx, s.buildPayload(rule, records))
 }
 
-// BuildPayload creates a *Payload instance from the provided
+// buildPayload creates a *Payload instance from the provided
 // records. After being JSON-encoded it can be included in a
 // POST request to a Slack webhook in order to create a new
 // Slack message.
-func (s *AlertMethod) BuildPayload(rule string, records []*alert.Record) *Payload {
-	payload := &Payload{
+func (s *AlertMethod) buildPayload(rule string, records []*alert.Record) payload {
+	pl := payload{
 		Channel:  s.channel,
 		Username: s.username,
 		Text:     s.text,
@@ -119,38 +121,43 @@ func (s *AlertMethod) BuildPayload(rule string, records []*alert.Record) *Payloa
 	records = s.preprocess(records)
 
 	for _, record := range records {
-		config := &AttachmentConfig{
+		att := attachment{
 			Title:      rule,
 			Text:       record.Filter,
 			MarkdownIn: []string{"text"},
+			Color:      defaultAttachmentColor,
+			Footer:     defaultAttachmentFooter,
+			FooterIcon: defaultAttachmentFooterIcon,
+			Timestamp:  time.Now().Unix(),
 		}
+
 		if record.BodyField && record.Text != "" {
-			config.Text = config.Text + "\n```\n" + record.Text + "\n```"
-			config.Color = "#ff0000"
+			att.Text = att.Text + "\n```\n" + record.Text + "\n```"
+			att.Color = "#ff0000"
 		}
 
-		att := NewAttachment(config)
-
-		for _, field := range record.Fields {
+		for _, f := range record.Fields {
 			short := false
-			if len(field.Key) <= 35 {
+			if len(f.Key) <= 35 {
 				short = true
 			}
-			f := &Field{
-				Title: field.Key,
-				Value: fmt.Sprintf("%d", field.Count),
+
+			att.Fields = append(att.Fields, field{
+				Title: f.Key,
+				Value: fmt.Sprintf("%d", f.Count),
 				Short: short,
-			}
-			att.Fields = append(att.Fields, f)
+			})
 		}
-		payload.Attachments = append(payload.Attachments, att)
+
+		pl.Attachments = append(pl.Attachments, att)
 	}
-	return payload
+
+	return pl
 }
 
-func (s *AlertMethod) post(ctx context.Context, payload *Payload) error {
+func (s *AlertMethod) post(ctx context.Context, pl payload) error {
 	buf := bytes.Buffer{}
-	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
+	if err := json.NewEncoder(&buf).Encode(pl); err != nil {
 		return err
 	}
 	req, err := http.NewRequest("POST", s.webhookURL, &buf)
