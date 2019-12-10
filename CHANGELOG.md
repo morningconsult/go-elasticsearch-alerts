@@ -2,6 +2,17 @@
 ## [Unreleased]
 
 ### Chore
+- Fix demonstration code
+- go mod tidy
+
+### Feat
+- Allow users to make alerts fire only when certain conditions are satisfied
+
+
+<a name="v0.1.15"></a>
+## [v0.1.15] - 2019-10-22
+### Chore
+- Bump version and update changelog [ci skip]
 - Add unit test for basic auth
 
 ### Feat
@@ -299,7 +310,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.14...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.15...HEAD
+[v0.1.15]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.14...v0.1.15
 [v0.1.14]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.13...v0.1.14
 [v0.1.13]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.12...v0.1.13
 [v0.1.12]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.11...v0.1.12
