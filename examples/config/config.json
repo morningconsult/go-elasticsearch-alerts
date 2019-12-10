@@ -1,7 +1,7 @@
 {
   "elasticsearch": {
     "server": {
-      "url": "http://elasticsearch-gea:9200"
+      "url": "http://es01:9200"
     },
     "client": {
       "tls_enabled": false

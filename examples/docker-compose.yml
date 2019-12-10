@@ -12,11 +12,14 @@ services:
     networks:
       - geanet
 
-  elasticsearch-gea:
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.3
-    container_name: elasticsearch-gea
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.0
+    container_name: es01
     environment:
-      - cluster.name=docker-cluster
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
@@ -24,9 +27,51 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - es_gea_data:/usr/share/elasticsearch/data
+      - data01:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+    networks:
+      - geanet
+
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.0
+    container_name: es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+    ports:
+      - 9201:9201
+    networks:
+      - geanet
+
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.0
+    container_name: es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+    ports:
+      - 9202:9202
     networks:
       - geanet
 
@@ -43,7 +88,11 @@ services:
 volumes:
   gea_data:
     driver: local
-  es_gea_data:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
     driver: local
   consul_gea_data:
     driver: local
