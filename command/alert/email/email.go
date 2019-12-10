@@ -118,16 +118,16 @@ func validateConfig(config *AlertMethodConfig) error {
 // AlertMethod. If there was an error sending the email,
 // it returns a non-nil error.
 func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
-	body, err := e.BuildMessage(rule, records)
+	body, err := e.buildMessage(rule, records)
 	if err != nil {
 		return xerrors.Errorf("error creating email message: %v", err)
 	}
 	return smtp.SendMail(fmt.Sprintf("%s:%d", e.host, e.port), e.auth, e.from, e.to, []byte(body))
 }
 
-// BuildMessage creates an email message from the provided
+// buildMessage creates an email message from the provided
 // records. It will return a non-nil error if an error occurs.
-func (e *AlertMethod) BuildMessage(rule string, records []*alert.Record) (string, error) {
+func (e *AlertMethod) buildMessage(rule string, records []*alert.Record) (string, error) { // nolint: funlen
 	alert := struct {
 		Name    string
 		Records []*alert.Record

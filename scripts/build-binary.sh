@@ -41,7 +41,7 @@ if [ "${COMMIT}" != "" ]; then
   version_ldflags="${version_ldflags} -X \"${PACKAGE_ROOT}/version.Commit=${COMMIT}\""
 fi
 
-GOPATH="" GO111MODULE=on CGO_ENABLED=0 go build \
+CGO_ENABLED=0 go build \
   -installsuffix cgo \
   -a \
   -ldflags "-s ${version_ldflags}" \

@@ -13,47 +13,28 @@
 
 package slack
 
-import "time"
-
 const (
 	defaultAttachmentColor      = "#36a64f"
 	defaultAttachmentFooter     = "Go Elasticsearch Alerts"
 	defaultAttachmentFooterIcon = "https://www.elastic.co/static/images/elastic-logo-200.png"
 )
 
-// Field corresponds to the 'attachment.field'
+// field corresponds to the 'attachment.field'
 // field of a Slack message payload.
-type Field struct {
+type field struct {
 	Title string `json:"title"`
 	Value string `json:"value"`
 	Short bool   `json:"short"`
 }
 
-// AttachmentConfig passed to NewAttachment to create
-// a new *Attachment.
-type AttachmentConfig struct {
-	Fallback   string
-	Color      string
-	Title      string
-	Pretext    string
-	Fields     []*Field
-	Text       string
-	AuthorName string
-	AuthorLink string
-	Footer     string
-	FooterIcon string
-	Timestamp  int64
-	MarkdownIn []string
-}
-
-// Attachment corresponds to the 'attachment' field
+// attachment corresponds to the 'attachment' field
 // of a Slack message payload.
-type Attachment struct {
+type attachment struct {
 	Fallback   string   `json:"fallback"`
 	Color      string   `json:"color,omitempty"`
 	Title      string   `json:"title,omitempty"`
 	Pretext    string   `json:"pretext,omitempty"`
-	Fields     []*Field `json:"fields,omitempty"`
+	Fields     []field  `json:"fields,omitempty"`
 	Text       string   `json:"text,omitempty"`
 	AuthorName string   `json:"author_name,omitempty"`
 	AuthorLink string   `json:"author_link,omitempty"`
@@ -61,38 +42,4 @@ type Attachment struct {
 	FooterIcon string   `json:"footer_icon,omitempty"`
 	Timestamp  int64    `json:"ts,omitempty"`
 	MarkdownIn []string `json:"mrkdwn_in,omitempty"`
-}
-
-// NewAttachment creates a new *Attachment instance.
-func NewAttachment(config *AttachmentConfig) *Attachment {
-	if config.Color == "" {
-		config.Color = defaultAttachmentColor
-	}
-
-	if config.Footer == "" {
-		config.Footer = defaultAttachmentFooter
-	}
-
-	if config.FooterIcon == "" {
-		config.FooterIcon = defaultAttachmentFooterIcon
-	}
-
-	if config.Timestamp == 0 {
-		config.Timestamp = time.Now().Unix()
-	}
-
-	return &Attachment{
-		Fallback:   config.Fallback,
-		Color:      config.Color,
-		Title:      config.Title,
-		Pretext:    config.Pretext,
-		Fields:     config.Fields,
-		Text:       config.Text,
-		AuthorName: config.AuthorName,
-		AuthorLink: config.AuthorLink,
-		Footer:     config.Footer,
-		FooterIcon: config.FooterIcon,
-		Timestamp:  config.Timestamp,
-		MarkdownIn: config.MarkdownIn,
-	}
 }

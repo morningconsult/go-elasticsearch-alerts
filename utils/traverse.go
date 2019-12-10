@@ -130,11 +130,14 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 		}
 
 		a := getall(i, stack, item, kc)
-		if v, ok := a.(map[string]interface{}); ok {
+		switch v := a.(type) {
+		case map[string]interface{}:
 			mod = append(mod, v)
-		}
-		if v, ok := a.([]interface{}); ok {
+		case []interface{}:
 			mod = append(mod, v...)
+		case nil:
+		default:
+			mod = append(mod, a)
 		}
 	}
 	return mod

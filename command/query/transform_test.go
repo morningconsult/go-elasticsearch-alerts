@@ -14,41 +14,46 @@
 package query
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	hclog "github.com/hashicorp/go-hclog"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
-func TestTransform(t *testing.T) {
+func TestProcess(t *testing.T) {
 	cases := []struct {
-		name    string
-		input   map[string]interface{}
-		filters []string
-		output  []*alert.Record
-		hits    int
-		err     bool
+		name       string
+		input      map[string]interface{}
+		filters    []string
+		conditions []config.Condition
+		output     []*alert.Record
+		hits       int
+		err        bool
 	}{
 		{
-			"one-level",
-			map[string]interface{}{
+			name: "one-level",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
 								"key":       "foo",
-								"doc_count": 2,
+								"doc_count": json.Number("2"),
 							},
 							map[string]interface{}{
 								"key":       "bar",
-								"doc_count": 3,
+								"doc_count": json.Number("3"),
 							},
 						},
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
@@ -63,26 +68,26 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			0,
-			false,
+			hits: 0,
+			err:  false,
 		},
 		{
-			"field-not-map",
-			map[string]interface{}{
+			name: "field-not-map",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							"string",
 							map[string]interface{}{
 								"key":       "bar",
-								"doc_count": 3,
+								"doc_count": json.Number("3"),
 							},
 						},
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
@@ -93,29 +98,29 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			0,
-			false,
+			hits: 0,
+			err:  false,
 		},
 		{
-			"zero-count",
-			map[string]interface{}{
+			name: "zero-count",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
 								"key":       "foo",
-								"doc_count": 0,
+								"doc_count": json.Number("0"),
 							},
 							map[string]interface{}{
 								"key":       "bar",
-								"doc_count": 3,
+								"doc_count": json.Number("3"),
 							},
 						},
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
@@ -126,12 +131,12 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			0,
-			false,
+			hits: 0,
+			err:  false,
 		},
 		{
-			"two-levels",
-			map[string]interface{}{
+			name: "two-levels",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
@@ -142,11 +147,11 @@ func TestTransform(t *testing.T) {
 									"buckets": []interface{}{
 										map[string]interface{}{
 											"key":       "bim",
-											"doc_count": 2,
+											"doc_count": json.Number("2"),
 										},
 										map[string]interface{}{
 											"key":       "baz",
-											"doc_count": 3,
+											"doc_count": json.Number("3"),
 										},
 									},
 								},
@@ -158,11 +163,11 @@ func TestTransform(t *testing.T) {
 									"buckets": []interface{}{
 										map[string]interface{}{
 											"key":       "ayy",
-											"doc_count": 1,
+											"doc_count": json.Number("1"),
 										},
 										map[string]interface{}{
 											"key":       "lmao",
-											"doc_count": 2,
+											"doc_count": json.Number("2"),
 										},
 									},
 								},
@@ -171,8 +176,8 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets.program.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets.program.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets.program.buckets",
 					Fields: []*alert.Field{
@@ -195,22 +200,22 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			0,
-			false,
+			hits: 0,
+			err:  false,
 		},
 		{
-			"hits-not-array",
-			map[string]interface{}{
+			name: "hits-not-array",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
 								"key":       "foo",
-								"doc_count": 2,
+								"doc_count": json.Number("2"),
 							},
 							map[string]interface{}{
 								"key":       "bar",
-								"doc_count": 3,
+								"doc_count": json.Number("3"),
 							},
 						},
 					},
@@ -221,8 +226,8 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
@@ -237,22 +242,22 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			0,
-			false,
+			hits: 0,
+			err:  false,
 		},
 		{
-			"hit-elems-not-maps",
-			map[string]interface{}{
+			name: "hit-elems-not-maps",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
 								"key":       "foo",
-								"doc_count": 2,
+								"doc_count": json.Number("2"),
 							},
 							map[string]interface{}{
 								"key":       "bar",
-								"doc_count": 3,
+								"doc_count": json.Number("3"),
 							},
 						},
 					},
@@ -268,8 +273,8 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
@@ -284,22 +289,22 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			0,
-			false,
+			hits: 0,
+			err:  false,
 		},
 		{
-			"hit-elems-have-no-source",
-			map[string]interface{}{
+			name: "hit-elems-have-no-source",
+			input: map[string]interface{}{
 				"aggregations": map[string]interface{}{
 					"hostname": map[string]interface{}{
 						"buckets": []interface{}{
 							map[string]interface{}{
 								"key":       "foo",
-								"doc_count": 2,
+								"doc_count": json.Number("2"),
 							},
 							map[string]interface{}{
 								"key":       "bar",
-								"doc_count": 3,
+								"doc_count": json.Number("3"),
 							},
 						},
 					},
@@ -318,8 +323,8 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			[]string{"aggregations.hostname.buckets"},
-			[]*alert.Record{
+			filters: []string{"aggregations.hostname.buckets"},
+			output: []*alert.Record{
 				{
 					Filter: "aggregations.hostname.buckets",
 					Fields: []*alert.Field{
@@ -339,12 +344,12 @@ func TestTransform(t *testing.T) {
 					BodyField: true,
 				},
 			},
-			1,
-			false,
+			hits: 1,
+			err:  false,
 		},
 		{
-			"hits-only",
-			map[string]interface{}{
+			name: "hits-only",
+			input: map[string]interface{}{
 				"hits": map[string]interface{}{
 					"hits": []interface{}{
 						map[string]interface{}{
@@ -360,8 +365,8 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			[]string{},
-			[]*alert.Record{
+			filters: []string{},
+			output: []*alert.Record{
 				{
 					Filter: "hits.hits._source",
 					Text: `{
@@ -374,19 +379,120 @@ func TestTransform(t *testing.T) {
 					BodyField: true,
 				},
 			},
-			2,
-			false,
+			hits: 2,
+			err:  false,
+		},
+		{
+			name: "no-hits-no-filters",
+			input: map[string]interface{}{
+				"hits": map[string]interface{}{
+					"hits": []interface{}{},
+				},
+			},
+			filters: []string{},
+			output:  []*alert.Record{},
+			hits:    0,
+			err:     false,
+		},
+		{
+			name: "conditions-not-met",
+			input: map[string]interface{}{
+				"aggregations": map[string]interface{}{
+					"hostname": map[string]interface{}{
+						"buckets": []interface{}{
+							map[string]interface{}{
+								"key":       "foo",
+								"doc_count": 2,
+								"queue_size": map[string]interface{}{
+									"value": json.Number("10"),
+								},
+							},
+							map[string]interface{}{
+								"key":       "bar",
+								"doc_count": 3,
+								"queue_size": map[string]interface{}{
+									"value": json.Number("20"),
+								},
+							},
+						},
+					},
+				},
+			},
+			conditions: []config.Condition{
+				{
+					"field":      "aggregations.hostname.buckets.queue_size.value",
+					"quantifier": "any",
+					"lt":         json.Number("9"),
+				},
+			},
+			output: nil,
+			hits:   0,
+			err:    false,
+		},
+		{
+			name: "conditions-met",
+			input: map[string]interface{}{
+				"aggregations": map[string]interface{}{
+					"hostname": map[string]interface{}{
+						"buckets": []interface{}{
+							map[string]interface{}{
+								"key":       "foo",
+								"doc_count": 2,
+								"queue_size": map[string]interface{}{
+									"value": json.Number("10"),
+								},
+							},
+							map[string]interface{}{
+								"key":       "bar",
+								"doc_count": 3,
+								"queue_size": map[string]interface{}{
+									"value": json.Number("20"),
+								},
+							},
+						},
+					},
+				},
+			},
+			filters: []string{"aggregations.hostname.buckets"},
+			conditions: []config.Condition{
+				{
+					"field":      "aggregations.hostname.buckets.queue_size.value",
+					"quantifier": "any",
+					"lt":         json.Number("11"),
+				},
+			},
+			output: []*alert.Record{
+				{
+					Filter: "aggregations.hostname.buckets",
+					Fields: []*alert.Field{
+						{
+							Key:   "foo",
+							Count: 2,
+						},
+						{
+							Key:   "bar",
+							Count: 3,
+						},
+					},
+				},
+			},
+			hits: 0,
+			err:  false,
 		},
 	}
+
+	logger := hclog.NewNullLogger()
 
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{
-				filters:   tc.filters,
-				bodyField: defaultBodyField,
+				logger:     logger,
+				filters:    tc.filters,
+				bodyField:  defaultBodyField,
+				conditions: tc.conditions,
 			}
-			records, hits, err := qh.Transform(tc.input)
+			records, hits, err := qh.process(tc.input)
 			if tc.hits != len(hits) {
 				t.Fatalf("Got %d hits, expected %d", len(hits), tc.hits)
 			}

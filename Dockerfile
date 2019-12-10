@@ -11,7 +11,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-FROM golang:1.12-alpine3.9
+FROM golang:1.13.4-alpine3.10
 
 RUN set -e; \
   apk add -qU --no-cache git make bzr; \
@@ -27,6 +27,6 @@ WORKDIR /build
 
 COPY . .
 
-RUN GO111MODULE=on make
+RUN make
 
 ENTRYPOINT "/bin/sh"

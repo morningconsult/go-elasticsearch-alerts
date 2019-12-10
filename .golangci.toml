@@ -18,6 +18,8 @@ exclude-rules = [
       'scopelint',
       'lll',
       'goimports',
+      'gocognit',
+      'funlen',
     ]
   },
 ]
@@ -28,6 +30,7 @@ enable-all = true
 disable = [
   "gochecknoglobals", # There are valid use cases for globals
   "maligned",         # Readability is more important than saving bytes
+  "wsl",
 ]
 
 [linters-settings]

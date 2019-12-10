@@ -1,4 +1,16 @@
 #!/bin/bash
+# Copyright 2019 The Morning Consult, LLC or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You may
+# not use this file except in compliance with the License. A copy of the
+# License is located at
+#
+#         https://www.apache.org/licenses/LICENSE-2.0
+#
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
 
 set -e
 
@@ -7,7 +19,7 @@ ES_URL="http://127.0.0.1:9200"
 CONSUL_URL="http://127.0.0.1:8500"
 
 ## Start Elasticsearch container
-docker-compose up -d elasticsearch-gea
+docker-compose up -d es01 es02 es03
 
 echo "==> Starting Elasticsearch health checks."
 
@@ -37,7 +49,7 @@ done
 echo "==> Elasticsearch is healthy. Creating index \"${INDEX}\"..."
 
 ## Create the test index
-curl "${ES_URL}/${INDEX}" \
+curl "${ES_URL}/${INDEX}?include_type_name=true" \
   -s \
   -H "Content-Type: application/json" \
   -X PUT \
@@ -74,7 +86,10 @@ cat <<EOF > /tmp/gea-payload-1.json
   "system": {
     "syslog": {
       "hostname": "ip-127-0-0-1",
-      "message": "You got an error buddy!"
+      "message": "You got an error buddy!",
+      "queue_size": {
+        "value": 60
+      }
     }
   }
 }
@@ -86,8 +101,11 @@ cat <<EOF > /tmp/gea-payload-2.json
   "source": "/var/log/errors.log",
   "system": {
     "syslog": {
-      "hostname": "ip-172-32-0-1",
-      "message": "Another error!"
+      "hostname": "ip-127-0-0-1",
+      "message": "Another error!",
+      "queue_size": {
+        "value": 59
+      }
     }
   }
 }

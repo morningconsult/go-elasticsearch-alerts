@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Setup &mdash; Go Elasticsearch Alerts v0.1.14 documentation</title>
+    <title>Setup &mdash; Go Elasticsearch Alerts v0.1.15 documentation</title>
     
     <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     'v0.1.14',
+        VERSION:     'v0.1.15',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="Go Elasticsearch Alerts v0.1.14 documentation" href="../index.html" />
+    <link rel="top" title="Go Elasticsearch Alerts v0.1.15 documentation" href="../index.html" />
     <link rel="next" title="Usage" href="usage.html" />
     <link rel="prev" title="Installation" href="install.html" />
    
@@ -227,6 +227,13 @@ extension. There must be at least one rule for the program to operate.</p>
     <span class="s2">&quot;aggregations.service_name.buckets&quot;</span><span class="p">,</span>
     <span class="s2">&quot;aggregations.service_name.buckets.program.buckets&quot;</span>
   <span class="p">],</span>
+  <span class="nt">&quot;conditions&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;aggregations.pipelines.queue.buckets.queue_usage.value&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;quantifier&quot;</span><span class="p">:</span> <span class="s2">&quot;any&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;gt&quot;</span><span class="p">:</span> <span class="mf">0.3</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
   <span class="nt">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;slack&quot;</span><span class="p">,</span>
@@ -314,10 +321,112 @@ before being sent to the provided output(s). This field is optional. If
 not specified, the program will group by the field <code class="docutils literal"><span class="pre">hits.hits._source</span></code>
 by default. More information on this field is provided in the <a class="reference internal" href="#filters">filters</a>
 section.</li>
+<li><span class="code-no-background">conditions</span> ([]<a class="reference external" href="#conditions-parameters">Conditions</a>: <code class="docutils literal"><span class="pre">[]</span></code>)
+- The criteria that must be met for the alert to be reported. Note that
+all conditions have an implicit &#8220;and&#8221; (i.e. all conditions must be satisfied
+for the alert to trigger). See the <a class="reference external" href="#conditions-parameters">Conditions</a>
+section for more details. This field is optional.</li>
 <li><span class="code-no-background">outputs</span> ([]<a class="reference external" href="#outputs-parameters">Output</a>: <code class="docutils literal"><span class="pre">[]</span></code>)
 - The media by which alerts should be sent. See the <a class="reference external" href="#outputs-parameters">Output</a> section for more details. At least one output must
 be specified.</li>
 </ul>
+</div>
+<div class="section" id="conditions-parameters">
+<h3><code class="docutils literal"><span class="pre">conditions</span></code> Parameters<a class="headerlink" href="#conditions-parameters" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal"><span class="pre">conditions</span></code> parameter of the rule file allows you to ensure alerts
+are only reported when the given conditions are satisfied. You may include
+as many or as few conditions as you wish. This field is optional.</p>
+<ul class="simple">
+<li><span class="code-no-background">field</span> (string: <code class="docutils literal"><span class="pre">&quot;&quot;</span></code>) - The path to the field
+of the JSON response that will be tested against the given criteria.
+This should point to only primitive values, including strings,
+numbers, or booleans (e.g. the last element of the path should be
+a primitive and not an object or array). This field is required.</li>
+<li><span class="code-no-background">quantifier</span> (string: <code class="docutils literal"><span class="pre">&quot;any&quot;</span></code>) - How the matching
+values should be compared. Accepted values include <code class="docutils literal"><span class="pre">&quot;all&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;any&quot;</span></code>,
+and <code class="docutils literal"><span class="pre">&quot;none&quot;</span></code>. This defaults to <code class="docutils literal"><span class="pre">&quot;any&quot;</span></code>.</li>
+<li><span class="code-no-background">eq</span> (string or number: <code class="docutils literal"><span class="pre">nil</span></code>) - The matching
+values should equal this value. This field is optional.</li>
+<li><span class="code-no-background">ne</span> (string or number: <code class="docutils literal"><span class="pre">nil</span></code>) - The matching
+values should not equal this value. This field is optional.</li>
+<li><span class="code-no-background">lt</span> (number: <code class="docutils literal"><span class="pre">nil</span></code>) - The matching values should
+be less than this value. This field is optional.</li>
+<li><span class="code-no-background">le</span> (number: <code class="docutils literal"><span class="pre">nil</span></code>) - The matching values should
+be less than or equal to this value. This field is optional.</li>
+<li><span class="code-no-background">gt</span> (number: <code class="docutils literal"><span class="pre">nil</span></code>) - The matching values should
+be greater than this value. This field is optional.</li>
+<li><span class="code-no-background">ge</span> (number: <code class="docutils literal"><span class="pre">nil</span></code>) - The matching values should
+be greater than or equal to this value. This field is optional.</li>
+</ul>
+<p>For example, assume we are using the rule given in the
+<a class="reference internal" href="#rule-example"><span>example</span></a> above. Also assume that when the query runs,
+Elasticsearch returns the following response:</p>
+<div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
+  <span class="nt">&quot;took&quot;</span> <span class="p">:</span> <span class="mi">4863</span><span class="p">,</span>
+  <span class="nt">&quot;timed_out&quot;</span> <span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="nt">&quot;_shards&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;total&quot;</span> <span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+    <span class="nt">&quot;successful&quot;</span> <span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+    <span class="nt">&quot;skipped&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nt">&quot;failed&quot;</span> <span class="p">:</span> <span class="mi">0</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;hits&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;total&quot;</span> <span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mi">376</span><span class="p">,</span>
+      <span class="nt">&quot;relation&quot;</span> <span class="p">:</span> <span class="s2">&quot;eq&quot;</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;max_score&quot;</span> <span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="nt">&quot;hits&quot;</span> <span class="p">:</span> <span class="p">[</span> <span class="p">]</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;aggregations&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;pipelines&quot;</span> <span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;doc_count&quot;</span> <span class="p">:</span> <span class="mi">3384</span><span class="p">,</span>
+      <span class="nt">&quot;queue&quot;</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;doc_count_error_upper_bound&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="nt">&quot;sum_other_doc_count&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="nt">&quot;buckets&quot;</span> <span class="p">:</span> <span class="p">[</span>
+          <span class="p">{</span>
+            <span class="nt">&quot;key&quot;</span> <span class="p">:</span> <span class="s2">&quot;main&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;doc_count&quot;</span> <span class="p">:</span> <span class="mi">1128</span><span class="p">,</span>
+            <span class="nt">&quot;queue_size&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mf">3.8679811209E10</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;max_queue_size&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mf">1.211180777472E13</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;queue_usage&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mf">0.3193562177376465</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="p">{</span>
+            <span class="nt">&quot;key&quot;</span> <span class="p">:</span> <span class="s2">&quot;message-queues&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;doc_count&quot;</span> <span class="p">:</span> <span class="mi">1128</span><span class="p">,</span>
+            <span class="nt">&quot;queue_size&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mf">3.632980257E9</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;max_queue_size&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mf">1.211180777472E13</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;queue_usage&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="mf">0.029995359277273426</span>
+            <span class="p">},</span>
+            <span class="nt">&quot;queue_empty&quot;</span> <span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span> <span class="p">:</span> <span class="kc">true</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">]</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>From this response, the process will gather the fields at the path defined
+in the condition at <code class="docutils literal"><span class="pre">aggregations.pipelines.queue.buckets.queue_usage.value</span></code>.
+This includes the set <code class="docutils literal"><span class="pre">[0.3193562177376465,</span> <span class="pre">0.029995359277273426]</span></code>. It will
+then check if any of these values are greater than 0.3. Since one of these
+values is indeed greater than 0.3, the alert will be sent to the output
+channel(s) defined in the rule.</p>
 </div>
 <div class="section" id="outputs-parameters">
 <h3><code class="docutils literal"><span class="pre">outputs</span></code> Parameters<a class="headerlink" href="#outputs-parameters" title="Permalink to this headline">¶</a></h3>
@@ -606,6 +715,7 @@ send the results via Slack and email as shown below.</p>
 <li><a class="reference internal" href="#rule-configuration-file">Rule Configuration File</a><ul>
 <li><a class="reference internal" href="#rule-example">Example</a></li>
 <li><a class="reference internal" href="#rule-file-parameters">Rule File Parameters</a></li>
+<li><a class="reference internal" href="#conditions-parameters"><code class="docutils literal"><span class="pre">conditions</span></code> Parameters</a></li>
 <li><a class="reference internal" href="#outputs-parameters"><code class="docutils literal"><span class="pre">outputs</span></code> Parameters</a></li>
 <li><a class="reference internal" href="#slack-output-parameters">Slack Output Parameters</a></li>
 <li><a class="reference internal" href="#email-output-parameters">Email Output Parameters</a></li>

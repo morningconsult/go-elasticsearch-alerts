@@ -210,6 +210,13 @@ Example
       "aggregations.service_name.buckets",
       "aggregations.service_name.buckets.program.buckets"
     ],
+    "conditions": [
+      {
+        "field": "aggregations.pipelines.queue.buckets.queue_usage.value",
+        "quantifier": "any",
+        "gt": 0.3
+      }
+    ],
     "outputs": [
       {
         "type": "slack",
@@ -301,10 +308,115 @@ Rule File Parameters
   not specified, the program will group by the field ``hits.hits._source``
   by default. More information on this field is provided in the `filters`_
   section.
+- :code-no-background:`conditions` ([]\ `Conditions <#conditions-parameters>`__: ``[]``)
+  - The criteria that must be met for the alert to be reported. Note that
+  all conditions have an implicit "and" (i.e. all conditions must be satisfied
+  for the alert to trigger). See the `Conditions <#conditions-parameters>`__
+  section for more details. This field is optional.
 - :code-no-background:`outputs` ([]\ `Output <#outputs-parameters>`__: ``[]``)
   - The media by which alerts should be sent. See the `Output
   <#outputs-parameters>`__ section for more details. At least one output must
   be specified.
+
+``conditions`` Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``conditions`` parameter of the rule file allows you to ensure alerts
+are only reported when the given conditions are satisfied. You may include
+as many or as few conditions as you wish. This field is optional.
+
+- :code-no-background:`field` (string: ``""``) - The path to the field
+  of the JSON response that will be tested against the given criteria.
+  This should point to only primitive values, including strings,
+  numbers, or booleans (e.g. the last element of the path should be
+  a primitive and not an object or array). This field is required.
+- :code-no-background:`quantifier` (string: ``"any"``) - How the matching
+  values should be compared. Accepted values include ``"all"``, ``"any"``,
+  and ``"none"``. This defaults to ``"any"``.
+- :code-no-background:`eq` (string or number: ``nil``) - The matching
+  values should equal this value. This field is optional.
+- :code-no-background:`ne` (string or number: ``nil``) - The matching
+  values should not equal this value. This field is optional.
+- :code-no-background:`lt` (number: ``nil``) - The matching values should
+  be less than this value. This field is optional.
+- :code-no-background:`le` (number: ``nil``) - The matching values should
+  be less than or equal to this value. This field is optional.
+- :code-no-background:`gt` (number: ``nil``) - The matching values should
+  be greater than this value. This field is optional.
+- :code-no-background:`ge` (number: ``nil``) - The matching values should
+  be greater than or equal to this value. This field is optional.
+
+For example, assume we are using the rule given in the
+:ref:`example <rule-example>` above. Also assume that when the query runs,
+Elasticsearch returns the following response:
+
+.. code-block:: json
+
+  {
+    "took" : 4863,
+    "timed_out" : false,
+    "_shards" : {
+      "total" : 7,
+      "successful" : 7,
+      "skipped" : 0,
+      "failed" : 0
+    },
+    "hits" : {
+      "total" : {
+        "value" : 376,
+        "relation" : "eq"
+      },
+      "max_score" : null,
+      "hits" : [ ]
+    },
+    "aggregations" : {
+      "pipelines" : {
+        "doc_count" : 3384,
+        "queue" : {
+          "doc_count_error_upper_bound" : 0,
+          "sum_other_doc_count" : 0,
+          "buckets" : [
+            {
+              "key" : "main",
+              "doc_count" : 1128,
+              "queue_size" : {
+                "value" : 3.8679811209E10
+              },
+              "max_queue_size" : {
+                "value" : 1.211180777472E13
+              },
+              "queue_usage" : {
+                "value" : 0.3193562177376465
+              }
+            },
+            {
+              "key" : "message-queues",
+              "doc_count" : 1128,
+              "queue_size" : {
+                "value" : 3.632980257E9
+              },
+              "max_queue_size" : {
+                "value" : 1.211180777472E13
+              },
+              "queue_usage" : {
+                "value" : 0.029995359277273426
+              },
+              "queue_empty" : {
+                "value" : true
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+
+From this response, the process will gather the fields at the path defined
+in the condition at ``aggregations.pipelines.queue.buckets.queue_usage.value``.
+This includes the set ``[0.3193562177376465, 0.029995359277273426]``. It will
+then check if any of these values are greater than 0.3. Since one of these
+values is indeed greater than 0.3, the alert will be sent to the output
+channel(s) defined in the rule.
 
 ``outputs`` Parameters
 ~~~~~~~~~~~~~~~~~~~~~~

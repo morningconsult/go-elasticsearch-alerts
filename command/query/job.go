@@ -36,6 +36,8 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 	"github.com/robfig/cron"
 	"golang.org/x/xerrors"
+
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
 const (
@@ -92,6 +94,10 @@ type QueryHandlerConfig struct { // nolint: golint
 	Filters []string
 
 	Logger hclog.Logger
+
+	// Conditions are used to make alerts fire when certain criteria
+	// are met.
+	Conditions []config.Condition
 }
 
 // QueryHandler performs the defined Elasticsearch query at the
@@ -112,6 +118,7 @@ type QueryHandler struct { // nolint: golint
 	schedule     cron.Schedule
 	bodyField    string
 	filters      []string
+	conditions   []config.Condition
 	newRequest   func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error)
 }
 
@@ -166,6 +173,7 @@ func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 		schedule:     schedule,
 		bodyField:    config.BodyField,
 		filters:      config.Filters,
+		conditions:   config.Conditions,
 		newRequest:   reqFunc,
 	}, nil
 }
@@ -245,7 +253,7 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 // equals the next time the query shall be executed per the provided
 // cron schedule. It will only execute the query if distLock.Acquired()
 // is true.
-func (q *QueryHandler) Run( // nolint: gocyclo
+func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
 	ctx context.Context,
 	outputCh chan *alert.Alert,
 	wg *sync.WaitGroup,
@@ -306,12 +314,12 @@ func (q *QueryHandler) Run( // nolint: gocyclo
 					break
 				}
 
-				records, tmp, err := q.Transform(data)
+				var records []*alert.Record
+				records, hits, err = q.process(data)
 				if err != nil {
 					q.logger.Error(fmt.Sprintf("[Rule: %q] error processing response", q.name), "error", err)
 					break
 				}
-				hits = tmp
 
 				if len(records) > 0 {
 					id, err := uuid.GenerateUUID()
@@ -346,7 +354,7 @@ func (q *QueryHandler) Run( // nolint: gocyclo
 // will serve as an alias for the state indices. The state indices
 // will be named 'go-es-alerts-status-{date}'; therefore, this template
 // enables searching all state indices via this alias
-func (q *QueryHandler) PutTemplate(ctx context.Context) error {
+func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funlen
 	payload := fmt.Sprintf(`{
   "index_patterns": ["%s-status-%s-*"],
   "order": 0,
@@ -442,7 +450,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 // created document belonging to this rule. It then attempts to
 // parse the 'next_query' field in order to inform the Run() loop
 // when to next execute the query.
-func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
+func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { // nolint: funlen
 	payload := fmt.Sprintf(`{
   "query": {
     "bool": {
@@ -566,8 +574,11 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 			resp.Status, q.readErrRespBody(resp))
 	}
 
+	dec := json.NewDecoder(resp.Body)
+	dec.UseNumber()
+
 	var data = make(map[string]interface{})
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if err := dec.Decode(&data); err != nil {
 		return nil, xerrors.Errorf("error JSON-decoding Elasticsearch response: %v", err)
 	}
 	return data, nil

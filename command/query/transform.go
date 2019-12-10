@@ -19,35 +19,46 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
 const hitsDelimiter = "\n----------------------------------------\n"
 
-// Transform converts the raw response returned from Elasticsearch into a
+// process converts the raw response returned from Elasticsearch into a
 // []*github.com/morningconsult/go-elasticsearch-alerts/command/alert.Record
 // array and returns that array, the response fields grouped by
 // *QueryHandler.bodyField (if any), and an error if there was an error.
-// If Transform returns a non-nil error, the other returned values will
+// If process returns a non-nil error, the other returned values will
 // be nil.
-func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Record, []map[string]interface{}, error) {
+func (q *QueryHandler) process( // nolint: gocyclo
+	respData map[string]interface{},
+) ([]*alert.Record, []map[string]interface{}, error) {
+	if len(q.conditions) != 0 && !config.ConditionsMet(q.logger.Named("conditions"), respData, q.conditions) {
+		return nil, nil, nil
+	}
+
 	records := make([]*alert.Record, 0)
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
 		if elems == nil || len(elems) < 1 {
 			continue
 		}
+
 		fields, err := q.gatherFields(elems)
 		if err != nil {
 			return nil, nil, err
 		}
+
 		if len(fields) < 1 {
 			continue
 		}
+
 		record := &alert.Record{
 			Filter: filter,
 			Fields: fields,
 		}
+
 		records = append(records, record)
 	}
 
@@ -70,6 +81,7 @@ func (q *QueryHandler) Transform(respData map[string]interface{}) ([]*alert.Reco
 		}
 		records = append(records, record)
 	}
+
 	return records, hits, nil
 }
 
