@@ -5,11 +5,6 @@
 #
 # ====================================
 resource_types:
-- name: slack-alert
-  type: registry-image
-  source:
-    repository: arbourd/concourse-slack-alert-resource
-
 - name: pull-request
   type: registry-image
   source:
@@ -51,7 +46,7 @@ resources:
   icon: golf
   source:
     repository: golang
-    tag: 1.12-alpine3.9
+    tag: 1.13.7-alpine3.11
 
 - name: python
   type: registry-image
@@ -59,13 +54,6 @@ resources:
   source:
     repository: python
     tag: 3.7.3-alpine3.9
-
-- name: slack
-  type: slack-alert
-  icon: slack
-  source:
-    url: ((slack-webhook))
-    channel: '#build'
 
 # ====================================
 #
@@ -116,12 +104,6 @@ jobs:
     image: golang
     file: go-elasticsearch-alerts/ci/tasks/validate.yml
     input_mapping: {repo: go-elasticsearch-alerts}
-    on_failure:
-      put: slack
-      params: {alert_type: failed}
-    on_abort:
-      put: slack
-      params: {alert_type: aborted}
 
 - name: build-new-release
   build_logs_to_retain: 30
@@ -145,12 +127,6 @@ jobs:
       params:
         repository: go-elasticsearch-alerts-dirty
         merge: true
-    on_failure:
-      put: slack
-      params: {alert_type: failed}
-    on_abort:
-      put: slack
-      params: {alert_type: aborted}
 
 - name: publish-release
   build_logs_to_retain: 30
@@ -167,9 +143,3 @@ jobs:
     input_mapping: {repo: go-elasticsearch-alerts-bumped}
     params:
       GITHUB_TOKEN: ((github-access-token))
-    on_failure:
-      put: slack
-      params: {alert_type: failed}
-    on_abort:
-      put: slack
-      params: {alert_type: aborted}
