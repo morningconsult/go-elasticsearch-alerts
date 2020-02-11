@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- go mod tidy
+
+
+<a name="v0.1.17"></a>
+## [v0.1.17] - 2020-02-11
+### Chore
+- Bump version and update changelog [ci skip]
+
 
 <a name="v0.1.16"></a>
 ## [v0.1.16] - 2019-12-10
@@ -314,7 +323,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.16...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.17...HEAD
+[v0.1.17]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.16...v0.1.17
 [v0.1.16]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.15...v0.1.16
 [v0.1.15]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.14...v0.1.15
 [v0.1.14]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.13...v0.1.14
