@@ -23,7 +23,7 @@ require (
 	github.com/miekg/dns v1.1.2 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mitchellh/mapstructure v1.2.3
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/robfig/cron v1.2.0
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
