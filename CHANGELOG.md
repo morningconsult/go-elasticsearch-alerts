@@ -2,6 +2,12 @@
 ## [Unreleased]
 
 
+<a name="v0.1.21"></a>
+## [v0.1.21] - 2020-07-13
+### Chore
+- Bump version and update changelog [ci skip]
+
+
 <a name="v0.1.20"></a>
 ## [v0.1.20] - 2020-07-13
 ### Chore
@@ -349,7 +355,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.20...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.21...HEAD
+[v0.1.21]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.20...v0.1.21
 [v0.1.20]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.19...v0.1.20
 [v0.1.19]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.18...v0.1.19
 [v0.1.18]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.17...v0.1.18
