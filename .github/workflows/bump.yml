@@ -16,8 +16,10 @@ jobs:
     steps:
     - name: Install git
       run: |
+        echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list
         apt-get -yqq update
         apt-get -yqq install git
+        apt-get clean all
 
     - uses: actions/checkout@v2
       with:
