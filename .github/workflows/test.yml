@@ -14,12 +14,13 @@ jobs:
   test:
     name: Test
     # runs-on: ubuntu-18.04
+    container:
+      image: golang:1.13.7-alpine3.11
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
     - name: test
-      uses: docker://golang:1.13.7-alpine3.11
       run: |
         apk add -qU --no-cache --no-progress curl git
         curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin "v1.21.0"
