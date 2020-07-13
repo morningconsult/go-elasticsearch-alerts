@@ -1,0 +1,35 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+    tags-ignore:
+      - v*
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Run linting and tests
+    runs-on: ubuntu-18.04
+    container:
+      image: golang:1.13.7-alpine3.11
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Run linting
+      env:
+        CGO_ENABLED: '0'
+      run: |
+        apk add -qU --no-cache --no-progress curl git
+        curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin "v1.21.0"
+        golangci-lint run ./...
+
+    - name: Run tests
+      env:
+        CGO_ENABLED: '0'
+        GO111MODULE: 'on'
+      run: go test ./...
