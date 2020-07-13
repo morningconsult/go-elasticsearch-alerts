@@ -14,9 +14,6 @@
 # Disable verbosity
 MAKEFLAGS += --silent --no-print-directory
 
-FLY := $(shell which fly)
-
-
 REPO := github.com/$(shell git config remote.origin.url | sed -e 's/.*://g' -e 's/\.git//g')
 SOURCES := $(shell find . -name '*.go')
 BINARY_NAME=go-elasticsearch-alerts
@@ -45,37 +42,3 @@ git_chglog_check:
 changelog: git_chglog_check
 	GOPATH=$(shell pwd) PATH=$$PATH:$(shell pwd)/bin git-chglog --output CHANGELOG.md
 .PHONY: changelog
-
-#=============================================================================
-# Release and Deployment tasks
-
-CONCOURSE_PIPELINE := go-elasticsearch-alerts
-
-
-check_fly:
-ifeq ($(FLY),)
-	sudo mkdir -p /usr/local/bin
-	sudo wget -q -O /usr/local/bin/fly "https://ci.morningconsultintelligence.com/api/v1/cli?arch=amd64&platform=linux";
-	sudo chmod +x /usr/local/bin/fly
-	/usr/local/bin/fly --version
-endif
-.PHONY: check_fly
-
-
-set_pipeline: check_fly
-	$(FLY) --target mci-ci-oss validate-pipeline \
-		--config ci/pipeline.yml \
-		--strict
-
-	$(FLY) --target mci-ci-oss set-pipeline \
-		--config ci/pipeline.yml \
-		--pipeline $(CONCOURSE_PIPELINE) \
-		--non-interactive \
-		--check-creds \
-		-v github-repo="$$(git config remote.origin.url)" \
-		-v github-actor="Dilan Bellinghoven" \
-		-v github-email="dbellinghoven@morningconsult.com"
-
-	$(FLY) --target mci-ci-oss unpause-pipeline \
-		--pipeline $(CONCOURSE_PIPELINE)
-.PHONY: set_pipeline

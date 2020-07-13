@@ -1,6 +1,6 @@
 # go-elasticsearch-alerts
 
-[![Build Status](https://ci.morningconsultintelligence.com/api/v1/teams/oss/pipelines/go-elasticsearch-alerts/jobs/publish-release/badge)](https://ci.morningconsultintelligence.com/teams/oss/pipelines/go-elasticsearch-alerts) [![Go Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)][godocs] [![Go Report Card](https://goreportcard.com/badge/github.com/morningconsult/go-elasticsearch-alerts)](https://goreportcard.com/report/github.com/morningconsult/go-elasticsearch-alerts)
+![Test](https://github.com/morningconsult/go-elasticsearch-alerts/workflows/Test/badge.svg) [![Go Documentation](https://img.shields.io/badge/godoc-reference-blue.svg)][godocs] [![Go Report Card](https://goreportcard.com/badge/github.com/morningconsult/go-elasticsearch-alerts)](https://goreportcard.com/report/github.com/morningconsult/go-elasticsearch-alerts)
 
 [godocs]: https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts
 
@@ -16,7 +16,7 @@ You can download your preferred variant of the binary from the [releases page](h
 
 ### Using `go get`
 
-You can build the binary via `go get` with 
+You can build the binary via `go get` with
 
 ```shell
 $ go get github.com/morningconsult/go-elasticsearch-alerts

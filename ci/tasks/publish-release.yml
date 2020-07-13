@@ -1,9 +1,0 @@
----
-platform: linux
-inputs:
-  - name: repo
-params:
-  GITHUB_TOKEN:
-run:
-  path: ci/release/publish-release.sh
-  dir: repo
