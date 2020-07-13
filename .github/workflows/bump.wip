@@ -1,0 +1,74 @@
+name: Bump
+
+on:
+  push:
+    branches:
+      - master
+    tags-ignore:
+      - v*
+
+jobs:
+  test:
+    name: test
+    # runs-on: ubuntu-18.04
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Run tests
+      uses: docker://golang:1.13.7-alpine3.11
+      run: |
+        apk add -qU --no-cache --no-progress curl git
+        curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin "v1.21.0"
+        CGO_ENABLED=0 golangci-lint run ./...
+        CGO_ENABLED=0 GO111MODULE=on go test ./...
+
+  bump:
+    name: bump
+    needs: test
+    steps:
+    - name: Bump version
+      uses: docker://python:3.7.3-alpine3.9
+      env:
+        GITHUB_ACTOR: "Dilan Bellinghoven"
+        GITHUB_EMAIL: dbellinghoven@morningconsult.com
+      run: |
+        apk add -qU --no-cache --no-progress git
+
+        git config --global user.email "${GITHUB_EMAIL}"
+        git config --global user.name "${GITHUB_ACTOR}"
+
+        readonly GIT_CHGLOG_VERSION="0.8.0"
+
+        # Download git-chglog
+        wget --output-document=/usr/local/bin/git-chglog --quiet \
+          "https://github.com/git-chglog/git-chglog/releases/download/${GIT_CHGLOG_VERSION}/git-chglog_linux_amd64"
+
+        # Make it executable
+        chmod a+x /usr/local/bin/git-chglog
+
+        # Clone the repo
+        git clone repo repo-dirty
+
+        cd repo-dirty
+
+        # Install dependencies
+        pip install --quiet --requirement ./ci/release/requirements.txt
+
+        # Get the latest version
+        readonly VERSION="$( python ./ci/release/version.py )"
+
+        if [ "${VERSION}" = "" ]; then
+          exit 0
+        fi
+
+        echo "${VERSION}" > ./VERSION
+
+        git-chglog --output ./CHANGELOG.md
+
+        # Add and commit changed files
+        git add ./VERSION ./CHANGELOG.md
+        git commit -m "chore: Bump version and update changelog [ci skip]"
+
+        # Tag the repo with the latest version
+        git tag "v${VERSION}"
