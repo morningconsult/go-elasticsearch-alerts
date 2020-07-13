@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Ci
+- Testing out github workflows ([#67](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/67))
+
+
+<a name="v0.1.19"></a>
+## [v0.1.19] - 2020-07-13
+### Chore
+- Bump version and update changelog [ci skip]
+
 
 <a name="v0.1.18"></a>
 ## [v0.1.18] - 2020-02-11
@@ -133,13 +142,20 @@
 ### Chore
 - Add pending step before running test-pr
 - Bump Goreleaser version and use new pull request Concourse resource
+
+### Ci
+- Fix tag_filter to use glob [ci skip]
+
+
+<a name="v0.1.3"></a>
+## [v0.1.3] - 2019-01-10
+### Chore
 - Updated other files to reflect migration to go modules
 - Using go modules instead of dep
 - Using go modules instead of dep
 - Updated license header to 2019; command/client.go: Separated logic for creating new Consul client into its own file; .drone.yml: Deleted since no longer using drone
 
 ### Ci
-- Fix tag_filter to use glob [ci skip]
 - fixing some errors with pipeline [ci skip]
 
 ### Dockerfile
@@ -327,7 +343,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.18...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.19...HEAD
+[v0.1.19]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.18...v0.1.19
 [v0.1.18]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.17...v0.1.18
 [v0.1.17]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.16...v0.1.17
 [v0.1.16]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.15...v0.1.16
@@ -343,7 +360,8 @@
 [v0.1.6]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.5...v0.1.6
 [v0.1.5]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.4...v0.1.5
 [v0.1.4]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.2...v0.1.4
-[v0.1.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.1...v0.1.2
+[v0.1.2]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.3...v0.1.2
+[v0.1.3]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.1...v0.1.3
 [v0.1.1]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.0...v0.1.1
 [v0.1.0]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.0.22...v0.1.0
 [v0.0.22]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.0.21...v0.0.22
