@@ -6,6 +6,9 @@ on:
       - master
     tags-ignore:
       - v*
+    paths-ignore:
+      - VERSION
+      - CHANGELOG.md
 
 jobs:
   bump:
