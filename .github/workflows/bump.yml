@@ -22,6 +22,8 @@ jobs:
     - name: Create local changes
       env:
         GIT_CHGLOG_VERSION: 0.8.0
+        GITHUB_EMAIL: dbellinghoven@morningconsult.com
+        GITHUB_ACTOR: 'Dilan Bellinghoven'
       run: |
         apk add -qU --no-cache --no-progress git
 
@@ -40,19 +42,16 @@ jobs:
 
         if [ "${VERSION}" = "" ]
         then
+          echo "No verison created?"
           exit 0
         fi
 
         echo "${VERSION}" > ./VERSION
 
-        git-chglog --output ./CHANGELOG.md
+        # Smoke test git-chglog
+        git-chglog --version
 
-    - name: Commit files
-      env:
-        GITHUB_EMAIL: dbellinghoven@morningconsult.com
-        GITHUB_ACTOR: 'Dilan Bellinghoven'
-      run: |
-        apk add -qU --no-cache --no-progress git
+        git-chglog --output ./CHANGELOG.md
 
         git config --global user.email "${GITHUB_EMAIL}"
         git config --global user.name "${GITHUB_ACTOR}"
