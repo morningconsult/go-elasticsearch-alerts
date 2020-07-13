@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Run lintiing and tests
+    name: Run linting and tests
     runs-on: ubuntu-18.04
     container:
       image: golang:1.13.7-alpine3.11
