@@ -14,10 +14,15 @@ jobs:
       image: python:3.7.3
 
     steps:
+    - name: Install git
+      run: |
+        apt-get -yqq update
+        apt-get -yqq install git
+
     - uses: actions/checkout@v2
       with:
         persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-        fetch-depth: 1 # otherwise, you will failed to push refs to dest repo
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
 
     - name: Create local changes
       env:
@@ -25,9 +30,6 @@ jobs:
         GITHUB_EMAIL: dbellinghoven@morningconsult.com
         GITHUB_ACTOR: 'Dilan Bellinghoven'
       run: |
-        apt-get -yqq update
-        apt-get -yqq install git
-
         # Download git-chglog
         wget --output-document=/usr/local/bin/git-chglog --quiet \
           "https://github.com/git-chglog/git-chglog/releases/download/${GIT_CHGLOG_VERSION}/git-chglog_linux_amd64"
