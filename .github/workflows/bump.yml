@@ -1,0 +1,66 @@
+name: Bump
+
+on:
+  push:
+    branches:
+      - master
+    tags-ignore:
+      - *
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.7.3-alpine3.9
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+
+    - name: Create local changes
+      env:
+        GITHUB_EMAIL: dbellinghoven@morningconsult.com
+        GITHUB_ACTOR: 'Dilan Bellinghoven'
+        GIT_CHGLOG_VERSION: 0.8.0
+      run: |
+        apk add -qU --no-cache --no-progress git
+
+        # Download git-chglog
+        wget --output-document=/usr/local/bin/git-chglog --quiet \
+          "https://github.com/git-chglog/git-chglog/releases/download/${GIT_CHGLOG_VERSION}/git-chglog_linux_amd64"
+
+        # Make it executable
+        chmod a+x /usr/local/bin/git-chglog
+
+        # Install dependencies
+        pip install --quiet --requirement ./ci/release/requirements.txt
+
+        # Get the latest version
+        readonly VERSION="$(python ./ci/release/version.py)"
+
+        if [ "${VERSION}" = "" ]
+        then
+          exit 0
+        fi
+
+        echo "${VERSION}" > ./VERSION
+
+        git-chglog --output ./CHANGELOG.md
+
+    - name: Commit files
+      run: |
+        apk add -qU --no-cache --no-progress git
+
+        git config --global user.email "${GITHUB_EMAIL}"
+        git config --global user.name "${GITHUB_ACTOR}"
+        git add ./VERSION ./CHANGELOG.md
+        git commit -m "chore: Bump version and update changelog [ci skip]"
+        git tag "v${VERSION}"
+
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        tags: true
