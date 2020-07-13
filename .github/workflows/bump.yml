@@ -11,13 +11,13 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     container:
-      image: python:3.7.3-alpine3.9
+      image: python:3.7.3
 
     steps:
     - uses: actions/checkout@v2
       with:
         persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-        fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
+        fetch-depth: 1 # otherwise, you will failed to push refs to dest repo
 
     - name: Create local changes
       env:
@@ -25,7 +25,8 @@ jobs:
         GITHUB_EMAIL: dbellinghoven@morningconsult.com
         GITHUB_ACTOR: 'Dilan Bellinghoven'
       run: |
-        apk add -qU --no-cache --no-progress git
+        apt-get -yqq update
+        apt-get -yqq install git
 
         # Download git-chglog
         wget --output-document=/usr/local/bin/git-chglog --quiet \
