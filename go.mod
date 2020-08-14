@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/armon/go-metrics v0.3.0 // indirect
 	github.com/aws/aws-sdk-go v1.25.47
-	github.com/google/go-cmp v0.3.1
+	github.com/google/go-cmp v0.5.1
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/hashicorp/consul/api v1.6.0
 	github.com/hashicorp/go-cleanhttp v0.5.1
@@ -26,7 +26,7 @@ require (
 	github.com/robfig/cron v1.2.0
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
 	golang.org/x/crypto v0.0.0-20191202143827-86a70503ff7e // indirect
-	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 )
 
 go 1.13
