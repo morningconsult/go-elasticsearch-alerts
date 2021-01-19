@@ -35,7 +35,7 @@ const (
 // a rule configuration file.
 type OutputConfig struct {
 	// Type is the type of output method. Some examples include
-	// 'email', 'file', and 'slack'. Additional output methods
+	// 'email', 'file', 'CLI' and 'slack'. Additional output methods
 	// may be added in the future
 	Type string `json:"type"`
 
