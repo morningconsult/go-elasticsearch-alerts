@@ -15,16 +15,21 @@ type comand struct {
 	name, arg string
 }
 
+// AlertMethodConfig configures which command will be executed and with which parameters.
 type AlertMethodConfig struct {
 	Comand string `mapstructure:"comand"`
 	// command arguments, separated by "|"
 	Args string `mapstructure:"args"`
 }
 
+// AlertMethod implements the alert.AlertMethod interface
+// for to execute cli commands
 type AlertMethod struct {
 	comand, args string
 }
 
+// NewAlertMethod creates a new *AlertMethod or a
+// non-nil error if there was an error.
 func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	return &AlertMethod{
 		comand: config.Comand,
@@ -34,7 +39,7 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 
 func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
 	runctx, _ := context.WithTimeout(context.WithValue(ctx, "rule", rule), time.Minute*5)
-	ch := make(chan comand, 0)
+	ch := make(chan comand)
 
 	go e.run(runctx, ch)
 
