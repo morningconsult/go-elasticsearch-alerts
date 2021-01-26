@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/armon/go-metrics v0.3.0 // indirect
 	github.com/aws/aws-sdk-go v1.25.47
+	github.com/carbocation/runningvariance v0.0.0-20150817162428-fdcce8a03b6b
 	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/hashicorp/consul/api v1.7.0

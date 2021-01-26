@@ -16,12 +16,15 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
+	"sync"
 
 	hclog "github.com/hashicorp/go-hclog"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/shopspring/decimal"
 	"golang.org/x/xerrors"
 
+	. "github.com/carbocation/runningvariance"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
@@ -39,6 +42,17 @@ const (
 	operatorLessThanOrEqualTo    = "le"
 	operatorGreaterThan          = "gt"
 	operatorGreaterThanOrEqualTo = "ge"
+
+	keyType               = "type"
+	typeStandardDeviation = "standardDeviation"
+
+	volumeBuffer = 5
+)
+
+var (
+	lastValue map[string][]int // для хранения последних значений (нужно для StandardDeviation)
+	one       sync.Once
+	mx        *sync.RWMutex
 )
 
 // Condition is an optional parameter that can be used to limit
@@ -51,6 +65,10 @@ func (c Condition) field() string {
 
 func (c Condition) quantifier() string {
 	return c[keyQuantifier].(string)
+}
+
+func (c Condition) getType() string {
+	return c[keyType].(string)
 }
 
 func (c Condition) validate() error {
@@ -76,12 +94,12 @@ func (c Condition) validate() error {
 }
 
 func (c Condition) validateField() error {
-	raw, ok := c[keyField]
-	if !ok {
+	fieldRaw, fieldOK := c[keyField]
+	if !fieldOK {
 		return errors.New("condition must have the field 'field'")
 	}
 
-	v, ok := raw.(string)
+	v, ok := fieldRaw.(string)
 	if !ok || v == "" {
 		return errors.New("field 'field' of condition must not be empty")
 	}
@@ -160,9 +178,9 @@ func (c Condition) validateMultiOperators() []error {
 // ConditionsMet returns true if the response JSON meets the given conditions.
 func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions []Condition) bool {
 	for _, condition := range conditions {
-		matches := utils.GetAll(resp, condition.field())
-
 		res := false
+
+		matches := utils.GetAll(resp, condition.field())
 
 		switch condition.quantifier() {
 		case quantifierAll:
@@ -223,20 +241,24 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 	case bool:
 		return boolSatisfied(v, condition)
 	default:
-		fields := make([]interface{}, 0, 4)
-		if f, ok := condition[keyField].(string); ok {
-			fields = append(fields, "field", f)
+		switch condition.getType() {
+		case typeStandardDeviation:
+			return standardDeviation(logger, v, condition)
+		default:
+			fields := make([]interface{}, 0, 4)
+			if f, ok := condition[keyField].(string); ok {
+				fields = append(fields, "field", f)
+			}
+
+			if d, err := json.Marshal(match); err == nil {
+				fields = append(fields, "value", string(d))
+			} else {
+				fields = append(fields, "value", match)
+			}
+
+			logger.Error("Value of field in Elasticsearch response is not a string, number, or boolean. Ignoring condition for this value", fields...) // nolint: lll
+			return true
 		}
-
-		if d, err := json.Marshal(match); err == nil {
-			fields = append(fields, "value", string(d))
-		} else {
-			fields = append(fields, "value", match)
-		}
-
-		logger.Error("Value of field in Elasticsearch response is not a string, number, or boolean. Ignoring condition for this value", fields...) // nolint: lll
-
-		return true
 	}
 }
 
@@ -300,4 +322,49 @@ func boolSatisfied(b bool, condition Condition) bool {
 	}
 
 	return sat
+}
+
+func standardDeviation(logger hclog.Logger, i interface{}, condition Condition) bool {
+	if data, ok := i.(map[string]interface{}); !ok {
+		return false
+	} else {
+		if doc_count, err := strconv.Atoi(string(data["doc_count"].(json.Number))); err == nil {
+			key := data["key"].(string)
+			lv := setlastValue(key, doc_count)
+
+			s := NewRunningStat()
+			for _, v := range lv[key] {
+				s.Push(float64(v))
+			}
+
+			dev := s.StandardDeviation()
+			logger.With("key", key, "deviation", dev).Info("standardDeviation")
+			return numberSatisfied(json.Number(strconv.FormatFloat(s.StandardDeviation(), 'f', 4, 64)), condition)
+		}
+	}
+
+	return false
+}
+
+func getlastValue() map[string][]int {
+	one.Do(func() {
+		lastValue = map[string][]int{}
+		mx = new(sync.RWMutex)
+	})
+	return lastValue
+}
+
+func setlastValue(k string, v int) map[string][]int {
+	lv := getlastValue()
+
+	mx.Lock()
+	defer mx.Unlock()
+
+	lv[k] = append(lv[k], v)
+
+	if len(lv[k]) > volumeBuffer {
+		lv[k] = lv[k][:volumeBuffer]
+	}
+
+	return lv
 }
