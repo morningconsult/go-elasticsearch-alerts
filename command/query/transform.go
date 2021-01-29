@@ -45,7 +45,7 @@ func (q *QueryHandler) process( // nolint: gocyclo
 			continue
 		}
 
-		fields, err := q.gatherFields(elems)
+		fields, sourceFields, err := q.gatherFields(elems)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -55,8 +55,9 @@ func (q *QueryHandler) process( // nolint: gocyclo
 		}
 
 		record := &alert.Record{
-			Filter: filter,
-			Fields: fields,
+			Filter:   filter,
+			Fields:   fields,
+			Elements: sourceFields,
 		}
 
 		records = append(records, record)
@@ -105,17 +106,28 @@ func (q *QueryHandler) gatherHits(body []interface{}) ([]string, []map[string]in
 	return stringifiedHits, hits, nil
 }
 
-func (q *QueryHandler) gatherFields(elems []interface{}) ([]*alert.Field, error) {
+func (q *QueryHandler) gatherFields(elems []interface{}) ([]*alert.Field, []map[string]interface{}, error) {
 	fields := make([]*alert.Field, 0, len(elems))
+	sourceFields := make([]map[string]interface{}, 0, len(elems))
+	logger := q.logger.Named("gatherFields")
+
+ELEMS:
 	for _, elem := range elems {
 		obj, ok := elem.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
+		for _, condition := range q.conditions {
+			if config.ConditionMet(logger, obj, condition, condition.Fieldfier()) {
+				logger.With("field", elem).Info("the element was skipped according to the filter condition")
+				continue ELEMS
+			}
+		}
+
 		field := new(alert.Field)
 		if err := mapstructure.Decode(obj, field); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		if field.Key == "" || field.Count < 1 {
@@ -123,6 +135,7 @@ func (q *QueryHandler) gatherFields(elems []interface{}) ([]*alert.Field, error)
 		}
 
 		fields = append(fields, field)
+		sourceFields = append(sourceFields, obj)
 	}
-	return fields, nil
+	return fields, sourceFields, nil
 }

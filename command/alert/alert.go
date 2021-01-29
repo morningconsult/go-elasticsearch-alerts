@@ -61,6 +61,8 @@ type Record struct {
 	// This will be non-empty only when the Filter is not
 	// the body field
 	Fields []*Field `json:"fields,omitempty"`
+
+	Elements []map[string]interface{} `json:"-"`
 }
 
 // Alert represents a unique set of results from an

@@ -3,10 +3,11 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -44,11 +45,23 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 	go e.run(runctx, ch)
 
 	for _, item := range records {
-		if !item.BodyField {
+		if !item.BodyField && item.Elements != nil {
+			for _, element := range item.Elements {
 
-			for _, field := range item.Fields {
-				msg := strings.Replace(e.args, "%key%", field.Key, -1)
-				msg = strings.Replace(msg, "%count%", strconv.Itoa(field.Count), -1)
+				value := utils.Get(element, "timelock.value")
+				doc_count := utils.Get(element, "doc_count")
+				key := utils.Get(element, "key")
+
+				msg := e.args
+				if doc_count != nil {
+					msg = strings.Replace(msg, "%count%", string(doc_count.(json.Number)), -1)
+				}
+				if value != nil {
+					msg = strings.Replace(msg, "%value%", string(value.(json.Number)), -1)
+				}
+				if key != nil {
+					msg = strings.Replace(msg, "%key%", key.(string), -1)
+				}
 				ch <- comand{
 					name: e.comand,
 					arg:  msg,

@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	keyField      = "field"
-	keyQuantifier = "quantifier"
+	keyCommonField  = "comonfield"
+	keyFiltersField = "filtersfield"
+	keyQuantifier   = "quantifier"
 
 	quantifierAny  = "any"
 	quantifierAll  = "all"
@@ -60,7 +61,11 @@ var (
 type Condition map[string]interface{}
 
 func (c Condition) field() string {
-	return c[keyField].(string)
+	return c[keyCommonField].(string)
+}
+
+func (c Condition) Fieldfier() string {
+	return c[keyFiltersField].(string)
 }
 
 func (c Condition) quantifier() string {
@@ -94,7 +99,7 @@ func (c Condition) validate() error {
 }
 
 func (c Condition) validateField() error {
-	fieldRaw, fieldOK := c[keyField]
+	fieldRaw, fieldOK := c[keyCommonField]
 	if !fieldOK {
 		return errors.New("condition must have the field 'field'")
 	}
@@ -178,29 +183,39 @@ func (c Condition) validateMultiOperators() []error {
 // ConditionsMet returns true if the response JSON meets the given conditions.
 func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions []Condition) bool {
 	for _, condition := range conditions {
-		res := false
-
-		matches := utils.GetAll(resp, condition.field())
-
-		switch condition.quantifier() {
-		case quantifierAll:
-			res = allSatisfied(logger, matches, condition)
-		case quantifierAny:
-			res = anySatisfied(logger, matches, condition)
-		case quantifierNone:
-			res = noneSatisfied(logger, matches, condition)
-		}
-
-		if !res {
+		if !ConditionMet(logger, resp, condition, condition.field()) {
+			logger.Info("Conditions false")
 			return false
 		}
 	}
 
+	logger.Info("Conditions true")
 	return true
+}
+
+func ConditionMet(logger hclog.Logger, resp map[string]interface{}, condition Condition, fieldPath string) (res bool) {
+	matches := utils.GetAll(resp, fieldPath)
+
+	switch condition.quantifier() {
+	case quantifierAll:
+		res = allSatisfied(logger, matches, condition)
+	case quantifierAny:
+		res = anySatisfied(logger, matches, condition)
+	case quantifierNone:
+		res = noneSatisfied(logger, matches, condition)
+	default:
+		res = false
+	}
+
+	return
 }
 
 func allSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
 	for _, match := range matches {
+		if match == nil {
+			continue
+		}
+
 		sat := satisfied(logger, match, condition)
 		if !sat {
 			return false
@@ -212,6 +227,10 @@ func allSatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 
 func anySatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
 	for _, match := range matches {
+		if match == nil {
+			continue
+		}
+
 		sat := satisfied(logger, match, condition)
 		if sat {
 			return true
@@ -223,6 +242,10 @@ func anySatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 
 func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
 	for _, match := range matches {
+		if match == nil {
+			continue
+		}
+
 		sat := satisfied(logger, match, condition)
 		if sat {
 			return false
@@ -246,7 +269,7 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 			return standardDeviation(logger, v, condition)
 		default:
 			fields := make([]interface{}, 0, 4)
-			if f, ok := condition[keyField].(string); ok {
+			if f, ok := condition[keyCommonField].(string); ok {
 				fields = append(fields, "field", f)
 			}
 

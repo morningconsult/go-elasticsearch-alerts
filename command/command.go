@@ -32,6 +32,7 @@ import (
 // function.
 func Run() int { // nolint: gocyclo, funlen
 	logger := hclog.Default()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
