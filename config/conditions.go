@@ -101,7 +101,7 @@ func (c Condition) validate() error {
 func (c Condition) validateField() error {
 	fieldRaw, fieldOK := c[keyCommonField]
 	if !fieldOK {
-		return errors.New("condition must have the field 'field'")
+		return errors.New("condition must have the field 'comonfield'")
 	}
 
 	v, ok := fieldRaw.(string)
