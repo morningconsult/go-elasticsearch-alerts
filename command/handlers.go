@@ -19,6 +19,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/mitchellh/mapstructure"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/cli"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/email"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/slack"
@@ -107,6 +108,12 @@ func buildMethod(output config.OutputConfig) (alert.Method, error) { // nolint: 
 			return nil, xerrors.Errorf("error decoding SNS output configuration: %v", err)
 		}
 		method, err = sns.NewAlertMethod(snsConfig)
+	case "cli":
+		cliConfig := new(cli.AlertMethodConfig)
+		if err = mapstructure.Decode(output.Config, cliConfig); err != nil {
+			return nil, xerrors.Errorf("error decoding CLI output configuration: %v", err)
+		}
+		method, err = cli.NewAlertMethod(cliConfig)
 	default:
 		return nil, xerrors.Errorf("output type %q is not supported", output.Type)
 	}

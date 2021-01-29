@@ -16,18 +16,22 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
+	"sync"
 
 	hclog "github.com/hashicorp/go-hclog"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/shopspring/decimal"
 	"golang.org/x/xerrors"
 
+	. "github.com/carbocation/runningvariance"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
 const (
-	keyField      = "field"
-	keyQuantifier = "quantifier"
+	keyCommonField  = "comonfield"
+	keyFiltersField = "filtersfield"
+	keyQuantifier   = "quantifier"
 
 	quantifierAny  = "any"
 	quantifierAll  = "all"
@@ -39,6 +43,17 @@ const (
 	operatorLessThanOrEqualTo    = "le"
 	operatorGreaterThan          = "gt"
 	operatorGreaterThanOrEqualTo = "ge"
+
+	keyType               = "type"
+	typeStandardDeviation = "standardDeviation"
+
+	volumeBuffer = 5
+)
+
+var (
+	lastValue map[string][]int // для хранения последних значений (нужно для StandardDeviation)
+	one       sync.Once
+	mx        *sync.RWMutex
 )
 
 // Condition is an optional parameter that can be used to limit
@@ -46,11 +61,19 @@ const (
 type Condition map[string]interface{}
 
 func (c Condition) field() string {
-	return c[keyField].(string)
+	return c[keyCommonField].(string)
+}
+
+func (c Condition) Fieldfier() string {
+	return c[keyFiltersField].(string)
 }
 
 func (c Condition) quantifier() string {
 	return c[keyQuantifier].(string)
+}
+
+func (c Condition) getType() string {
+	return c[keyType].(string)
 }
 
 func (c Condition) validate() error {
@@ -76,12 +99,12 @@ func (c Condition) validate() error {
 }
 
 func (c Condition) validateField() error {
-	raw, ok := c[keyField]
-	if !ok {
-		return errors.New("condition must have the field 'field'")
+	fieldRaw, fieldOK := c[keyCommonField]
+	if !fieldOK {
+		return errors.New("condition must have the field 'comonfield'")
 	}
 
-	v, ok := raw.(string)
+	v, ok := fieldRaw.(string)
 	if !ok || v == "" {
 		return errors.New("field 'field' of condition must not be empty")
 	}
@@ -160,29 +183,39 @@ func (c Condition) validateMultiOperators() []error {
 // ConditionsMet returns true if the response JSON meets the given conditions.
 func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions []Condition) bool {
 	for _, condition := range conditions {
-		matches := utils.GetAll(resp, condition.field())
-
-		res := false
-
-		switch condition.quantifier() {
-		case quantifierAll:
-			res = allSatisfied(logger, matches, condition)
-		case quantifierAny:
-			res = anySatisfied(logger, matches, condition)
-		case quantifierNone:
-			res = noneSatisfied(logger, matches, condition)
-		}
-
-		if !res {
+		if !ConditionMet(logger, resp, condition, condition.field()) {
+			logger.Info("Conditions false")
 			return false
 		}
 	}
 
+	logger.Info("Conditions true")
 	return true
+}
+
+func ConditionMet(logger hclog.Logger, resp map[string]interface{}, condition Condition, fieldPath string) (res bool) {
+	matches := utils.GetAll(resp, fieldPath)
+
+	switch condition.quantifier() {
+	case quantifierAll:
+		res = allSatisfied(logger, matches, condition)
+	case quantifierAny:
+		res = anySatisfied(logger, matches, condition)
+	case quantifierNone:
+		res = noneSatisfied(logger, matches, condition)
+	default:
+		res = false
+	}
+
+	return
 }
 
 func allSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
 	for _, match := range matches {
+		if match == nil {
+			continue
+		}
+
 		sat := satisfied(logger, match, condition)
 		if !sat {
 			return false
@@ -194,6 +227,10 @@ func allSatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 
 func anySatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
 	for _, match := range matches {
+		if match == nil {
+			continue
+		}
+
 		sat := satisfied(logger, match, condition)
 		if sat {
 			return true
@@ -205,6 +242,10 @@ func anySatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 
 func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
 	for _, match := range matches {
+		if match == nil {
+			continue
+		}
+
 		sat := satisfied(logger, match, condition)
 		if sat {
 			return false
@@ -223,20 +264,24 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 	case bool:
 		return boolSatisfied(v, condition)
 	default:
-		fields := make([]interface{}, 0, 4)
-		if f, ok := condition[keyField].(string); ok {
-			fields = append(fields, "field", f)
+		switch condition.getType() {
+		case typeStandardDeviation:
+			return standardDeviation(logger, v, condition)
+		default:
+			fields := make([]interface{}, 0, 4)
+			if f, ok := condition[keyCommonField].(string); ok {
+				fields = append(fields, "field", f)
+			}
+
+			if d, err := json.Marshal(match); err == nil {
+				fields = append(fields, "value", string(d))
+			} else {
+				fields = append(fields, "value", match)
+			}
+
+			logger.Error("Value of field in Elasticsearch response is not a string, number, or boolean. Ignoring condition for this value", fields...) // nolint: lll
+			return true
 		}
-
-		if d, err := json.Marshal(match); err == nil {
-			fields = append(fields, "value", string(d))
-		} else {
-			fields = append(fields, "value", match)
-		}
-
-		logger.Error("Value of field in Elasticsearch response is not a string, number, or boolean. Ignoring condition for this value", fields...) // nolint: lll
-
-		return true
 	}
 }
 
@@ -300,4 +345,49 @@ func boolSatisfied(b bool, condition Condition) bool {
 	}
 
 	return sat
+}
+
+func standardDeviation(logger hclog.Logger, i interface{}, condition Condition) bool {
+	if data, ok := i.(map[string]interface{}); !ok {
+		return false
+	} else {
+		if doc_count, err := strconv.Atoi(string(data["doc_count"].(json.Number))); err == nil {
+			key := data["key"].(string)
+			lv := setlastValue(key, doc_count)
+
+			s := NewRunningStat()
+			for _, v := range lv[key] {
+				s.Push(float64(v))
+			}
+
+			dev := s.StandardDeviation()
+			logger.With("key", key, "deviation", dev).Info("standardDeviation")
+			return numberSatisfied(json.Number(strconv.FormatFloat(s.StandardDeviation(), 'f', 4, 64)), condition)
+		}
+	}
+
+	return false
+}
+
+func getlastValue() map[string][]int {
+	one.Do(func() {
+		lastValue = map[string][]int{}
+		mx = new(sync.RWMutex)
+	})
+	return lastValue
+}
+
+func setlastValue(k string, v int) map[string][]int {
+	lv := getlastValue()
+
+	mx.Lock()
+	defer mx.Unlock()
+
+	lv[k] = append(lv[k], v)
+
+	if len(lv[k]) > volumeBuffer {
+		lv[k] = lv[k][:volumeBuffer]
+	}
+
+	return lv
 }
