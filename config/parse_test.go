@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func TestParseConfig_MainConfig(t *testing.T) { // nolint: gocyclo
+func TestParseConfig_MainConfig(t *testing.T) {
 	cases := []struct {
 		name string
 		path string
@@ -173,13 +173,13 @@ func TestParseConfig_MainConfig(t *testing.T) { // nolint: gocyclo
 				t.Fatal("config.Consul does not have key \"consul_lock_key\"")
 			}
 			if l != "go-elasticsearch-alerts/leader" {
-				t.Fatalf("config.Consul[\"consul_lock_key\"] unexpected value (got %q, expected \"go-elasticsearch-alerts/leader\")", l) // nolint: lll
+				t.Fatalf("config.Consul[\"consul_lock_key\"] unexpected value (got %q, expected \"go-elasticsearch-alerts/leader\")", l)
 			}
 		})
 	}
 }
 
-func TestParseConfig_Rules(t *testing.T) { // nolint: gocyclo
+func TestParseConfig_Rules(t *testing.T) {
 	type ruleFile struct {
 		filename string
 		data     string

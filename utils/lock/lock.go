@@ -15,7 +15,7 @@ package lock
 
 import "sync"
 
-// Lock is used as a mutex to synchronize between nodes
+// Lock is used as a mutex to synchronize between nodes.
 type Lock struct {
 	mutex *sync.RWMutex
 	have  *bool

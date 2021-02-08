@@ -35,8 +35,10 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 )
 
-const ElasticsearchURL string = "http://127.0.0.1:9200"
-const badURL string = "bad-url"
+const (
+	ElasticsearchURL string = "http://127.0.0.1:9200"
+	badURL           string = "bad-url"
+)
 
 func TestNewQueryHandler(t *testing.T) {
 	cases := []struct {
@@ -214,7 +216,7 @@ func TestBuildHTTPRequestFunc(t *testing.T) {
 	})
 }
 
-func TestPutTemplate(t *testing.T) { // nolint: gocyclo
+func TestPutTemplate(t *testing.T) {
 	reqFunc, err := buildHTTPRequestFunc()
 	if err != nil {
 		t.Fatal(err)
@@ -259,7 +261,7 @@ func TestPutTemplate(t *testing.T) { // nolint: gocyclo
 					default:
 						t.Fatalf("unsupported data type: %T", v)
 					}
-					w.Write(data) // nolint: errcheck
+					w.Write(data)
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -290,7 +292,7 @@ func TestPutTemplate(t *testing.T) { // nolint: gocyclo
 	}
 }
 
-func TestGetNextQuery(t *testing.T) { // nolint: gocyclo
+func TestGetNextQuery(t *testing.T) {
 	expected := time.Now().Add(2 * time.Hour).Format(time.RFC3339)
 	cases := []struct {
 		name   string
@@ -402,7 +404,7 @@ func TestGetNextQuery(t *testing.T) { // nolint: gocyclo
 					default:
 						t.Fatalf("unsupported data type: %T", v)
 					}
-					w.Write(data) // nolint: errcheck
+					w.Write(data)
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -445,7 +447,7 @@ func TestGetNextQuery(t *testing.T) { // nolint: gocyclo
 	}
 }
 
-func TestRun(t *testing.T) { // nolint: gocyclo
+func TestRun(t *testing.T) {
 	queryIndex := randomUUID(t)
 	expected := map[string]interface{}{
 		"hits": map[string]interface{}{
@@ -464,7 +466,7 @@ func TestRun(t *testing.T) { // nolint: gocyclo
 		if r.URL.Path == fmt.Sprintf("/_template/%s-%s", defaultStateIndexAlias, templateVersion) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
-			w.Write([]byte(`{"acknowledged": true}`)) // nolint: errcheck
+			w.Write([]byte(`{"acknowledged": true}`))
 			return
 		}
 
@@ -476,14 +478,14 @@ func TestRun(t *testing.T) { // nolint: gocyclo
 			)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(200)
-			w.Write([]byte(payload)) // nolint: errcheck
+			w.Write([]byte(payload))
 			return
 		}
 
 		// Mocks successful response to QueryHandler.setNextQuery()
 		if r.URL.Path == fmt.Sprintf("/<%s-status-%s-{now/d}>/_doc", defaultStateIndexAlias, templateVersion) {
 			w.WriteHeader(201)
-			w.Write([]byte("ok")) // nolint: errcheck
+			w.Write([]byte("ok"))
 			return
 		}
 
@@ -590,7 +592,7 @@ func TestSetNextQuery(t *testing.T) {
 				case "POST", "PUT":
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(tc.status)
-					w.Write([]byte(`{"acknowledged": true}`)) // nolint: errcheck
+					w.Write([]byte(`{"acknowledged": true}`))
 				default:
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
@@ -788,7 +790,7 @@ func newTestServer(status int, payload interface{}) *httptest.Server {
 				http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				return
 			}
-			w.Write(data) // nolint: errcheck
+			w.Write(data)
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		}
