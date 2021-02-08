@@ -73,7 +73,7 @@ func (cc ConsulConfig) validate() error {
 	return nil
 }
 
-// RuleConfig represents a rule configuration file
+// RuleConfig represents a rule configuration file.
 type RuleConfig struct {
 	// Name is the name of the rule. This value should come
 	// from the 'name' field of the rule configuration file
@@ -270,7 +270,7 @@ func ParseConfig() (*Config, error) {
 
 // ParseRules parses the rule configuration files and returns an
 // array of *RuleConfig or a non-nil error if there was an error.
-func ParseRules() ([]RuleConfig, error) { // nolint: gocyclo
+func ParseRules() ([]RuleConfig, error) {
 	rulesDir := defaultRulesDir
 	if v := os.Getenv(envRulesDir); v != "" {
 		d, err := homedir.Expand(v)

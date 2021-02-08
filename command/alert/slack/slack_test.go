@@ -331,7 +331,7 @@ func newMockSlackServer(status int) *httptest.Server {
 				return
 			}
 			w.WriteHeader(status)
-			w.Write([]byte("OK")) // nolint: errcheck
+			w.Write([]byte("OK"))
 			return
 		default:
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)

@@ -28,7 +28,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// Ensure Method adheres to the Method interface
+// Ensure Method adheres to the Method interface.
 var _ Method = (*fileAlertMethod)(nil)
 
 type OutputJSON struct {
@@ -39,7 +39,7 @@ type OutputJSON struct {
 
 // filealertMethod is defined here rather than importing
 // gitlab.morningconsult.com/mci/go-elasticsearch-alerts/command/alert/file
-// to avoid import cycle
+// to avoid import cycle.
 type fileAlertMethod struct {
 	outputFilepath string
 }
@@ -60,7 +60,7 @@ func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Rec
 }
 
 // errorAlertMethod is a mock alert.AlertMethod used to simulate an
-// even where AlertMethod.Write() return an error
+// even where AlertMethod.Write() return an error.
 type errorAlertMethod struct{}
 
 func (e *errorAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {

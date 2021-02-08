@@ -25,7 +25,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// Ensure AlertMethod adheres to the alert.Method interface
+// Ensure AlertMethod adheres to the alert.Method interface.
 var _ alert.Method = (*AlertMethod)(nil)
 
 type outputJSON struct {
@@ -67,9 +67,7 @@ func validateConfig(config *AlertMethodConfig) error {
 	var allErrors *multierror.Error
 	if config == nil {
 		allErrors = multierror.Append(xerrors.New("no config provided"))
-	}
-
-	if config.OutputFilepath == "" {
+	} else if config.OutputFilepath == "" {
 		allErrors = multierror.Append(xerrors.New("no file path provided"))
 	}
 	return allErrors.ErrorOrNil()

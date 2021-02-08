@@ -89,7 +89,7 @@ func (c *Config) NewESClient() (*http.Client, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig := &tls.Config{
+	tlsConfig := &tls.Config{ // nolint: gosec
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      caCertPool,
 		ServerName:   c.Elasticsearch.Client.ServerName,

@@ -42,7 +42,7 @@ const (
 )
 
 // Condition is an optional parameter that can be used to limit
-// when alerts are triggered
+// when alerts are triggered.
 type Condition map[string]interface{}
 
 func (c Condition) field() string {
@@ -240,7 +240,7 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 	}
 }
 
-func numberSatisfied(k json.Number, condition Condition) bool { // nolint: gocyclo, gocognit
+func numberSatisfied(k json.Number, condition Condition) bool { // nolint: gocyclo
 	d := decimal.RequireFromString(k.String())
 
 	dec := decimal.RequireFromString
