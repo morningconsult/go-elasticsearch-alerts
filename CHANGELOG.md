@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- Update golang versions to 1.15.8
+
+
+<a name="v0.1.28"></a>
+## [v0.1.28] - 2020-09-12
+### Chore
+- Bump version and update changelog [ci skip]
+
 
 <a name="v0.1.27"></a>
 ## [v0.1.27] - 2020-08-14
@@ -392,7 +401,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.27...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.28...HEAD
+[v0.1.28]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.27...v0.1.28
 [v0.1.27]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.26...v0.1.27
 [v0.1.26]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.25...v0.1.26
 [v0.1.25]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.24...v0.1.25
