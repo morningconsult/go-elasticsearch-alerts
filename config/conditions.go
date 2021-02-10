@@ -16,6 +16,9 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils"
+	"math"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -23,9 +26,6 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/shopspring/decimal"
 	"golang.org/x/xerrors"
-
-	. "github.com/carbocation/runningvariance"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 )
 
 const (
@@ -65,7 +65,11 @@ func (c Condition) field() string {
 }
 
 func (c Condition) Fieldfier() string {
-	return c[keyFiltersField].(string)
+	if v, ok := c[keyFiltersField]; ok {
+		return v.(string)
+	} else {
+		return ""
+	}
 }
 
 func (c Condition) quantifier() string {
@@ -73,7 +77,11 @@ func (c Condition) quantifier() string {
 }
 
 func (c Condition) getType() string {
-	return c[keyType].(string)
+	if v, ok := c[keyType]; ok {
+		return v.(string)
+	} else {
+		return ""
+	}
 }
 
 func (c Condition) validate() error {
@@ -194,7 +202,10 @@ func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions 
 }
 
 func ConditionMet(logger hclog.Logger, resp map[string]interface{}, condition Condition, fieldPath string) (res bool) {
-	matches := utils.GetAll(resp, fieldPath)
+	matches := []interface{}{ resp }
+	if fieldPath != "" {
+		matches = utils.GetAll(resp, fieldPath)
+	}
 
 	switch condition.quantifier() {
 	case quantifierAll:
@@ -355,14 +366,13 @@ func standardDeviation(logger hclog.Logger, i interface{}, condition Condition) 
 			key := data["key"].(string)
 			lv := setlastValue(key, doc_count)
 
-			s := NewRunningStat()
-			for _, v := range lv[key] {
-				s.Push(float64(v))
-			}
+			// Если текущее значение меньше чем предыдущее, значит произошло падение, на такое мы не реагируем. Потому что на резкие падения нам не нужно реагировать
+			downturn := len(lv[key]) > 1 && lv[key][len(lv[key])-2] > doc_count
 
-			dev := s.StandardDeviation()
-			logger.With("key", key, "deviation", dev).Info("standardDeviation")
-			return numberSatisfied(json.Number(strconv.FormatFloat(s.StandardDeviation(), 'f', 4, 64)), condition)
+			dev := stDeviation(lv[key])
+			m := mediana(lv[key])
+			logger.With("key", key, "deviation", dev, "mediana", m, "data", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
+			return !downturn && dev > m
 		}
 	}
 
@@ -380,14 +390,45 @@ func getlastValue() map[string][]int {
 func setlastValue(k string, v int) map[string][]int {
 	lv := getlastValue()
 
+	// если standardDeviation вызовится 2 раза подряд, то в массив lv[k] добавится еще раз тоже самое значение и это повлияет на расчет стандартного отклонения
+	// по этому исключаем такие случаи вот так
+	//if len(lv[k]) > 0 && lv[k][len(lv[k])-1] == v {
+	//	return lv
+	//}
+
 	mx.Lock()
 	defer mx.Unlock()
 
 	lv[k] = append(lv[k], v)
-
 	if len(lv[k]) > volumeBuffer {
 		lv[k] = lv[k][:volumeBuffer]
 	}
 
 	return lv
+}
+
+func stDeviation(selection []int) float64 {
+	var av, result float64
+	for _, v := range selection {
+		av += float64(v) / float64(len(selection))
+	}
+	for _, v := range selection {
+		result += math.Pow(float64(v) - av, 2) / float64(len(selection)-1)
+	}
+
+	if math.IsNaN(result) {
+		result = 0
+	}
+
+	return math.Sqrt(result)
+}
+
+func mediana(selection []int) float64 {
+	sort.Ints(selection)
+
+	if len(selection)%2 != 0 {
+		return float64(selection[((len(selection)-1)/2)])
+	} else {
+		return float64(selection[(len(selection)/2)-1]+selection[(len(selection)/2)]) / 2
+	}
 }

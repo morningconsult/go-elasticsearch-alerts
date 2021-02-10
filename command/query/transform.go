@@ -39,7 +39,7 @@ func (q *QueryHandler) process( // nolint: gocyclo
 	}
 
 	records := make([]*alert.Record, 0)
-	for _, filter := range q.filters {
+	for _, filter := range q. filters {
 		elems := utils.GetAll(respData, filter)
 		if elems == nil || len(elems) < 1 {
 			continue
@@ -119,8 +119,8 @@ ELEMS:
 		}
 
 		for _, condition := range q.conditions {
-			if config.ConditionMet(logger, obj, condition, condition.Fieldfier()) {
-				logger.With("field", elem).Info("the element was skipped according to the filter condition")
+			if !config.ConditionMet(logger, obj, condition, condition.Fieldfier()) {
+				logger.With("field", elem, "name", q.name).Info("the element was skipped according to the filter condition")
 				continue ELEMS
 			}
 		}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
+	"github.com/shopspring/decimal"
 	"os/exec"
 	"strings"
 	"time"
@@ -44,24 +45,24 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 
 	go e.run(runctx, ch)
 
+	msg := e.args
+	params := map[string]interface{}{}
+	getParamsFromMsg(msg, params)
+
 	for _, item := range records {
 		if !item.BodyField && item.Elements != nil {
 			for _, element := range item.Elements {
+				for k, _ := range params {
+					params[k] = utils.Get(element, k)
 
-				value := utils.Get(element, "timelock.value")
-				doc_count := utils.Get(element, "doc_count")
-				key := utils.Get(element, "key")
+					switch  v := params[k].(type) {
+					case json.Number:
+						msg = strings.Replace(msg, "%"+ k +"%", requireFromString(string(v)), -1)
+					case string:
+						msg = strings.Replace(msg, "%"+ k +"%", v, -1)
+					}
+				}
 
-				msg := e.args
-				if doc_count != nil {
-					msg = strings.Replace(msg, "%count%", string(doc_count.(json.Number)), -1)
-				}
-				if value != nil {
-					msg = strings.Replace(msg, "%value%", string(value.(json.Number)), -1)
-				}
-				if key != nil {
-					msg = strings.Replace(msg, "%key%", key.(string), -1)
-				}
 				ch <- comand{
 					name: e.comand,
 					arg:  msg,
@@ -77,6 +78,8 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 func (e *AlertMethod) run(ctx context.Context, c chan comand) {
 	rule := ctx.Value("rule").(string)
 	for comand := range c {
+		fmt.Println(comand.arg)
+
 		cmd := exec.CommandContext(ctx, comand.name, strings.Split(comand.arg, "|")...)
 		cmd.Stdout = new(bytes.Buffer)
 		//cmd.Stderr = new(bytes.Buffer)
@@ -87,4 +90,21 @@ func (e *AlertMethod) run(ctx context.Context, c chan comand) {
 		fmt.Println(cmd.Stdout.(*bytes.Buffer).String())
 		//fmt.Println(cmd.Stderr.(*bytes.Buffer).String())
 	}
+}
+
+func requireFromString(in string) string {
+	d := decimal.RequireFromString(string(in))
+	return d.String()
+}
+
+func getParamsFromMsg(msg string, out map[string]interface{}) {
+	start := strings.Index(msg, "%") + 1
+	end := strings.Index(msg[start:], "%") + start
+
+	if start < 0 || end < 0 || start > end {
+		return
+	}
+
+	out[msg[start:end]] = nil
+	getParamsFromMsg(msg[end+1:], out)
 }
