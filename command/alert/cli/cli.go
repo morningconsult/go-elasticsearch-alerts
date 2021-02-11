@@ -46,13 +46,13 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 	go e.run(runctx, ch)
 
 	params := map[string]interface{}{}
+	getParamsFromMsg(e.args, params)
 
 	for _, item := range records {
-		msg := e.args
-		getParamsFromMsg(msg, params)
-
 		if !item.BodyField && item.Elements != nil {
 			for _, element := range item.Elements {
+				msg := e.args
+
 				for k, _ := range params {
 					params[k] = utils.Get(element, k)
 
@@ -79,8 +79,6 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 func (e *AlertMethod) run(ctx context.Context, c chan comand) {
 	rule := ctx.Value("rule").(string)
 	for comand := range c {
-		fmt.Println(comand.arg)
-
 		cmd := exec.CommandContext(ctx, comand.name, strings.Split(comand.arg, "|")...)
 		cmd.Stdout = new(bytes.Buffer)
 		//cmd.Stderr = new(bytes.Buffer)
