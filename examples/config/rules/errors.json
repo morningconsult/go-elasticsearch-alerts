@@ -1,0 +1,105 @@
+{
+  "name": "Errors in DBs",
+  "index": "techlog-minimal-*",
+  "schedule": "@every 1h",
+  "body": {
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "query_string": {
+              "query": "!*Прайд_ДополнитьФормуДоговора* and !*Сеанс работы завершен администратором*",
+              "analyze_wildcard": true,
+              "time_zone": "Europe/Moscow"
+            }
+          }
+        ],
+        "filter": [
+          {
+            "exists": {
+              "field": "Context"
+            }
+          },
+		   {
+          "match_phrase": {
+            "event": {
+              "query": "EXCP"
+            }
+          }
+        },
+          {
+            "range": {
+              "@timestamp": {
+                "gte": "now-1h"
+              }
+            }
+          }
+        ],
+		
+        "must_not": [
+          {
+            "match_phrase": {
+              "Context": {
+                "query": "Система.ПолучитьФорму : Обработка.КаталогРасширений.Форма.ФормаУстановленныеРасширения"
+              }
+            }
+			},
+			{
+			  "match_phrase": {
+				"processName": {
+				  "query": "##AdminProcess##"
+				}
+			  }
+			}
+        ]
+      }
+    },
+    "aggs": {
+      "dbname": {
+        "terms": {
+          "field": "processName",
+          "min_doc_count": 10,
+          "size": 100
+        }
+      }
+    },
+    "size": 20,
+    "_source": "hits.hits._index"
+  },
+  "body_field": "hits.hits._index",
+  "filters": [
+    "aggregations.dbname.buckets"
+  ],
+  "Conditions": [
+    {
+      "comonfield": "aggregations.dbname.buckets",
+	  "filtersfield": "",
+      "type": "standardDeviation",
+      "gt": 50,
+      "quantifier": "any"
+    }
+  ],
+  "outputs": [
+    {
+      "type": "cli",
+      "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "@sid_ps|Errors in DBs|Проблема с базой %key%, резкий всплеск ошибок %doc_count%"
+      }
+    },
+    {
+      "type": "cli",
+      "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "@LazarenkoAN|Errors in DBs|Проблема с базой %key%, резкий всплеск ошибок %doc_count%"
+      }
+    },
+	{
+      "type": "cli",
+      "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "@PimenovaMarina|Errors in DBs|Мариуль, говорят что с базой %key% беда, резкий всплеск ошибок %doc_count%"
+      }
+    }
+  ]
+}

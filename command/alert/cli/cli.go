@@ -45,11 +45,12 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 
 	go e.run(runctx, ch)
 
-	msg := e.args
 	params := map[string]interface{}{}
-	getParamsFromMsg(msg, params)
 
 	for _, item := range records {
+		msg := e.args
+		getParamsFromMsg(msg, params)
+
 		if !item.BodyField && item.Elements != nil {
 			for _, element := range item.Elements {
 				for k, _ := range params {
