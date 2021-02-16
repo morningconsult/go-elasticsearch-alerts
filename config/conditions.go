@@ -371,7 +371,7 @@ func standardDeviation(logger hclog.Logger, i interface{}, condition Condition) 
 
 			dev := stDeviation(lv[key])
 			m := mediana(lv[key])
-			logger.With("key", key, "deviation", dev, "mediana", m, "data", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
+			logger.With("key", key, "deviation", dev, "mediana", m, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
 			return !downturn && dev > m
 		}
 	}
@@ -401,7 +401,7 @@ func setlastValue(k string, v int) map[string][]int {
 
 	lv[k] = append(lv[k], v)
 	if len(lv[k]) > volumeBuffer {
-		lv[k] = lv[k][:volumeBuffer]
+		lv[k] = lv[k][len(lv[k]) - volumeBuffer:]
 	}
 
 	return lv
