@@ -16,10 +16,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
 	cmd "github.com/morningconsult/go-elasticsearch-alerts/command"
 	"github.com/morningconsult/go-elasticsearch-alerts/version"
+	"os"
 )
 
 const banner = "Go Elasticsearch Alerts version %v, commit %v, built %v\n"

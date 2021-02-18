@@ -371,6 +371,7 @@ func standardDeviation(logger hclog.Logger, i interface{}, condition Condition) 
 
 			dev := stDeviation(lv[key])
 			m := mediana(lv[key])
+
 			logger.With("key", key, "deviation", dev, "mediana", m, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
 			return !downturn && dev > m
 		}
@@ -389,12 +390,6 @@ func getlastValue() map[string][]int {
 
 func setlastValue(k string, v int) map[string][]int {
 	lv := getlastValue()
-
-	// если standardDeviation вызовится 2 раза подряд, то в массив lv[k] добавится еще раз тоже самое значение и это повлияет на расчет стандартного отклонения
-	// по этому исключаем такие случаи вот так
-	//if len(lv[k]) > 0 && lv[k][len(lv[k])-1] == v {
-	//	return lv
-	//}
 
 	mx.Lock()
 	defer mx.Unlock()
@@ -423,12 +418,15 @@ func stDeviation(selection []int) float64 {
 	return math.Sqrt(result)
 }
 
-func mediana(selection []int) float64 {
-	sort.Ints(selection)
 
-	if len(selection)%2 != 0 {
-		return float64(selection[((len(selection)-1)/2)])
+func mediana(selection []int) float64 {
+	tmp := make([]int, len(selection), len(selection)) // что б исходный массив не сортировался
+	copy(tmp, selection)
+	sort.Ints(tmp)
+
+	if len(tmp)%2 != 0 {
+		return float64(tmp[((len(tmp)-1)/2)])
 	} else {
-		return float64(selection[(len(selection)/2)-1]+selection[(len(selection)/2)]) / 2
+		return float64(tmp[(len(tmp)/2)-1]+tmp[(len(tmp)/2)]) / 2
 	}
 }
