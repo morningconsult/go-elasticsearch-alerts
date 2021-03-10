@@ -2,6 +2,13 @@
 ## [Unreleased]
 
 ### Chore
+- Fix inclusify changes
+
+
+<a name="v0.1.29"></a>
+## [v0.1.29] - 2021-02-09
+### Chore
+- Bump version and update changelog [ci skip]
 - Update golang versions to 1.15.8
 
 
@@ -401,7 +408,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.28...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.29...HEAD
+[v0.1.29]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.28...v0.1.29
 [v0.1.28]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.27...v0.1.28
 [v0.1.27]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.26...v0.1.27
 [v0.1.26]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.25...v0.1.26
