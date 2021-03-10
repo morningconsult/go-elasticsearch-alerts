@@ -3,7 +3,7 @@ name: Test
 on:
   push:
     branches:
-      - master
+      - main
     tags-ignore:
       - v*
     paths-ignore:
@@ -11,7 +11,7 @@ on:
       - CHANGELOG.md
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   test:
