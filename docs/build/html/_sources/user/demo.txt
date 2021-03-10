@@ -13,7 +13,7 @@ first make sure you have `Docker <https://docs.docker.com/install/>`__
 installed then clone the `respository
 <https://github.com/morningconsult/go-elasticsearch-alerts>`__ and run the
 `setup script
-<https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh>`__:
+<https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/start-test-system.sh>`__:
 
 .. code-block:: shell
 
@@ -42,7 +42,7 @@ Now Go Elasticsearch Alerts should be running in a Docker container in your
 terminal. You should see some logs appear in your terminal, including the data
 the setup script wrote to the test index. The process is now alerting on the
 rule defined `here
-<https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json>`__.
+<https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/config/rules/test-rule.json>`__.
 As you can see in the rule, every two minutes (per the ``'schedule'`` field)
 the query handler will make the following request (illustrated as a cURL
 request) to Elasticsearch:
@@ -78,7 +78,7 @@ request) to Elasticsearch:
 
 If it receives any data, it will transform the data (per the ``'body_field'``
 and ``'filters'`` fields of the `rule
-<https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json>`__
+<https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/config/rules/test-rule.json>`__
 ) and then write the process data to stdout (per the ``'outputs[0]'`` field).
 
 Elasticsearch
@@ -133,7 +133,7 @@ like this:
 
 This is because we are operating in distributed mode (as specified by the `main
 configuration file
-<https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/config.json>`__).
+<https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/config/config.json>`__).
 Since we only started one instance of Go Elasticsearch Alerts, the process
 immediately acquires the lock from Consul. However, if we were to start
 multiple instances then only one of them would announce itself the leader

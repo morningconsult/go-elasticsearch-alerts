@@ -483,7 +483,7 @@ AWS SNS Output Parameters
   of `alert records 
   <https://godoc.org/github.com/morningconsult/go-elasticsearch-alerts/command/alert#Record>`__
   into the template to expose custom message formatting for your alerts. Note that
-  `Sprig template functions <https://masterminds.github.io/sprig/>`__ are available
+  `Sprig template functions <https://mainminds.github.io/sprig/>`__ are available
   for use in your template. This field is required.
 
 **IMPORTANT**: If sending SMS messages with your SMS topic, a strict 140-character

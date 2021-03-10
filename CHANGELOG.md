@@ -284,8 +284,8 @@
 <a name="v0.0.21"></a>
 ## [v0.0.21] - 2018-12-05
 ### Merge Requests
-- Merge branch 'better-slack-formatting' into 'master'
-- Merge branch 'master' into 'better-slack-formatting'
+- Merge branch 'better-slack-formatting' into 'main'
+- Merge branch 'main' into 'better-slack-formatting'
 
 
 <a name="v0.0.20"></a>
@@ -303,7 +303,7 @@
 <a name="v0.0.17"></a>
 ## [v0.0.17] - 2018-12-04
 ### Merge Requests
-- Merge branch 'dynamic-body-field' into 'master'
+- Merge branch 'dynamic-body-field' into 'main'
 
 
 <a name="v0.0.16"></a>
@@ -315,7 +315,7 @@
 <a name="v0.0.14"></a>
 ## [v0.0.14] - 2018-12-03
 ### Merge Requests
-- Merge branch 'enable-rule-refresh' into 'master'
+- Merge branch 'enable-rule-refresh' into 'main'
 
 
 <a name="v0.0.13"></a>
@@ -330,7 +330,7 @@
 - Include hits.hits array with state doc
 
 ### Merge Requests
-- Merge branch 'improved-state-index' into 'master'
+- Merge branch 'improved-state-index' into 'main'
 
 
 <a name="v0.0.11"></a>
@@ -351,7 +351,7 @@
 - formatted .go files
 
 ### Merge Requests
-- Merge branch 'goreleaser' into 'master'
+- Merge branch 'goreleaser' into 'main'
 
 
 <a name="v0.0.6"></a>
@@ -360,7 +360,7 @@
 <a name="v0.0.5"></a>
 ## [v0.0.5] - 2018-11-28
 ### Merge Requests
-- Merge branch 'v0.0.1' into 'master'
+- Merge branch 'v0.0.1' into 'main'
 
 
 <a name="v0.0.4"></a>

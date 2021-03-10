@@ -3,7 +3,7 @@ name: Bump
 on:
   push:
     branches:
-      - master
+      - main
     tags-ignore:
       - v*
     paths-ignore:
@@ -68,7 +68,7 @@ jobs:
         git tag "v${VERSION}"
 
     - name: Push changes
-      uses: ad-m/github-push-action@master
+      uses: ad-m/github-push-action@main
       with:
         github_token: ${{ secrets.PUBLISH_TOKEN }}
         tags: true

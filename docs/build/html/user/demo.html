@@ -48,7 +48,7 @@ Elasticsearch Alerts.</p>
 <p>To see a quick demonstration of how Go Elasticsearch Alerts works in action,
 first make sure you have <a class="reference external" href="https://docs.docker.com/install/">Docker</a>
 installed then clone the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts">respository</a> and run the
-<a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/start-test-system.sh">setup script</a>:</p>
+<a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/start-test-system.sh">setup script</a>:</p>
 <div class="highlight-shell"><div class="highlight"><pre>$ git clone https://github.com/morningconsult/go-elasticsearch-alerts.git
 $ <span class="nb">cd</span> go-elasticsearch-alerts/examples
 $ ./start-test-system.sh
@@ -73,7 +73,7 @@ fail.</p>
 <p>Now Go Elasticsearch Alerts should be running in a Docker container in your
 terminal. You should see some logs appear in your terminal, including the data
 the setup script wrote to the test index. The process is now alerting on the
-rule defined <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">here</a>.
+rule defined <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/config/rules/test-rule.json">here</a>.
 As you can see in the rule, every two minutes (per the <code class="docutils literal"><span class="pre">'schedule'</span></code> field)
 the query handler will make the following request (illustrated as a cURL
 request) to Elasticsearch:</p>
@@ -106,7 +106,7 @@ request) to Elasticsearch:</p>
 </pre></div>
 </div>
 <p>If it receives any data, it will transform the data (per the <code class="docutils literal"><span class="pre">'body_field'</span></code>
-and <code class="docutils literal"><span class="pre">'filters'</span></code> fields of the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/rules/test-rule.json">rule</a>
+and <code class="docutils literal"><span class="pre">'filters'</span></code> fields of the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/config/rules/test-rule.json">rule</a>
 ) and then write the process data to stdout (per the <code class="docutils literal"><span class="pre">'outputs[0]'</span></code> field).</p>
 </div>
 <div class="section" id="elasticsearch">
@@ -152,7 +152,7 @@ like this:</p>
 <div class="highlight-text"><div class="highlight"><pre>go-elasticsearch-alerts    | 2018-12-13T15:45:04.798Z [INFO]  This process is now the leader
 </pre></div>
 </div>
-<p>This is because we are operating in distributed mode (as specified by the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/master/examples/config/config.json">main
+<p>This is because we are operating in distributed mode (as specified by the <a class="reference external" href="https://github.com/morningconsult/go-elasticsearch-alerts/blob/main/examples/config/config.json">main
 configuration file</a>).
 Since we only started one instance of Go Elasticsearch Alerts, the process
 immediately acquires the lock from Consul. However, if we were to start
