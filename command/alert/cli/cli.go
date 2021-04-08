@@ -79,6 +79,8 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 func (e *AlertMethod) run(ctx context.Context, c chan comand) {
 	rule := ctx.Value("rule").(string)
 	for comand := range c {
+		//fmt.Println(comand.arg)
+
 		cmd := exec.CommandContext(ctx, comand.name, strings.Split(comand.arg, "|")...)
 		cmd.Stdout = new(bytes.Buffer)
 		//cmd.Stderr = new(bytes.Buffer)

@@ -14,6 +14,7 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -34,12 +35,14 @@ const hitsDelimiter = "\n----------------------------------------\n"
 func (q *QueryHandler) process( // nolint: gocyclo
 	respData map[string]interface{},
 ) ([]*alert.Record, []map[string]interface{}, error) {
+	config.Ctx = context.Background()
 	if len(q.conditions) != 0 && !config.ConditionsMet(q.logger.Named("conditions"), respData, q.conditions) {
 		return nil, nil, nil
 	}
 
+	config.Ctx = context.WithValue(context.Background(), "notShift", true) // что б буфер не сдвигался
 	records := make([]*alert.Record, 0)
-	for _, filter := range q. filters {
+	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
 		if elems == nil || len(elems) < 1 {
 			continue
@@ -120,7 +123,7 @@ ELEMS:
 
 		for _, condition := range q.conditions {
 			if !config.ConditionMet(logger, obj, condition, condition.Fieldfier()) {
-				logger.With("field", elem, "name", q.name).Info("the element was skipped according to the filter condition")
+				logger.With("field", elem, "name", q.name).Debug("the element was skipped according to the filter condition")
 				continue ELEMS
 			}
 		}

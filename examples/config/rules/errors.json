@@ -74,8 +74,8 @@
     {
       "comonfield": "aggregations.dbname.buckets",
 	  "filtersfield": "",
-      "type": "standardDeviation",
-      "gt": 50,
+      "type": "spike",
+      "ge": 3,
       "quantifier": "any"
     }
   ],
@@ -86,20 +86,7 @@
         "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
         "args": "@sid_ps|Errors in DBs|Проблема с базой %key%, резкий всплеск ошибок %doc_count%"
       }
-    },
-    {
-      "type": "cli",
-      "config": {
-        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
-        "args": "@LazarenkoAN|Errors in DBs|Проблема с базой %key%, резкий всплеск ошибок %doc_count%"
-      }
-    },
-	{
-      "type": "cli",
-      "config": {
-        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
-        "args": "@PimenovaMarina|Errors in DBs|Мариуль, говорят что с базой %key% беда, резкий всплеск ошибок %doc_count%"
-      }
     }
+
   ]
 }

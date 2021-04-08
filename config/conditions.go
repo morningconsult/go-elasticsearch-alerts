@@ -14,6 +14,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
@@ -44,8 +45,8 @@ const (
 	operatorGreaterThan          = "gt"
 	operatorGreaterThanOrEqualTo = "ge"
 
-	keyType               = "type"
-	typeStandardDeviation = "standardDeviation"
+	keyType   = "type"
+	typeSpike = "spike"
 
 	volumeBuffer = 5
 )
@@ -54,6 +55,7 @@ var (
 	lastValue map[string][]int // для хранения последних значений (нужно для StandardDeviation)
 	one       sync.Once
 	mx        *sync.RWMutex
+	Ctx       context.Context
 )
 
 // Condition is an optional parameter that can be used to limit
@@ -192,17 +194,17 @@ func (c Condition) validateMultiOperators() []error {
 func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions []Condition) bool {
 	for _, condition := range conditions {
 		if !ConditionMet(logger, resp, condition, condition.field()) {
-			logger.Info("Conditions false")
+			logger.Debug("Conditions false")
 			return false
 		}
 	}
 
-	logger.Info("Conditions true")
+	logger.Debug("Conditions true")
 	return true
 }
 
 func ConditionMet(logger hclog.Logger, resp map[string]interface{}, condition Condition, fieldPath string) (res bool) {
-	matches := []interface{}{ resp }
+	matches := []interface{}{resp}
 	if fieldPath != "" {
 		matches = utils.GetAll(resp, fieldPath)
 	}
@@ -221,7 +223,8 @@ func ConditionMet(logger hclog.Logger, resp map[string]interface{}, condition Co
 	return
 }
 
-func allSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
+func allSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) (result bool) {
+	result = true
 	for _, match := range matches {
 		if match == nil {
 			continue
@@ -229,14 +232,15 @@ func allSatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 
 		sat := satisfied(logger, match, condition)
 		if !sat {
-			return false
+			result = false
 		}
 	}
 
-	return true
+	return result
 }
 
-func anySatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
+func anySatisfied(logger hclog.Logger, matches []interface{}, condition Condition) (result bool) {
+	result = false
 	for _, match := range matches {
 		if match == nil {
 			continue
@@ -244,14 +248,15 @@ func anySatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 
 		sat := satisfied(logger, match, condition)
 		if sat {
-			return true
+			result = true
 		}
 	}
 
-	return false
+	return result
 }
 
-func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
+func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) (result bool) {
+	result = true
 	for _, match := range matches {
 		if match == nil {
 			continue
@@ -259,11 +264,11 @@ func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Conditi
 
 		sat := satisfied(logger, match, condition)
 		if sat {
-			return false
+			result = false // return тут нельзя т.к. мы должны оббежать все элементы (т.к. в ConditionMet происходит инициализация буфера)
 		}
 	}
 
-	return true
+	return result
 }
 
 func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool {
@@ -276,8 +281,8 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 		return boolSatisfied(v, condition)
 	default:
 		switch condition.getType() {
-		case typeStandardDeviation:
-			return standardDeviation(logger, v, condition)
+		case typeSpike:
+			return spike(logger, v, condition)
 		default:
 			fields := make([]interface{}, 0, 4)
 			if f, ok := condition[keyCommonField].(string); ok {
@@ -358,22 +363,36 @@ func boolSatisfied(b bool, condition Condition) bool {
 	return sat
 }
 
-func standardDeviation(logger hclog.Logger, i interface{}, condition Condition) bool {
+func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 	if data, ok := i.(map[string]interface{}); !ok {
 		return false
 	} else {
 		if doc_count, err := strconv.Atoi(string(data["doc_count"].(json.Number))); err == nil {
+			lv :=  map[string][]int{}
 			key := data["key"].(string)
-			lv := setlastValue(key, doc_count)
 
-			// Если текущее значение меньше чем предыдущее, значит произошло падение, на такое мы не реагируем. Потому что на резкие падения нам не нужно реагировать
+			if notShift, ok := Ctx.Value("notShift").(bool); ok && notShift{
+				lv = getlastValue()
+			} else {
+				lv = setlastValue(key, doc_count)
+			}
+
+			// Если текущее значение меньше чем предыдущее, значит произошло падение, на такое мы не реагируем.
+			// такое может быть при таких данных buffer=[130, 100, 329, 216, 90]
 			downturn := len(lv[key]) > 1 && lv[key][len(lv[key])-2] > doc_count
 
-			dev := stDeviation(lv[key])
-			m := mediana(lv[key])
+			//dev := stDeviation(lv[key])
+			//m := mediana(lv[key])
 
-			logger.With("key", key, "deviation", dev, "mediana", m, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
-			return !downturn && dev > m
+			//l, r := calc(lv[key])
+
+			//logger.With("key", key, "deviation", dev, "mediana", m, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
+
+			//logger.With("key", key, "left", l, "right", r, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
+
+			av := average(lv[key][:len(lv[key])-1]) // среднюю считаем без учета текущего значения (оно последним будет)
+			logger.With("key", key, "buffer", lv[key], "average", av, "doc_count", doc_count).Info("spike")
+			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(strconv.FormatFloat(float64(doc_count) / av, 'f', 4, 64)), condition)
 		}
 	}
 
@@ -396,19 +415,26 @@ func setlastValue(k string, v int) map[string][]int {
 
 	lv[k] = append(lv[k], v)
 	if len(lv[k]) > volumeBuffer {
-		lv[k] = lv[k][len(lv[k]) - volumeBuffer:]
+		lv[k] = lv[k][len(lv[k])-volumeBuffer:]
 	}
 
 	return lv
 }
 
-func stDeviation(selection []int) float64 {
-	var av, result float64
-	for _, v := range selection {
-		av += float64(v) / float64(len(selection))
+func calc(in []int) (left, right float64) {
+	if len(in)%2 == 0 {
+		return average(in[:len(in)/2]), average(in[len(in)/2:])
+	} else {
+		haif := in[(len(in)/2)] / 2
+		return average(append(append([]int{}, haif), in[:(len(in)/2)]...)), average(append(append([]int{}, haif), in[(len(in)/2)+1:]...))
 	}
+}
+
+func stDeviation(selection []int) (result float64) {
+	av := average(selection)
+
 	for _, v := range selection {
-		result += math.Pow(float64(v) - av, 2) / float64(len(selection)-1)
+		result += math.Pow(float64(v)-av, 2) / float64(len(selection)-1) // дисперсия
 	}
 
 	if math.IsNaN(result) {
@@ -418,6 +444,13 @@ func stDeviation(selection []int) float64 {
 	return math.Sqrt(result)
 }
 
+func average(in []int) (result float64) {
+	for _, v := range in {
+		result += float64(v) / float64(len(in))
+	}
+
+	return result
+}
 
 func mediana(selection []int) float64 {
 	tmp := make([]int, len(selection), len(selection)) // что б исходный массив не сортировался
@@ -425,7 +458,7 @@ func mediana(selection []int) float64 {
 	sort.Ints(tmp)
 
 	if len(tmp)%2 != 0 {
-		return float64(tmp[((len(tmp)-1)/2)])
+		return float64(tmp[((len(tmp) - 1) / 2)])
 	} else {
 		return float64(tmp[(len(tmp)/2)-1]+tmp[(len(tmp)/2)]) / 2
 	}
