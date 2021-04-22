@@ -91,12 +91,12 @@ type Method interface {
 
 // HandlerConfig is used to provide the logger
 // with which the alert handlers will log messages.
-type HandlerConfig struct { // nolint: golint
+type HandlerConfig struct {
 	Logger hclog.Logger
 }
 
 // Handler is used to send alerts to various outputs.
-type Handler struct { // nolint: golint
+type Handler struct {
 	logger hclog.Logger
 	rand   *rand.Rand
 
@@ -112,7 +112,7 @@ type Handler struct { // nolint: golint
 func NewHandler(config *HandlerConfig) *Handler {
 	return &Handler{
 		logger: config.Logger,
-		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))),
+		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))), // nolint: gosec
 		StopCh: make(chan struct{}),
 		DoneCh: make(chan struct{}),
 	}

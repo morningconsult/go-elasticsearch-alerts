@@ -21,7 +21,7 @@ def get_latest_version(repo):
 
     return semvers[0]
 
-def next_version(latest_tag, version, repo, branch='master'):
+def next_version(latest_tag, version, repo, branch='main'):
     latest_tagged_commit = repo.commit(latest_tag)
 
     pre_v1 = version.major < 1

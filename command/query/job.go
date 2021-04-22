@@ -49,7 +49,7 @@ const (
 	defaultBodyField       string = "hits.hits._source"
 )
 
-// QueryHandlerConfig is passed as an argument to NewQueryHandler()
+// QueryHandlerConfig is passed as an argument to NewQueryHandler().
 type QueryHandlerConfig struct { // nolint: golint
 	// Name is the name of the rule. This should come from
 	// the 'name' field of the rule configuration file
@@ -122,7 +122,7 @@ type QueryHandler struct { // nolint: golint
 	newRequest   func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error)
 }
 
-// NewQueryHandler creates a new *QueryHandler instance
+// NewQueryHandler creates a new *QueryHandler instance.
 func NewQueryHandler(config *QueryHandlerConfig) (*QueryHandler, error) {
 	if config == nil {
 		config = &QueryHandlerConfig{}
@@ -353,7 +353,7 @@ func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
 // PutTemplate attempts to create a template in Elasticsearch which
 // will serve as an alias for the state indices. The state indices
 // will be named 'go-es-alerts-status-{date}'; therefore, this template
-// enables searching all state indices via this alias
+// enables searching all state indices via this alias.
 func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funlen
 	payload := fmt.Sprintf(`{
   "index_patterns": ["%s-status-%s-*"],
@@ -493,7 +493,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { /
 		return nil, xerrors.Errorf("received non-200 response status (status: %q)", resp.Status)
 	}
 
-	var data = make(map[string]interface{})
+	data := make(map[string]interface{})
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil { // nolint: govet
 		return nil, xerrors.Errorf("error JSON-decoding HTTP response: %v", err)
 	}
@@ -521,7 +521,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { /
 
 // setNextQuery creates a new document in a state index to
 // inform the Run() loop when to next execute the query if
-// the process gets restarted
+// the process gets restarted.
 func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []map[string]interface{}) error {
 	status := struct {
 		Time  string                   `json:"@timestamp"`
@@ -577,7 +577,7 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
 
-	var data = make(map[string]interface{})
+	data := make(map[string]interface{})
 	if err := dec.Decode(&data); err != nil {
 		return nil, xerrors.Errorf("error JSON-decoding Elasticsearch response: %v", err)
 	}
@@ -619,13 +619,13 @@ func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
 }
 
 // StateAliasURL returns the URL of the Elasticsearch
-// alias used to search the state indices
+// alias used to search the state indices.
 func (q *QueryHandler) StateAliasURL() string {
 	return fmt.Sprintf("%s/%s", q.esURL, q.TemplateName())
 }
 
 // StateIndexURL returns the URL of the Elasticsearch
-// index where state records are stored
+// index where state records are stored.
 func (q *QueryHandler) StateIndexURL() string {
 	escaped := url.PathEscape(
 		fmt.Sprintf(
@@ -638,7 +638,7 @@ func (q *QueryHandler) StateIndexURL() string {
 }
 
 // TemplateName returns the name of the Elasticsearch
-// template used to search against all state indices
+// template used to search against all state indices.
 func (q *QueryHandler) TemplateName() string {
 	return fmt.Sprintf("%s-%s", defaultStateIndexAlias, templateVersion)
 }

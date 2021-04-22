@@ -3,7 +3,7 @@ name: Bump
 on:
   push:
     branches:
-      - master
+      - main
     tags-ignore:
       - v*
     paths-ignore:
@@ -31,7 +31,7 @@ jobs:
 
     - name: Create local changes
       env:
-        GIT_CHGLOG_VERSION: 0.8.0
+        GIT_CHGLOG_VERSION: 0.9.1
         GITHUB_EMAIL: dbellinghoven@morningconsult.com
         GITHUB_ACTOR: 'Dilan Bellinghoven'
       run: |
@@ -64,7 +64,7 @@ jobs:
         git config --global user.email "${GITHUB_EMAIL}"
         git config --global user.name "${GITHUB_ACTOR}"
         git add ./VERSION ./CHANGELOG.md
-        git commit -m "chore: Bump version and update changelog [ci skip]"
+        git commit -m "chore: Bump version and update changelog"
         git tag "v${VERSION}"
 
     - name: Push changes

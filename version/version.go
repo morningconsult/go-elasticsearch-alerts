@@ -17,8 +17,8 @@ package version
 var Version = "dev"
 
 // Commit is the commit hash of the git repository from which
-// the binary is built
+// the binary is built.
 var Commit = "none"
 
-// Date is the date on which the binary was built
+// Date is the date on which the binary was built.
 var Date = "unknown"

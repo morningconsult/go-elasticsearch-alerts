@@ -28,7 +28,7 @@ import (
 
 const defaultTextLimit = 6000
 
-// Ensure AlertMethod adheres to the alert.Method interface
+// Ensure AlertMethod adheres to the alert.Method interface.
 var _ alert.Method = (*AlertMethod)(nil)
 
 // AlertMethodConfig configures where Slack alerts should be
@@ -181,7 +181,7 @@ func (s *AlertMethod) post(ctx context.Context, pl payload) error {
 }
 
 // preprocess breaks attachments with text greater than s.textLimit
-// into multiple attachments in order to prevent trucation
+// into multiple attachments in order to prevent trucation.
 func (s *AlertMethod) preprocess(records []*alert.Record) []*alert.Record {
 	output := make([]*alert.Record, 0)
 	for _, rawRecord := range records {
