@@ -1,7 +1,11 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.31"></a>
+## [v0.1.31] - 2021-03-10
 ### Chore
+- Bump version and update changelog
 - Remove ci skip from bump commit so release stage will run
 
 
@@ -415,7 +419,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.30...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.31...HEAD
+[v0.1.31]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.30...v0.1.31
 [v0.1.30]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.29...v0.1.30
 [v0.1.29]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.28...v0.1.29
 [v0.1.28]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.27...v0.1.28
