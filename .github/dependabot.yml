@@ -1,11 +1,4 @@
 version: 2
-registries:
-  git-gitlab-morningconsult-com:
-    type: git
-    url: https://gitlab.morningconsult.com
-    username: alexdulin
-    password: "${{secrets.GIT_GITLAB_MORNINGCONSULT_COM_PASSWORD}}"
-
 updates:
 - package-ecosystem: gomod
   directory: "/"
@@ -24,5 +17,3 @@ updates:
   - dependency-name: github.com/google/go-cmp
     versions:
     - 0.5.4
-  registries:
-  - git-gitlab-morningconsult-com
