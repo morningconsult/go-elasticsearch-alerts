@@ -1,0 +1,28 @@
+version: 2
+registries:
+  git-gitlab-morningconsult-com:
+    type: git
+    url: https://gitlab.morningconsult.com
+    username: alexdulin
+    password: "${{secrets.GIT_GITLAB_MORNINGCONSULT_COM_PASSWORD}}"
+
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 10
+  reviewers:
+  - dbellinghoven
+  labels:
+  - dependencies
+  ignore:
+  - dependency-name: github.com/aws/aws-sdk-go
+    versions:
+    - "> 1.25.47"
+  - dependency-name: github.com/google/go-cmp
+    versions:
+    - 0.5.4
+  registries:
+  - git-gitlab-morningconsult-com
