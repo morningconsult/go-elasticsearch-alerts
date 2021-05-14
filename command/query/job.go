@@ -298,6 +298,7 @@ func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
 			),
 		)
 	}
+	//next = now.Add(time.Minute) // для отладки
 
 	for {
 		hits := []map[string]interface{}{}

@@ -19,6 +19,7 @@ import (
 	"errors"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"sync"
@@ -45,8 +46,9 @@ const (
 	operatorGreaterThan          = "gt"
 	operatorGreaterThanOrEqualTo = "ge"
 
-	keyType   = "type"
-	typeSpike = "spike"
+	keyType            = "type"
+	typeSpike          = "spike"
+	regexPreProcessing = "regexPreProcessing"
 
 	volumeBuffer = 5
 )
@@ -83,6 +85,14 @@ func (c Condition) getType() string {
 		return v.(string)
 	} else {
 		return ""
+	}
+}
+
+func (c Condition) getRegexPreProcessing() map[string]interface{} {
+	if v, ok := c[regexPreProcessing]; ok {
+		return v.(map[string]interface{})
+	} else {
+		return map[string]interface{}{}
 	}
 }
 
@@ -368,10 +378,22 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 		return false
 	} else {
 		if doc_count, err := strconv.Atoi(string(data["doc_count"].(json.Number))); err == nil {
-			lv :=  map[string][]int{}
+			lv := map[string][]int{}
 			key := data["key"].(string)
 
-			if notShift, ok := Ctx.Value("notShift").(bool); ok && notShift{
+			// если задан шаблон регулярки пробуем преобразовать ключ по этому шаблону
+			preProcessing := condition.getRegexPreProcessing()
+			if pattern, ok := preProcessing["pattern"]; ok {
+				reg := regexp.MustCompile(pattern.(string))
+				match := reg.FindAllString(key, -1)
+				if group, ok := preProcessing["groupResult"]; ok {
+					if v, err := strconv.Atoi(string(group.(json.Number))); err == nil && v <= len(match) && v > 0 {
+						key = match[v-1]
+					}
+				}
+			}
+
+			if notShift, ok := Ctx.Value("notShift").(bool); ok && notShift {
 				lv = getlastValue()
 			} else {
 				lv = setlastValue(key, doc_count)
@@ -392,7 +414,7 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 
 			av := average(lv[key][:len(lv[key])-1]) // среднюю считаем без учета текущего значения (оно последним будет)
 			logger.With("key", key, "buffer", lv[key], "average", av, "doc_count", doc_count).Info("spike")
-			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(strconv.FormatFloat(float64(doc_count) / av, 'f', 4, 64)), condition)
+			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(strconv.FormatFloat(float64(doc_count)/av, 'f', 4, 64)), condition)
 		}
 	}
 

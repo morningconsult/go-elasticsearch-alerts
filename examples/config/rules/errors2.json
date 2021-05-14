@@ -1,5 +1,5 @@
 {
-  "name": "Errors in DBs",
+  "name": "Errors",
   "index": "techlog-minimal-*",
   "schedule": "@every 1h",
   "body": {
@@ -17,11 +17,6 @@
         "filter": [
           {
             "exists": {
-              "field": "Context"
-            }
-          },
-          {
-            "exists": {
               "field": "processName"
             }
           },
@@ -33,46 +28,9 @@
             }
           },
           {
-            "match_phrase": {
-              "process": {
-                "query": "rphost"
-              }
-            }
-          },
-          {
             "range": {
               "@timestamp": {
                 "gte": "now-1h"
-              }
-            }
-          }
-        ],
-        "must_not": [
-          {
-            "match_phrase": {
-              "Context": {
-                "query": "Система.ПолучитьФорму : Обработка.КаталогРасширений.Форма.ФормаУстановленныеРасширения"
-              }
-            }
-          },
-          {
-            "match_phrase": {
-              "processName": {
-                "query": "##AdminProcess##"
-              }
-            }
-          },
-          {
-            "match_phrase": {
-              "applicationName": {
-                "query": "RAS"
-              }
-            }
-          },
-          {
-            "match_phrase": {
-              "Context": {
-                "query": ""
               }
             }
           }
@@ -80,11 +38,11 @@
       }
     },
     "aggs": {
-      "dbname": {
+      "errors": {
         "terms": {
-          "field": "processName",
-          "min_doc_count": 70,
-          "size": 100
+          "field": "Descr",
+          "min_doc_count": 100,
+          "size": 10
         }
       }
     },
@@ -93,14 +51,18 @@
   },
   "body_field": "hits.hits._index",
   "filters": [
-    "aggregations.dbname.buckets"
+    "aggregations.errors.buckets"
   ],
   "Conditions": [
     {
-      "comonfield": "aggregations.dbname.buckets",
+      "comonfield": "aggregations.errors.buckets",
+      "regexPreProcessing": {
+        "pattern": "(?m).+?:",
+        "groupResult": 3
+      },
       "filtersfield": "",
       "type": "spike",
-      "ge": 3,
+      "ge": 7,
       "quantifier": "any"
     }
   ],
@@ -109,7 +71,7 @@
       "type": "cli",
       "config": {
         "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
-        "args": "-599333313|❗Errors in DBs|Проблема с базой %key%, резкий всплеск ошибок %doc_count%|--channel"
+        "args": "-599333313|❗Errors in DBs|Обнаружен резкий всплеск (%doc_count%) ошибок '%key%' |--channel"
       }
     }
   ]
