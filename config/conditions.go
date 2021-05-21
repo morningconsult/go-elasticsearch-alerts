@@ -374,12 +374,24 @@ func boolSatisfied(b bool, condition Condition) bool {
 }
 
 func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
+	logger.Named("spike")
+
 	if data, ok := i.(map[string]interface{}); !ok {
 		return false
 	} else {
 		if doc_count, err := strconv.Atoi(string(data["doc_count"].(json.Number))); err == nil {
 			lv := map[string][]int{}
-			key := data["key"].(string)
+			key := ""
+			switch v := data["key"].(type) {
+			case string:
+				key = v
+			case json.Number:
+				key = string(v)
+			default:
+				logger.With(data["key"]).Warn("Тип данных не поддерживается")
+				return false
+
+			}
 
 			// если задан шаблон регулярки пробуем преобразовать ключ по этому шаблону
 			preProcessing := condition.getRegexPreProcessing()
