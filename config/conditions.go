@@ -19,7 +19,6 @@ import (
 	"errors"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"sync"
@@ -48,11 +47,8 @@ const (
 	operatorGreaterThan          = "gt"
 	operatorGreaterThanOrEqualTo = "ge"
 
-	keyType   = "type"
-	typeSpike = "spike"
-	// шаблон регулярного выражения которое применяется для преобразования ключа группировки, например если мы группируем по контексту
-	regexPreProcessing = "regexPreProcessing"
-
+	keyType      = "type"
+	typeSpike    = "spike"
 	volumeBuffer = 5
 )
 
@@ -88,14 +84,6 @@ func (c Condition) getType() string {
 		return v.(string)
 	} else {
 		return ""
-	}
-}
-
-func (c Condition) getRegexPreProcessing() map[string]interface{} {
-	if v, ok := c[regexPreProcessing]; ok {
-		return v.(map[string]interface{})
-	} else {
-		return map[string]interface{}{}
 	}
 }
 
@@ -402,18 +390,6 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 				logger.With(data["key"]).Warn("Тип данных не поддерживается")
 				return false
 
-			}
-
-			// если задан шаблон регулярки пробуем преобразовать ключ по этому шаблону
-			preProcessing := condition.getRegexPreProcessing()
-			if pattern, ok := preProcessing["pattern"]; ok {
-				reg := regexp.MustCompile(pattern.(string))
-				match := reg.FindAllString(key, -1)
-				if group, ok := preProcessing["groupResult"]; ok {
-					if v, err := strconv.Atoi(string(group.(json.Number))); err == nil && v <= len(match) && v > 0 {
-						key = match[v-1]
-					}
-				}
 			}
 
 			value := int64(doc_count)
