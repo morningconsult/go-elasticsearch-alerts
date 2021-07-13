@@ -35,5 +35,5 @@ func main() {
 	}
 
 	os.Exit(cmd.Run())
-}
 
+}

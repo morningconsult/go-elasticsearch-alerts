@@ -34,6 +34,8 @@ const (
 	keyCommonField  = "comonfield"
 	keyFiltersField = "filtersfield"
 	keyQuantifier   = "quantifier"
+	// поле по которому будет сохраняться значения в буфер для расчета среднего (используется в типе typeSpike)
+	keyAveragefield = "averagefield"
 
 	quantifierAny  = "any"
 	quantifierAll  = "all"
@@ -46,15 +48,16 @@ const (
 	operatorGreaterThan          = "gt"
 	operatorGreaterThanOrEqualTo = "ge"
 
-	keyType            = "type"
-	typeSpike          = "spike"
+	keyType   = "type"
+	typeSpike = "spike"
+	// шаблон регулярного выражения которое применяется для преобразования ключа группировки, например если мы группируем по контексту
 	regexPreProcessing = "regexPreProcessing"
 
 	volumeBuffer = 5
 )
 
 var (
-	lastValue map[string][]int // для хранения последних значений (нужно для StandardDeviation)
+	lastValue map[string][]int64 // для хранения последних значений (нужно для StandardDeviation)
 	one       sync.Once
 	mx        *sync.RWMutex
 	Ctx       context.Context
@@ -93,6 +96,14 @@ func (c Condition) getRegexPreProcessing() map[string]interface{} {
 		return v.(map[string]interface{})
 	} else {
 		return map[string]interface{}{}
+	}
+}
+
+func (c Condition) getAveragefield() string {
+	if v, ok := c[keyAveragefield]; ok {
+		return v.(string)
+	} else {
+		return ""
 	}
 }
 
@@ -380,7 +391,7 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 		return false
 	} else {
 		if doc_count, err := strconv.Atoi(string(data["doc_count"].(json.Number))); err == nil {
-			lv := map[string][]int{}
+			lv := map[string][]int64{}
 			key := ""
 			switch v := data["key"].(type) {
 			case string:
@@ -405,15 +416,23 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 				}
 			}
 
+			value := int64(doc_count)
+			if fieldvalue := condition.getAveragefield(); fieldvalue != "" {
+				if match := utils.Get(data, fieldvalue); match != nil {
+					d := decimal.RequireFromString(string(match.(json.Number)))
+					value = d.IntPart()
+				}
+			}
+
 			if notShift, ok := Ctx.Value("notShift").(bool); ok && notShift {
 				lv = getlastValue()
 			} else {
-				lv = setlastValue(key, doc_count)
+				lv = setlastValue(key, value)
 			}
 
 			// Если текущее значение меньше чем предыдущее, значит произошло падение, на такое мы не реагируем.
 			// такое может быть при таких данных buffer=[130, 100, 329, 216, 90]
-			downturn := len(lv[key]) > 1 && lv[key][len(lv[key])-2] > doc_count
+			downturn := len(lv[key]) > 1 && lv[key][len(lv[key])-2] > value
 
 			//dev := stDeviation(lv[key])
 			//m := mediana(lv[key])
@@ -425,23 +444,23 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 			//logger.With("key", key, "left", l, "right", r, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
 
 			av := average(lv[key][:len(lv[key])-1]) // среднюю считаем без учета текущего значения (оно последним будет)
-			logger.With("key", key, "buffer", lv[key], "average", av, "doc_count", doc_count).Info("spike")
-			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(strconv.FormatFloat(float64(doc_count)/av, 'f', 4, 64)), condition)
+			logger.With("key", key, "buffer", lv[key], "average", av, "value", value).Info("spike")
+			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(strconv.FormatFloat(float64(value)/av, 'f', 4, 64)), condition)
 		}
 	}
 
 	return false
 }
 
-func getlastValue() map[string][]int {
+func getlastValue() map[string][]int64 {
 	one.Do(func() {
-		lastValue = map[string][]int{}
+		lastValue = map[string][]int64{}
 		mx = new(sync.RWMutex)
 	})
 	return lastValue
 }
 
-func setlastValue(k string, v int) map[string][]int {
+func setlastValue(k string, v int64) map[string][]int64 {
 	lv := getlastValue()
 
 	mx.Lock()
@@ -455,16 +474,16 @@ func setlastValue(k string, v int) map[string][]int {
 	return lv
 }
 
-func calc(in []int) (left, right float64) {
+func calc(in []int64) (left, right float64) {
 	if len(in)%2 == 0 {
 		return average(in[:len(in)/2]), average(in[len(in)/2:])
 	} else {
 		haif := in[(len(in)/2)] / 2
-		return average(append(append([]int{}, haif), in[:(len(in)/2)]...)), average(append(append([]int{}, haif), in[(len(in)/2)+1:]...))
+		return average(append(append([]int64{}, haif), in[:(len(in)/2)]...)), average(append(append([]int64{}, haif), in[(len(in)/2)+1:]...))
 	}
 }
 
-func stDeviation(selection []int) (result float64) {
+func stDeviation(selection []int64) (result float64) {
 	av := average(selection)
 
 	for _, v := range selection {
@@ -478,7 +497,7 @@ func stDeviation(selection []int) (result float64) {
 	return math.Sqrt(result)
 }
 
-func average(in []int) (result float64) {
+func average(in []int64) (result float64) {
 	for _, v := range in {
 		result += float64(v) / float64(len(in))
 	}
