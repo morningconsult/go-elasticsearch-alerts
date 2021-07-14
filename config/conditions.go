@@ -420,8 +420,13 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 			//logger.With("key", key, "left", l, "right", r, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
 
 			av := average(lv[key][:len(lv[key])-1]) // среднюю считаем без учета текущего значения (оно последним будет)
-			logger.With("key", key, "buffer", lv[key], "average", av, "value", value).Info("spike")
-			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(strconv.FormatFloat(float64(value)/av, 'f', 4, 64)), condition)
+			if av == 0 {
+				return false
+			}
+			div := strconv.FormatInt(value/av, 10)
+			logger.With("key", key, "buffer", lv[key], "average", strconv.FormatInt(av, 10), "value", value, "division", div).Info("spike")
+
+			return !downturn && len(lv[key]) > 3 && numberSatisfied(json.Number(div), condition)
 		}
 	}
 
@@ -450,7 +455,7 @@ func setlastValue(k string, v int64) map[string][]int64 {
 	return lv
 }
 
-func calc(in []int64) (left, right float64) {
+func calc(in []int64) (left, right int64) {
 	if len(in)%2 == 0 {
 		return average(in[:len(in)/2]), average(in[len(in)/2:])
 	} else {
@@ -463,7 +468,7 @@ func stDeviation(selection []int64) (result float64) {
 	av := average(selection)
 
 	for _, v := range selection {
-		result += math.Pow(float64(v)-av, 2) / float64(len(selection)-1) // дисперсия
+		result += math.Pow(float64(v-av), 2) / float64(len(selection)-1) // дисперсия
 	}
 
 	if math.IsNaN(result) {
@@ -473,9 +478,9 @@ func stDeviation(selection []int64) (result float64) {
 	return math.Sqrt(result)
 }
 
-func average(in []int64) (result float64) {
+func average(in []int64) (result int64) {
 	for _, v := range in {
-		result += float64(v) / float64(len(in))
+		result += v / int64(len(in))
 	}
 
 	return result
