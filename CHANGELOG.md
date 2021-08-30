@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Chore
+- Update bump and test workflows for latest versions ([#102](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/102))
+
+
+<a name="v0.1.40"></a>
+## [v0.1.40] - 2021-07-08
+### Chore
+- Bump version and update changelog
+
 
 <a name="v0.1.39"></a>
 ## [v0.1.39] - 2021-06-30
@@ -467,7 +476,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.39...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.40...HEAD
+[v0.1.40]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.39...v0.1.40
 [v0.1.39]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.38...v0.1.39
 [v0.1.38]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.37...v0.1.38
 [v0.1.37]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.36...v0.1.37
