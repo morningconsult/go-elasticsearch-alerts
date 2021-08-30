@@ -134,7 +134,7 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			}
 
 			if tc.name != "homedir-error" && tc.name != "file-doesnt-exist" {
-				if err := ioutil.WriteFile(tc.path, []byte(tc.data), 0666); err != nil {
+				if err := ioutil.WriteFile(tc.path, []byte(tc.data), 0o666); err != nil {
 					t.Fatal(err)
 				}
 				defer os.Remove(tc.path)
@@ -555,7 +555,7 @@ func TestParseConfig_Rules(t *testing.T) {
 
 			for _, file := range tc.files {
 				fname := filepath.Join(tc.path, file.filename)
-				if err := ioutil.WriteFile(fname, []byte(file.data), 0666); err != nil {
+				if err := ioutil.WriteFile(fname, []byte(file.data), 0o666); err != nil {
 					t.Fatal(err)
 				}
 				defer os.Remove(fname)

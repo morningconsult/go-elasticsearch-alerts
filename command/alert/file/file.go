@@ -78,7 +78,7 @@ func validateConfig(config *AlertMethodConfig) error {
 // If there was an error writing logs to disk, it returns a
 // non-nil error.
 func (f *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
-	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
 	if err != nil {
 		return xerrors.Errorf("error opening new file: %v", err)
 	}
