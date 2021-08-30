@@ -45,7 +45,7 @@ type fileAlertMethod struct {
 }
 
 func (f *fileAlertMethod) Write(ctx context.Context, rule string, records []*Record) error {
-	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	outfile, err := os.OpenFile(f.outputFilepath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
 	if err != nil {
 		return xerrors.Errorf("error opening new file: %v", err)
 	}

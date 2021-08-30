@@ -78,7 +78,7 @@ func buildQueryHandlers(
 	return queryHandlers, nil
 }
 
-func buildMethod(output config.OutputConfig) (alert.Method, error) { // nolint: gocyclo
+func buildMethod(output config.OutputConfig) (alert.Method, error) {
 	var method alert.Method
 	var err error
 
