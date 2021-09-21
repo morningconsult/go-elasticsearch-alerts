@@ -1,0 +1,74 @@
+{
+  "name": "Errors",
+  "index": "techlog-minimal-*",
+  "schedule": "@every 1h",
+  "body": {
+    "query": {
+      "bool": {
+	  "must": [
+          {
+            "query_string": {
+              "query": "!*Прайд_ДополнитьФормуДоговора* and !*Сеанс работы завершен администратором* and !*Форма недоступна для использования* and !*Неправильное имя пользователя или пароль* and !*Параметр сеанса отсутствует или удален* and  !*Connection reinstall is required* and !*Требуется переустановка соединения*",
+              "analyze_wildcard": true,
+              "time_zone": "Europe/Moscow"
+            }
+          }
+        ],
+        "filter": [
+          {
+            "exists": {
+              "field": "processName"
+            }
+          },
+		   {
+          "match_phrase": {
+            "event": {
+              "query": "EXCP"
+            }
+          }
+        },
+          {
+            "range": {
+              "@timestamp": {
+                "gte": "now-1h"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "aggs": {
+		"errors": {
+		  "terms": {
+			"script":  "def m = /[А-я\\s]+/.matcher(doc['Descr'].value); def result = \"\"; while (m.find()) {result += m.group(0) } if(result != \"\") return result; else return doc['Descr'].value;",
+			"min_doc_count": 100,
+			"size": 10
+		  }
+		}
+	},
+    "size": 20,
+    "_source": "hits.hits._index"
+  },
+  "body_field": "hits.hits._index",
+  "filters": [
+    "aggregations.errors.buckets"
+  ],
+  "Conditions": [
+    {
+      "comonfield": "aggregations.errors.buckets",
+	  "filtersfield": "",
+      "type": "spike",
+	  "ge": 7,
+      "quantifier": "any"
+    }
+  ],
+  "outputs": [
+    {
+      "type": "cli",
+      "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "-599333313|❗Errors in DBs|Обнаружен резкий всплеск (%doc_count%) ошибок '%key%' |--channel"
+      }
+    }
+  ]
+}

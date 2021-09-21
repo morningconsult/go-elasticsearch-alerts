@@ -413,7 +413,7 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 			//dev := stDeviation(lv[key])
 			//m := mediana(lv[key])
 
-			//l, r := calc(lv[key])
+			//l, r := calc(lv[
 
 			//logger.With("key", key, "deviation", dev, "mediana", m, "buffer", lv[key], "downturn", downturn, "doc_count", doc_count).Info("standardDeviation")
 

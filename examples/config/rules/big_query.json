@@ -1,0 +1,91 @@
+{
+  "name": "Big Query",
+  "index": "metricbeat-*",
+  "schedule": "@every 5m",
+  "body": {
+    "query": {
+      "bool": {
+        "must": [],
+        "filter": [
+          {
+            "bool": {
+              "filter": [
+                {
+                  "bool": {
+                    "should": [
+                      {
+                      "range": {
+                        "prometheus.metrics.SessionsData": {
+                          "gte": 3600000
+                        }
+                      }
+                    }
+                  ],
+                    "minimum_should_match": 1
+                  }
+                },
+                {
+                  "bool": {
+                    "should": [
+                      {
+                        "range": {
+                          "prometheus.metrics.SessionsData": {
+                            "lt": 100000000
+                          }
+                        }
+                      }
+                    ],
+                    "minimum_should_match": 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "match_phrase": {
+              "prometheus.labels.quantile": {
+                "query": "0.5"
+              }
+            }
+          },
+          {
+            "match_phrase": {
+              "prometheus.labels.datatype": {
+                "query": "durationcurrentdbms"
+              }
+            }
+          },
+          {
+            "match_phrase": {
+              "event.module": {
+                "query": "prometheus"
+              }
+            }
+          },
+          {
+            "range": {
+              "@timestamp": {
+                "gte": "now-6h"
+              }
+            }
+          }
+        ],
+        "should": [],
+        "must_not": []
+      }
+    }
+  },
+  "body_field": "hits.hits._source",
+  "filters": [
+    "hits.hits._source"
+  ],
+  "outputs": [
+    {
+      "type": "cli",
+      "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "MONITORING_PARMA|❗Запрос выполянется более 1ч|%host.name%, %prometheus.labels.user%, %prometheus.labels.id%|--group"
+      }
+    }
+  ]
+}

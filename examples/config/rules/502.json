@@ -1,0 +1,72 @@
+{
+  "name": "502 errors",
+  "index": "nginx-*",
+  "schedule": "@every 1m",
+  "body": {
+    "query": {
+      "bool": {
+        "must": [],
+        "filter": [
+          {
+            "match_all": {}
+          },
+          {
+            "exists": {
+              "field": "http.response.status_code"
+            }
+          },
+          {
+            "match_phrase": {
+              "http.response.status_code": {
+                "query": "502"
+              }
+            }
+          },
+          {
+            "range": {
+              "@timestamp": {
+                "gte": "now-1m"
+              }
+            }
+          }
+        ],
+        "should": [],
+        "must_not": []
+      }
+    },
+    "aggs": {
+      "code": {
+        "terms": {
+          "field": "http.response.status_code"
+        }
+      }
+    },
+  "size": 0
+  },
+  "Conditions": [
+    {
+       "comonfield": "aggregations.code.buckets.doc_count",
+       "gt": 100,
+       "quantifier": "any"
+     },
+
+    {
+      "comonfield": "aggregations.code.buckets.key",
+      "eq": 502,
+      "quantifier": "any"
+    }
+  ],
+  "body_field": "aggregations",
+  "filters": [
+    "aggregations.code.buckets"
+  ],
+  "outputs": [
+    {
+      "type": "cli",
+      "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "MONITORING_PARMA|❗502 errors|Ответов с кодом 502 больше 100 в минуту|--group"
+      }
+    }
+  ]
+}

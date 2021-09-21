@@ -1,91 +1,91 @@
 {
   "name": "Duration lock in DBs",
   "index": "techlog-tlock-*",
-  "schedule": "@every 5m",
+  "schedule": "@every 1h",
   "body": {
-    "query": {
-      "bool": {
-        "must": [
-        ],
-        "filter": [
-          {
-            "exists": {
-              "field": "duration"
-            }
-          },
-          {
-            "range": {
-              "@timestamp": {
-                "gte": "now-1h"
-              }
-            }
-          },
-          {
-            "match_phrase": {
-              "event": {
-                "query": "TLOCK"
-              }
-            }
-          },
-          {
-            "bool": {
-              "should": [
-                {
-                  "query_string": {
-                    "fields": [
-                      "Locks"
-                    ],
-                    "query": "*Exclusive*"
-                  }
-                }
-              ],
-              "minimum_should_match": 1
-            }
+  "query": {
+    "bool": {
+      "must": [
+      ],
+      "filter": [
+        {
+          "exists": {
+            "field": "duration"
           }
-        ],
-        "must_not": [
-          {
-            "match_phrase": {
-              "processName": {
-                "query": "qmc"
-              }
-            }
-          }
-        ]
-      }
-    },
-    "aggs": {
-      "dbname": {
-        "terms": {
-          "script": "return doc['event'] + \"_\" +  doc['processName']",
-          "order": {
-            "timelock": "desc"
-          },
-          "min_doc_count": 10000,
-          "size": 10
         },
-        "aggs": {
-          "timelock": {
-            "sum": {
-              "field": "duration"
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        },
+        {
+          "match_phrase": {
+            "event": {
+              "query": "TLOCK"
+            }
+          }
+        },
+		{
+          "bool": {
+            "should": [
+              {
+                "query_string": {
+                  "fields": [
+                    "Locks"
+                  ],
+                  "query": "*Exclusive*"
+                }
+              }
+            ],
+            "minimum_should_match": 1
+          }
+        }
+      ],
+      "must_not": [
+        {
+          "match_phrase": {
+            "processName": {
+              "query": "qmc"
             }
           }
         }
+      ]
+    }
+  },
+  "aggs": {
+    "dbname": {
+      "terms": {
+        "script":  "return doc['event'] + \"_\" +  doc['processName']", 
+        "order": {
+          "timelock": "desc"
+        },
+        "min_doc_count": 10000,
+        "size": 10
+      },
+      "aggs": {
+        "timelock": {
+          "sum": {
+            "field": "duration"
+          }
+        }
       }
-    },
-    "size": 0
+    }
+  },
+  "size": 0
   },
   "body_field": "aggregations.dbname.buckets",
   "filters": [
-    "aggregations.dbname.buckets"
+	 "aggregations.dbname.buckets"
   ],
   "conditions": [
-    {
+  {
       "comonfield": "aggregations.dbname.buckets",
       "filtersfield": "",
       "quantifier": "any",
       "type": "spike",
-      "ge": 4,
+      "ge": 5,
       "averagefield": "timelock.value"
     }
   ],
@@ -94,7 +94,7 @@
       "type": "cli",
       "config": {
         "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
-        "args": "MONITORING_PARMA|❗Duration in DBs|Проблема с базой %key%, резкий всплеск блокировок %timelock.value% (количество документов %doc_count%)|--group"
+        "args": "-599333313|❗Duration in DBs|Проблема с базой %key%, резкий всплеск блокировок %timelock.value% (количество документов %doc_count%)|--channel"
       }
     }
   ]

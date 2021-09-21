@@ -1,0 +1,53 @@
+{
+  "name": "Deadlock in DBs",
+  "index": "techlog-*",
+  "schedule": "@every 1h",
+  "body": {
+  "query": {
+    "bool": {
+      "must": [
+      ],
+      "filter": [
+        {
+          "match_phrase": {
+            "event": {
+              "query": "TDEADLOCK"
+            }
+          }
+        },
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+      "dbname": {
+        "terms": {
+          "field": "processName",
+          "size": 100
+        }
+      }
+    },
+    "size": 20,
+    "_source": "hits.hits._index"
+  },
+  "body_field": "aggregations.dbname.buckets",
+  "filters": [
+	 "aggregations.dbname.buckets"
+  ],
+  "outputs": [
+	 {
+      "type": "cli",
+	  "config": {
+        "comand": "/usr/lib/zabbix/alertscripts/zbxtg.py",
+        "args": "-599333313|❗Deadlock in DBs|Проблема с базой %key%, обнаружено %doc_count% deadlocks|--channel"
+      }
+     
+    }
+  ]
+}
