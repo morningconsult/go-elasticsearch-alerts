@@ -1,6 +1,7 @@
 module github.com/morningconsult/go-elasticsearch-alerts
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible

@@ -121,8 +121,9 @@ ELEMS:
 			continue
 		}
 
+		// это нужно для случаев когда задан "quantifier": "any", в этом случае сработает алерт, но зачем нам присылать уведомления не элементам которые не подходят под условия?
 		for _, condition := range q.conditions {
-			if !config.ConditionMet(logger, obj, condition, condition.Fieldfier()) {
+			if !config.ConditionMet(logger, obj, condition, condition.FieldFilter()) {
 				logger.With("field", elem, "name", q.name).Debug("the element was skipped according to the filter condition")
 				continue ELEMS
 			}

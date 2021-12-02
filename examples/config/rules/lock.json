@@ -82,11 +82,10 @@
   "conditions": [
   {
       "comonfield": "aggregations.dbname.buckets",
-      "filtersfield": "",
       "quantifier": "any",
       "type": "spike",
       "ge": 5,
-      "averagefield": "timelock.value"
+      "averagefield": "[timelock.value]/[doc_count]"
     }
   ],
   "outputs": [

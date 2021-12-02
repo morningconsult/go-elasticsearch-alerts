@@ -45,12 +45,14 @@
   },
   "Conditions": [
     {
+      "filtersfield": "doc_count",
        "comonfield": "aggregations.code.buckets.doc_count",
-       "gt": 100,
+       "gt": 1,
        "quantifier": "any"
      },
 
     {
+      "filtersfield": "key",
       "comonfield": "aggregations.code.buckets.key",
       "eq": 502,
       "quantifier": "any"

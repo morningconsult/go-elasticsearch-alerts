@@ -17,10 +17,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/Knetic/govaluate"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 
 	hclog "github.com/hashicorp/go-hclog"
@@ -30,7 +33,9 @@ import (
 )
 
 const (
-	keyCommonField  = "comonfield"
+	keyCommonField = "comonfield"
+
+	// используется когда есть агрегация и из buckets нужно взять конкретное поле
 	keyFiltersField = "filtersfield"
 	keyQuantifier   = "quantifier"
 	// поле по которому будет сохраняться значения в буфер для расчета среднего (используется в типе typeSpike)
@@ -67,7 +72,7 @@ func (c Condition) field() string {
 	return c[keyCommonField].(string)
 }
 
-func (c Condition) Fieldfier() string {
+func (c Condition) FieldFilter() string {
 	if v, ok := c[keyFiltersField]; ok {
 		return v.(string)
 	} else {
@@ -397,6 +402,34 @@ func spike(logger hclog.Logger, i interface{}, condition Condition) bool {
 				if match := utils.Get(data, fieldvalue); match != nil {
 					d := decimal.RequireFromString(string(match.(json.Number)))
 					value = d.IntPart()
+				} else {
+					logger.With("fieldvalue", fieldvalue).Trace("вычисление выражения")
+
+					// проверяем случаи когда заданы 2 поля, например "[timelock.value]/[doc_count]"
+					var rexp = regexp.MustCompile(`(?m)\[(.+?)\]`)
+					result := rexp.FindAllStringSubmatch(fieldvalue, -1)
+					if len(result) == 0 {
+						logger.With("fieldvalue", fieldvalue).Warn("формула не определена. Шаблон формулы [field1]/[field2]")
+						return false
+					}
+
+					for _, matchRg := range result {
+						if matchValue := utils.Get(data, matchRg[1]); matchValue != nil {
+							d := decimal.RequireFromString(string(matchValue.(json.Number)))
+							fieldvalue = strings.Replace(fieldvalue, matchRg[0], d.String(), 1)
+						} else {
+							logger.With("fieldvalue", fieldvalue).Warn("не найдено значение поля ", matchRg[1])
+							return false
+						}
+					}
+
+					expression, _ := govaluate.NewEvaluableExpression(fieldvalue)
+					if result, err := expression.Evaluate(map[string]interface{}{}); err == nil {
+						value = int64(result.(float64))
+					} else {
+						logger.With("fieldvalue", fieldvalue, "error", err).Error("произошла ошибка вычисления выражения")
+						return false
+					}
 				}
 			}
 

@@ -2,3 +2,4 @@ bin
 src
 .vscode
 *.exe
+go-elasticsearch-alerts

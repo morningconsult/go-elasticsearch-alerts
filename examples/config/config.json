@@ -1,12 +1,11 @@
 {
   "elasticsearch": {
     "server": {
-      "url": "http://ca-elk-mn-1:9200"
+      "url": "http://172.18.1.44/elastic"
     },
     "client": {
       "tls_enabled": false
     }
   },
   "distributed": false
-  }
 }
