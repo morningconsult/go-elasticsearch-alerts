@@ -20,7 +20,7 @@ require (
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.4.3
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/robfig/cron v1.2.0
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
