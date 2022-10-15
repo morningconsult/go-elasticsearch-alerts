@@ -2,6 +2,15 @@
 ## [Unreleased]
 
 ### Feat
+- disable building windows arm64 ([#122](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/122))
+
+
+<a name="v0.1.52"></a>
+## [v0.1.52] - 2022-10-15
+### Chore
+- Bump version and update changelog
+
+### Feat
 - support compatibility with elasticsearch 8 ([#121](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/121))
 
 
@@ -543,7 +552,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.51...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.52...HEAD
+[v0.1.52]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.51...v0.1.52
 [v0.1.51]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.50...v0.1.51
 [v0.1.50]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.49...v0.1.50
 [v0.1.49]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.48...v0.1.49
