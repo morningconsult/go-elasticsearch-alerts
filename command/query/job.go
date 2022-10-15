@@ -204,14 +204,19 @@ func validateConfig(config *QueryHandlerConfig) error {
 	return allErrors.ErrorOrNil()
 }
 
+// compatibilityHeader is the header to enable REST API compatibility.
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-api-compatibility.html
+const compatibilityHeader = "application/vnd.elasticsearch+json;compatible-with=7"
+
 func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*http.Request, error), error) {
 	reqFunc := func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
 		req, err := http.NewRequest(method, url, data)
 		if err != nil {
 			return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
 		}
+		req.Header.Set("Accept", compatibilityHeader)
 		if data != nil {
-			req.Header.Add("Content-Type", "application/json")
+			req.Header.Set("Content-Type", compatibilityHeader)
 		}
 		req = req.WithContext(ctx)
 		return req, nil
@@ -234,8 +239,9 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 				return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
 			}
 			req.SetBasicAuth(username, password)
+			req.Header.Set("Accept", compatibilityHeader)
 			if data != nil {
-				req.Header.Add("Content-Type", "application/json")
+				req.Header.Set("Content-Type", compatibilityHeader)
 			}
 			req = req.WithContext(ctx)
 			return req, nil
@@ -414,7 +420,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funle
 	resp, err := q.makeRequest(
 		ctx,
 		http.MethodPut,
-		fmt.Sprintf("%s/_template/%s?include_type_name=true", q.esURL, q.TemplateName()),
+		fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()),
 		bytes.NewBufferString(payload),
 	)
 	if err != nil {
