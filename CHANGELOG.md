@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Feat
+- support compatibility with elasticsearch 8 ([#121](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/121))
+
+
+<a name="v0.1.51"></a>
+## [v0.1.51] - 2022-04-21
+### Chore
+- Bump version and update changelog
+
 
 <a name="v0.1.50"></a>
 ## [v0.1.50] - 2022-04-11
@@ -534,7 +543,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.50...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.51...HEAD
+[v0.1.51]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.50...v0.1.51
 [v0.1.50]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.49...v0.1.50
 [v0.1.49]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.48...v0.1.49
 [v0.1.48]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.47...v0.1.48
