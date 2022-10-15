@@ -2,6 +2,15 @@
 ## [Unreleased]
 
 ### Feat
+- fix mapping using _doc field ([#123](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/123))
+
+
+<a name="v0.1.53"></a>
+## [v0.1.53] - 2022-10-15
+### Chore
+- Bump version and update changelog
+
+### Feat
 - disable building windows arm64 ([#122](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/122))
 
 
@@ -552,7 +561,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.52...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.53...HEAD
+[v0.1.53]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.52...v0.1.53
 [v0.1.52]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.51...v0.1.52
 [v0.1.51]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.50...v0.1.51
 [v0.1.50]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.49...v0.1.50
