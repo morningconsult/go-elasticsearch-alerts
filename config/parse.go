@@ -292,7 +292,7 @@ func ParseRules() ([]RuleConfig, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, xerrors.Errorf("error opening file %s: %v", file.Name(), err)
+			return nil, xerrors.Errorf("error opening file: %v", err)
 		}
 
 		dec := json.NewDecoder(file)
