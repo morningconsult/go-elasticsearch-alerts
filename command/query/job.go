@@ -204,14 +204,19 @@ func validateConfig(config *QueryHandlerConfig) error {
 	return allErrors.ErrorOrNil()
 }
 
+// compatibilityHeader is the header to enable REST API compatibility.
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-api-compatibility.html
+const compatibilityHeader = "application/vnd.elasticsearch+json;compatible-with=7"
+
 func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*http.Request, error), error) {
 	reqFunc := func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
 		req, err := http.NewRequest(method, url, data)
 		if err != nil {
 			return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
 		}
+		req.Header.Set("Accept", compatibilityHeader)
 		if data != nil {
-			req.Header.Add("Content-Type", "application/json")
+			req.Header.Set("Content-Type", compatibilityHeader)
 		}
 		req = req.WithContext(ctx)
 		return req, nil
@@ -234,8 +239,9 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 				return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
 			}
 			req.SetBasicAuth(username, password)
+			req.Header.Set("Accept", compatibilityHeader)
 			if data != nil {
-				req.Header.Add("Content-Type", "application/json")
+				req.Header.Set("Content-Type", compatibilityHeader)
 			}
 			req = req.WithContext(ctx)
 			return req, nil
@@ -356,65 +362,75 @@ func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
 // enables searching all state indices via this alias.
 func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funlen
 	payload := fmt.Sprintf(`{
-  "index_patterns": ["%s-status-%s-*"],
-  "order": 0,
-  "aliases": {%q:{}},
-  "settings":{
-    "index": {
-      "number_of_shards": 1,
-      "number_of_replicas": 1,
-      "auto_expand_replicas": "0-2",
-      "codec": "best_compression",
-      "translog": {
-	"flush_threshold_size": "752mb"
-      },
-      "sort": {
-	"field": ["next_query","rule_name","hostname"],
-	"order": ["desc","desc","desc"]
+    "index_patterns": [
+      "%s-status-%s-*"
+    ],
+    "order": 0,
+    "aliases": {
+        %q: {}
+    },
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1,
+        "auto_expand_replicas": "0-2",
+        "codec": "best_compression",
+        "translog": {
+          "flush_threshold_size": "752mb"
+        },
+        "sort": {
+          "field": [
+            "next_query",
+            "rule_name",
+            "hostname"
+          ],
+          "order": [
+            "desc",
+            "desc",
+            "desc"
+          ]
+        }
       }
-    }
-  },
-  "mappings": {
-    "_doc": {
+    },
+    "mappings": {
       "dynamic_templates": [
         {
           "strings_as_keywords": {
-	    "match_mapping_type": "string",
-	    "mapping": {
-	      "type": "keyword"
-	    }
-	  }
-	}
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        }
       ],
       "properties": {
         "@timestamp": {
-	  "type": "date"
-	},
-	"rule_name": {
-	  "type": "keyword"
-	},
-	"next_query": {
-	  "type": "date"
-	},
-	"hostname": {
-	  "type": "keyword"
-	},
-	"hits_count": {
-	  "type": "long",
-	  "null_value": 0
-	},
-	"hits": {
-	  "enabled": false
-	}
+          "type": "date"
+        },
+        "rule_name": {
+          "type": "keyword"
+        },
+        "next_query": {
+          "type": "date"
+        },
+        "hostname": {
+          "type": "keyword"
+        },
+        "hits_count": {
+          "type": "long",
+          "null_value": 0
+        },
+        "hits": {
+          "enabled": false
+        }
       }
     }
-  }
-}`, defaultStateIndexAlias, templateVersion, q.TemplateName())
+  }`, defaultStateIndexAlias, templateVersion, q.TemplateName())
 
 	resp, err := q.makeRequest(
 		ctx,
 		http.MethodPut,
-		fmt.Sprintf("%s/_template/%s?include_type_name=true", q.esURL, q.TemplateName()),
+		fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()),
 		bytes.NewBufferString(payload),
 	)
 	if err != nil {
@@ -452,28 +468,28 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funle
 // when to next execute the query.
 func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { // nolint: funlen
 	payload := fmt.Sprintf(`{
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "term": {
-            "rule_name": {
-	      "value": %q
-	    }
-	  }
-	}
-      ]
-    }
-  },
-  "sort": [
-    {
-      "next_query": {
-	"order": "desc"
+    "query": {
+      "bool": {
+        "must": [
+          {
+            "term": {
+              "rule_name": {
+                "value": %q
+              }
+            }
+          }
+        ]
       }
-    }
-  ],
-  "size": 1
-}`, q.cleanedName())
+    },
+    "sort": [
+      {
+        "next_query": {
+          "order": "desc"
+        }
+      }
+    ],
+    "size": 1
+  }`, q.cleanedName())
 
 	u, err := url.Parse(q.StateAliasURL() + "/_search")
 	if err != nil {
@@ -483,7 +499,7 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { /
 	query.Add("filter_path", "hits.hits._source.next_query")
 	u.RawQuery = query.Encode()
 
-	resp, err := q.makeRequest(ctx, "GET", u.String(), bytes.NewBufferString(payload))
+	resp, err := q.makeRequest(ctx, http.MethodGet, u.String(), bytes.NewBufferString(payload))
 	if err != nil {
 		return nil, xerrors.Errorf("error making HTTP request: %v", err)
 	}
@@ -544,7 +560,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 		return xerrors.Errorf("error JSON-encoding payload: %v", err)
 	}
 
-	resp, err := q.makeRequest(ctx, "POST", q.StateIndexURL()+"/_doc", &payload)
+	resp, err := q.makeRequest(ctx, http.MethodPost, q.StateIndexURL()+"/_doc", &payload)
 	if err != nil {
 		return xerrors.Errorf("error making HTTP request: %v", err)
 	}
@@ -563,7 +579,7 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 		return nil, xerrors.Errorf("error JSON-encoding Elasticsearch query body: %v", err)
 	}
 
-	resp, err := q.makeRequest(ctx, "GET", fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), &payload)
+	resp, err := q.makeRequest(ctx, http.MethodGet, fmt.Sprintf("%s/%s/_search", q.esURL, q.queryIndex), &payload)
 	if err != nil {
 		return nil, xerrors.Errorf("error making HTTP request: %v", err)
 	}

@@ -49,7 +49,7 @@ done
 echo "==> Elasticsearch is healthy. Creating index \"${INDEX}\"..."
 
 ## Create the test index
-curl "${ES_URL}/${INDEX}?include_type_name=true" \
+curl "${ES_URL}/${INDEX}" \
   -s \
   -H "Content-Type: application/json" \
   -X PUT \
@@ -62,7 +62,7 @@ curl "${ES_URL}/${INDEX}?include_type_name=true" \
         "properties": {
           "@timestamp": { "type": "date" },
           "source": { "type": "keyword" },
-          "system": { 
+          "system": {
             "properties": {
               "syslog": {
                 "properties": {
