@@ -24,7 +24,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/robfig/cron v1.2.0
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
-	golang.org/x/crypto v0.0.0-20191202143827-86a70503ff7e // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 )
 
