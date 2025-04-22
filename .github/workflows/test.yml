@@ -15,24 +15,47 @@ on:
 
 jobs:
   test:
-    name: Run linting and tests
     runs-on: ubuntu-latest
-    container:
-      image: golang:1.16.7-alpine3.14
     steps:
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.2
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
 
-    - name: Run linting
-      env:
-        CGO_ENABLED: '0'
-      run: |
-        apk add -qU --no-cache --no-progress curl git
-        curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin "v1.40.1"
-        golangci-lint run
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.2
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.2
 
-    - name: Run tests
-      env:
-        CGO_ENABLED: '0'
-        GO111MODULE: 'on'
-      run: go test -cover ./...
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.2
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release --clean --snapshot
