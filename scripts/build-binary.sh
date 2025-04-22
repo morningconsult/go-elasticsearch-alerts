@@ -31,14 +31,14 @@ cd "${ROOT}"
 
 mkdir -p "${BIN_DIR}"
 
-version_ldflags="-X \"${PACKAGE_ROOT}/version.Date=$( date +"%b %d, %Y" )\""
+version_ldflags="-X 'main.date=$( date +"%b %d, %Y" )'"
 
 if [ "${TAG}" != "" ]; then
-  version_ldflags="${version_ldflags} -X \"${PACKAGE_ROOT}/version.Version=${TAG}\""
+  version_ldflags="${version_ldflags} -X 'main.version=${TAG}'"
 fi
 
 if [ "${COMMIT}" != "" ]; then
-  version_ldflags="${version_ldflags} -X \"${PACKAGE_ROOT}/version.Commit=${COMMIT}\""
+  version_ldflags="${version_ldflags} -X 'main.commit=${COMMIT}'"
 fi
 
 CGO_ENABLED=0 go build \
