@@ -18,11 +18,22 @@ import (
 	"fmt"
 	"os"
 
-	cmd "github.com/morningconsult/go-elasticsearch-alerts/command"
-	"github.com/morningconsult/go-elasticsearch-alerts/version"
+	"github.com/morningconsult/go-elasticsearch-alerts/command"
 )
 
 const banner = "Go Elasticsearch Alerts version %v, commit %v, built %v\n"
+
+var (
+	// version indicates which version of the binary is running.
+	version = "dev"
+
+	// commit is the commit hash of the git repository from which
+	// the binary is built.
+	commit = "none"
+
+	// date is the date on which the binary was built.
+	date = "unknown"
+)
 
 func main() {
 	var versionFlag bool
@@ -31,9 +42,9 @@ func main() {
 
 	// Exit safely when version is used
 	if versionFlag {
-		fmt.Printf(banner, version.Version, version.Commit, version.Date)
+		fmt.Printf(banner, version, commit, date)
 		os.Exit(0)
 	}
 
-	os.Exit(cmd.Run())
+	os.Exit(command.Run())
 }

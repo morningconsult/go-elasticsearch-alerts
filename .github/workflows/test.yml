@@ -16,7 +16,7 @@ on:
 jobs:
   test:
     name: Run linting and tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container:
       image: golang:1.16.7-alpine3.14
     steps:

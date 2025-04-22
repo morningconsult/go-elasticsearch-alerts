@@ -2,7 +2,7 @@ project_name: go-elasticsearch-alerts
 builds:
   - ldflags:
       - -s -w
-      - -X "github.com/morningconsult/go-elasticsearch-alerts/version.Version={{ .Version }}" -X "github.com/morningconsult/go-elasticsearch-alerts/version.Commit={{ .ShortCommit }}" -X "github.com/morningconsult/go-elasticsearch-alerts/version.Date={{ time "Jan 02, 2006" }}"
+      - -X 'main.version={{ .Version }}' -X 'main.commit={{ .ShortCommit }}' -X 'main.date={{ time 'Jan 02, 2006" }}"
     env:
     - CGO_ENABLED=0
     goos:
