@@ -2,9 +2,9 @@ project_name: go-elasticsearch-alerts
 builds:
   - ldflags:
       - -s -w
-      - -X 'main.version={{ .Version }}' -X 'main.commit={{ .ShortCommit }}' -X 'main.date={{ time 'Jan 02, 2006" }}"
+      - -X 'main.version={{ .Version }}' -X 'main.commit={{ .ShortCommit }}' -X 'main.date={{ time "Jan 02, 2006" }}'
     env:
-    - CGO_ENABLED=0
+      - CGO_ENABLED=0
     goos:
       - windows
       - darwin
@@ -14,13 +14,17 @@ builds:
         goarch: arm64
 archives:
   - id: main
-    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+    name_template: >-
+      {{- .Binary }}_
+      {{- .Version }}_
+      {{- if eq .Os "darwin" }}Darwin
+      {{- else if eq .Os "linux" }}Linux
+      {{- else if eq .Os "windows" }}Windows
+      {{- else }}{{ .Os }}{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end -}}
     format_overrides:
       - goos: windows
         format: zip
@@ -32,4 +36,5 @@ changelog:
   sort: asc
   filters:
     exclude:
-    - '^docs:'
+      - '^docs:'
+      - '^test:'

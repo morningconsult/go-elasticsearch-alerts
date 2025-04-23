@@ -1,13 +1,12 @@
 from semantic_version import Version
 from git import Repo
-import os
 import re
 
 def enumerate_semver(version):
     return (int(i.strip('vV')) for i in version.split('.'))
 
 def get_latest_version(repo):
-    semver_re = re.compile("^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$")
+    semver_re = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$")
 
     semvers = [str(tag) for tag in repo.tags if semver_re.search(str(tag))]
 

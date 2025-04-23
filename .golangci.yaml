@@ -1,0 +1,105 @@
+version: "2"
+issues:
+  new: true # TODO: Fix issues and remove this config
+  max-same-issues: 0
+
+linters:
+  enable:
+    - bodyclose
+    - errcheck
+    - errchkjson
+    - exptostd
+    - fatcontext
+    - gocognit
+    - gocritic
+    - gocyclo
+    - godot
+    - gosec
+    - lll
+    - mirror
+    - misspell
+    - nakedret
+    - nilnesserr
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - revive
+    - sloglint
+    - unconvert
+    - unparam
+    - usetesting
+  settings:
+    errcheck:
+      exclude-functions:
+        # Errors we wouldn't act on after checking
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+        - io.WriteString(net/http.ResponseWriter)
+        - fmt.Fprint(net/http.ResponseWriter)
+        - fmt.Fprintf(net/http.ResponseWriter)
+        - fmt.Fprintln(net/http.ResponseWriter)
+
+        # Handled by errchkjson
+        - encoding/json.Marshal
+        - encoding/json.MarshalIndent
+        - (*encoding/json.Encoder).Encode
+    gocognit:
+      min-complexity: 10
+    gocyclo:
+      min-complexity: 10
+    govet:
+      enable:
+        - shadow
+    nakedret:
+      max-func-lines: 0
+    revive:
+      confidence: 0
+    sloglint:
+      args-on-sep-lines: true
+      no-mixed-args: false
+  exclusions:
+    generated: strict
+    rules:
+      - linters:
+          - bodyclose
+          - gocognit
+          - gocyclo
+          - gosec
+          - lll
+          - prealloc
+        path: _test\.go
+
+      # Overly picky
+      - linters: [revive]
+        path: _test\.go
+        text: unused-parameter
+
+      # Duplicates of errcheck
+      - linters: [gosec]
+        text: 'G104: Errors unhandled'
+      - linters: [gosec]
+        text: 'G307: Deferring unsafe method'
+
+      # Contexts are best assigned defensively
+      - linters: [ineffassign]
+        text: ineffectual assignment to `ctx`
+      - linters: [revive]
+        text: "unused-parameter: parameter 'ctx' seems to be unused"
+      - linters: [staticcheck]
+        text: 'SA4006: this value of `ctx` is never used'
+
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+  exclusions:
+    generated: strict
