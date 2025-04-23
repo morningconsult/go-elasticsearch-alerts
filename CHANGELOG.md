@@ -1,6 +1,22 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Build
+- bump various versions ([#137](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/137))
+
+### Ci
+- swap back to personal access token ([#139](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/139))
+- use default github.token for bumps ([#138](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/138))
+
+### Refactor
+- Remove version package ([#136](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/136))
+
+
+<a name="v0.1.54"></a>
+## [v0.1.54] - 2022-10-15
+### Chore
+- Bump version and update changelog
+
 ### Feat
 - fix mapping using _doc field ([#123](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/123))
 
@@ -561,7 +577,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.53...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.54...HEAD
+[v0.1.54]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.53...v0.1.54
 [v0.1.53]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.52...v0.1.53
 [v0.1.52]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.51...v0.1.52
 [v0.1.51]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.50...v0.1.51
