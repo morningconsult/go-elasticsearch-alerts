@@ -1,8 +1,14 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.55"></a>
+## [v0.1.55] - 2025-04-23
 ### Build
 - bump various versions ([#137](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/137))
+
+### Chore
+- Bump version and update changelog
 
 ### Ci
 - swap back to personal access token ([#139](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/139))
@@ -577,7 +583,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.54...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.55...HEAD
+[v0.1.55]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.54...v0.1.55
 [v0.1.54]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.53...v0.1.54
 [v0.1.53]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.52...v0.1.53
 [v0.1.52]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.51...v0.1.52
