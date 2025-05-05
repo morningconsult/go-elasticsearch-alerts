@@ -17,10 +17,11 @@ import (
 	"context"
 	"sync"
 
+	"golang.org/x/xerrors"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
-	"golang.org/x/xerrors"
 )
 
 type controllerConfig struct {

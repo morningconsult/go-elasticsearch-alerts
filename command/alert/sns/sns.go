@@ -23,8 +23,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"golang.org/x/xerrors"
+
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 // AlertMethodConfig configures where AWS SNS alerts will be
@@ -58,7 +59,7 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config.Template == "" {
 		return nil, xerrors.New("field 'output.config.template' must not be empty when using the SNS output method")
 	}
-	tmpl, err := template.New("sns").Funcs(template.FuncMap(sprig.FuncMap())).Parse(config.Template)
+	tmpl, err := template.New("sns").Funcs(sprig.FuncMap()).Parse(config.Template)
 	if err != nil {
 		return nil, xerrors.Errorf("error parsing SNS message template: %w", err)
 	}
@@ -78,7 +79,7 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 // Write renders the pre-defined message template and publishes
 // the message to an AWS SNS topic.
 func (a *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
-	if records == nil || len(records) < 1 {
+	if len(records) < 1 {
 		return nil
 	}
 	msg, err := a.renderTemplate(rule, records)

@@ -27,7 +27,7 @@ import (
 func TestProcess(t *testing.T) {
 	cases := []struct {
 		name       string
-		input      map[string]interface{}
+		input      map[string]any
 		filters    []string
 		conditions []config.Condition
 		output     []*alert.Record
@@ -36,15 +36,15 @@ func TestProcess(t *testing.T) {
 	}{
 		{
 			name: "one-level",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": json.Number("2"),
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": json.Number("3"),
 							},
@@ -73,12 +73,12 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "field-not-map",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
 							"string",
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": json.Number("3"),
 							},
@@ -103,15 +103,15 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "zero-count",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": json.Number("0"),
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": json.Number("3"),
 							},
@@ -136,36 +136,36 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "two-levels",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": 5,
-								"program": map[string]interface{}{
-									"buckets": []interface{}{
-										map[string]interface{}{
+								"program": map[string]any{
+									"buckets": []any{
+										map[string]any{
 											"key":       "bim",
 											"doc_count": json.Number("2"),
 										},
-										map[string]interface{}{
+										map[string]any{
 											"key":       "baz",
 											"doc_count": json.Number("3"),
 										},
 									},
 								},
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": 3,
-								"program": map[string]interface{}{
-									"buckets": []interface{}{
-										map[string]interface{}{
+								"program": map[string]any{
+									"buckets": []any{
+										map[string]any{
 											"key":       "ayy",
 											"doc_count": json.Number("1"),
 										},
-										map[string]interface{}{
+										map[string]any{
 											"key":       "lmao",
 											"doc_count": json.Number("2"),
 										},
@@ -205,23 +205,23 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "hits-not-array",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": json.Number("2"),
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": json.Number("3"),
 							},
 						},
 					},
 				},
-				"hits": map[string]interface{}{
-					"hits": map[string]interface{}{
+				"hits": map[string]any{
+					"hits": map[string]any{
 						"ayy": "lmao",
 					},
 				},
@@ -247,23 +247,23 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "hit-elems-not-maps",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": json.Number("2"),
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": json.Number("3"),
 							},
 						},
 					},
 				},
-				"hits": map[string]interface{}{
-					"hits": []interface{}{
+				"hits": map[string]any{
+					"hits": []any{
 						"sadly",
 						"i",
 						"am",
@@ -294,29 +294,29 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "hit-elems-have-no-source",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": json.Number("2"),
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": json.Number("3"),
 							},
 						},
 					},
 				},
-				"hits": map[string]interface{}{
-					"hits": []interface{}{
-						map[string]interface{}{
+				"hits": map[string]any{
+					"hits": []any{
+						map[string]any{
 							"any": "field",
 							"but": "_source!",
 						},
-						map[string]interface{}{
-							"_source": map[string]interface{}{
+						map[string]any{
+							"_source": map[string]any{
 								"ayy": "lmao",
 							},
 						},
@@ -349,16 +349,16 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "hits-only",
-			input: map[string]interface{}{
-				"hits": map[string]interface{}{
-					"hits": []interface{}{
-						map[string]interface{}{
-							"_source": map[string]interface{}{
+			input: map[string]any{
+				"hits": map[string]any{
+					"hits": []any{
+						map[string]any{
+							"_source": map[string]any{
 								"ayy": "lmao",
 							},
 						},
-						map[string]interface{}{
-							"_source": map[string]interface{}{
+						map[string]any{
+							"_source": map[string]any{
 								"yeah": "buddy",
 							},
 						},
@@ -384,9 +384,9 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "no-hits-no-filters",
-			input: map[string]interface{}{
-				"hits": map[string]interface{}{
-					"hits": []interface{}{},
+			input: map[string]any{
+				"hits": map[string]any{
+					"hits": []any{},
 				},
 			},
 			filters: []string{},
@@ -396,21 +396,21 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "conditions-not-met",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": 2,
-								"queue_size": map[string]interface{}{
+								"queue_size": map[string]any{
 									"value": json.Number("10"),
 								},
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": 3,
-								"queue_size": map[string]interface{}{
+								"queue_size": map[string]any{
 									"value": json.Number("20"),
 								},
 							},
@@ -431,21 +431,21 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name: "conditions-met",
-			input: map[string]interface{}{
-				"aggregations": map[string]interface{}{
-					"hostname": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			input: map[string]any{
+				"aggregations": map[string]any{
+					"hostname": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key":       "foo",
 								"doc_count": 2,
-								"queue_size": map[string]interface{}{
+								"queue_size": map[string]any{
 									"value": json.Number("10"),
 								},
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key":       "bar",
 								"doc_count": 3,
-								"queue_size": map[string]interface{}{
+								"queue_size": map[string]any{
 									"value": json.Number("20"),
 								},
 							},

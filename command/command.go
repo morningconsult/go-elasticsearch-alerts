@@ -22,15 +22,16 @@ import (
 
 	consul "github.com/hashicorp/consul/api"
 	hclog "github.com/hashicorp/go-hclog"
+	"golang.org/x/xerrors"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
-	"golang.org/x/xerrors"
 )
 
 // Run starts the daemon running. This function should be
 // called directly within os.Exit() in your main.main()
 // function.
-func Run() int { // nolint: gocyclo, funlen
+func Run() int { //nolint:gocyclo,gocognit
 	logger := hclog.Default()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

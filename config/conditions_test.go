@@ -91,7 +91,7 @@ func TestCondition_validate(t *testing.T) {
 				"ge":         "asdf",
 				"gt":         10, // not a json.Number
 				"le":         true,
-				"lt":         map[string]interface{}{"ayy": "lmao"},
+				"lt":         map[string]any{"ayy": "lmao"},
 			},
 			expectErr: `4 errors occurred:
 	* value of operator 'le' should be a number
@@ -109,7 +109,7 @@ func TestCondition_validate(t *testing.T) {
 				"ge":         "asdf",
 				"gt":         10, // not a json.Number
 				"le":         true,
-				"lt":         map[string]interface{}{"ayy": "lmao"},
+				"lt":         map[string]any{"ayy": "lmao"},
 				"eq":         true, // not a json.Number or string
 				"ne":         100,  // not a json.Number or string
 			},
@@ -355,7 +355,7 @@ func TestConditionsMet(t *testing.T) {
 			dec := json.NewDecoder(buf)
 			dec.UseNumber()
 
-			var res map[string]interface{}
+			var res map[string]any
 			if err := dec.Decode(&res); err != nil {
 				t.Fatal(err)
 			}

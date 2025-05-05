@@ -112,7 +112,7 @@ type Handler struct {
 func NewHandler(config *HandlerConfig) *Handler {
 	return &Handler{
 		logger: config.Logger,
-		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))), // nolint: gosec
+		rand:   rand.New(rand.NewSource(int64(time.Now().Nanosecond()))), //nolint:gosec
 		StopCh: make(chan struct{}),
 		DoneCh: make(chan struct{}),
 	}
@@ -128,7 +128,7 @@ func NewHandler(config *HandlerConfig) *Handler {
 // ctx.Done() or StopCh becomes unblocked. Before returning,
 // it will close the DoneCh. Once DoneCh is closed, Run
 // should not be called again.
-func (a *Handler) Run(ctx context.Context, outputCh <-chan *Alert) { // nolint: gocyclo
+func (a *Handler) Run(ctx context.Context, outputCh <-chan *Alert) { //nolint:gocyclo,gocognit
 	defer func() {
 		close(a.DoneCh)
 	}()

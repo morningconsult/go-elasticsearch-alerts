@@ -14,9 +14,9 @@
 package slack
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -24,6 +24,7 @@ import (
 	"time"
 
 	uuid "github.com/hashicorp/go-uuid"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -116,7 +117,7 @@ func TestBuildPayload(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      rule,
-						Text:       fmt.Sprintf("%s (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```", filter),
+						Text:       filter + " (1 of 3)\n```\n(part 1 of 3)\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a\n\n(continued)\n```",
 						MarkdownIn: []string{"text"},
 						Color:      "#ff0000",
 						Footer:     "Go Elasticsearch Alerts",
@@ -125,7 +126,7 @@ func TestBuildPayload(t *testing.T) {
 					},
 					{
 						Title:      rule,
-						Text:       fmt.Sprintf("%s (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```", filter),
+						Text:       filter + " (2 of 3)\n```\n(part 2 of 3)\n\nliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n\n(continued)\n```",
 						MarkdownIn: []string{"text"},
 						Color:      "#ff0000",
 						Footer:     "Go Elasticsearch Alerts",
@@ -134,7 +135,7 @@ func TestBuildPayload(t *testing.T) {
 					},
 					{
 						Title:      rule,
-						Text:       fmt.Sprintf("%s (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```", filter),
+						Text:       filter + " (3 of 3)\n```\n(part 3 of 3)\n\n officia deserunt mollit anim id est laborum.\n```",
 						MarkdownIn: []string{"text"},
 						Color:      "#ff0000",
 						Footer:     "Go Elasticsearch Alerts",
@@ -294,7 +295,7 @@ func TestWrite(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			ctx := context.Background()
+			ctx := t.Context()
 			err = s.Write(ctx, "test-rule", tc.records)
 			if tc.err {
 				if err == nil {
@@ -319,7 +320,7 @@ func newMockSlackServer(status int) *httptest.Server {
 				return
 			}
 
-			var data map[string]interface{}
+			var data map[string]any
 			if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 				http.Error(w, "Internal Server Error", 500)
 				return
@@ -340,7 +341,7 @@ func newMockSlackServer(status int) *httptest.Server {
 	}))
 }
 
-func prettyJSON(t *testing.T, v interface{}) string {
+func prettyJSON(t *testing.T, v any) string {
 	data, err := json.MarshalIndent(v, "", "    ")
 	if err != nil {
 		t.Fatal(err)
@@ -387,7 +388,10 @@ func ExampleAlertMethod_buildPayload() {
 	for i := range payload.Attachments {
 		payload.Attachments[i].Timestamp = 1
 	}
-	data, _ := json.MarshalIndent(payload, "", "    ")
+	data, err := json.MarshalIndent(payload, "", "    ")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println(string(data))
 

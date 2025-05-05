@@ -15,7 +15,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -125,16 +124,14 @@ func TestParseConfig_MainConfig(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			os.Setenv(envConfigFile, tc.path)
-			defer os.Unsetenv(envConfigFile)
+			t.Setenv(envConfigFile, tc.path)
 
 			if tc.name == "success" {
-				os.Setenv(envRulesDir, "testdata/rules-main")
-				defer os.Unsetenv(envRulesDir)
+				t.Setenv(envRulesDir, "testdata/rules-main")
 			}
 
 			if tc.name != "homedir-error" && tc.name != "file-doesnt-exist" {
-				if err := ioutil.WriteFile(tc.path, []byte(tc.data), 0o666); err != nil {
+				if err := os.WriteFile(tc.path, []byte(tc.data), 0o666); err != nil {
 					t.Fatal(err)
 				}
 				defer os.Remove(tc.path)
@@ -550,12 +547,11 @@ func TestParseConfig_Rules(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			os.Setenv(envRulesDir, tc.path)
-			defer os.Unsetenv(envRulesDir)
+			t.Setenv(envRulesDir, tc.path)
 
 			for _, file := range tc.files {
 				fname := filepath.Join(tc.path, file.filename)
-				if err := ioutil.WriteFile(fname, []byte(file.data), 0o666); err != nil {
+				if err := os.WriteFile(fname, []byte(file.data), 0o666); err != nil {
 					t.Fatal(err)
 				}
 				defer os.Remove(fname)
@@ -579,7 +575,7 @@ func TestParseConfig_Rules(t *testing.T) {
 			}
 
 			for i, file := range tc.files {
-				var contents map[string]interface{}
+				var contents map[string]any
 				if err := json.Unmarshal([]byte(file.data), &contents); err != nil {
 					t.Fatal(err)
 				}
@@ -630,7 +626,7 @@ func TestParseConfig_Rules(t *testing.T) {
 					}
 				}
 
-				body, ok := contents["body"].(map[string]interface{})
+				body, ok := contents["body"].(map[string]any)
 				if !ok {
 					continue
 				}
@@ -640,7 +636,7 @@ func TestParseConfig_Rules(t *testing.T) {
 						rules[i].ElasticsearchBody, body)
 				}
 
-				outputs, ok := contents["outputs"].([]interface{})
+				outputs, ok := contents["outputs"].([]any)
 				if !ok {
 					continue
 				}

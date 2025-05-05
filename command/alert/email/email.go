@@ -23,8 +23,9 @@ import (
 	"strings"
 
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"golang.org/x/xerrors"
+
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 const (
@@ -127,7 +128,7 @@ func (e *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 
 // buildMessage creates an email message from the provided
 // records. It will return a non-nil error if an error occurs.
-func (e *AlertMethod) buildMessage(rule string, records []*alert.Record) (string, error) { // nolint: funlen
+func (e *AlertMethod) buildMessage(rule string, records []*alert.Record) (string, error) {
 	alert := struct {
 		Name    string
 		Records []*alert.Record
@@ -138,8 +139,8 @@ func (e *AlertMethod) buildMessage(rule string, records []*alert.Record) (string
 
 	funcs := template.FuncMap{
 		"tabsAndLines": func(text string) template.HTML {
-			escaped := strings.Replace(template.HTMLEscapeString(text), "\n", "<br>", -1)
-			return template.HTML(strings.Replace(escaped, " ", "&nbsp;", -1)) // nolint: gosec
+			escaped := strings.ReplaceAll(template.HTMLEscapeString(text), "\n", "<br>")
+			return template.HTML(strings.ReplaceAll(escaped, " ", "&nbsp;")) //nolint:gosec
 		},
 	}
 

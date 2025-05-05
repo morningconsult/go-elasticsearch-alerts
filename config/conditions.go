@@ -43,7 +43,7 @@ const (
 
 // Condition is an optional parameter that can be used to limit
 // when alerts are triggered.
-type Condition map[string]interface{}
+type Condition map[string]any
 
 func (c Condition) field() string {
 	return c[keyField].(string)
@@ -158,7 +158,7 @@ func (c Condition) validateMultiOperators() []error {
 }
 
 // ConditionsMet returns true if the response JSON meets the given conditions.
-func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions []Condition) bool {
+func ConditionsMet(logger hclog.Logger, resp map[string]any, conditions []Condition) bool {
 	for _, condition := range conditions {
 		matches := utils.GetAll(resp, condition.field())
 
@@ -181,7 +181,7 @@ func ConditionsMet(logger hclog.Logger, resp map[string]interface{}, conditions 
 	return true
 }
 
-func allSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
+func allSatisfied(logger hclog.Logger, matches []any, condition Condition) bool {
 	for _, match := range matches {
 		sat := satisfied(logger, match, condition)
 		if !sat {
@@ -192,7 +192,7 @@ func allSatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 	return true
 }
 
-func anySatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
+func anySatisfied(logger hclog.Logger, matches []any, condition Condition) bool {
 	for _, match := range matches {
 		sat := satisfied(logger, match, condition)
 		if sat {
@@ -203,7 +203,7 @@ func anySatisfied(logger hclog.Logger, matches []interface{}, condition Conditio
 	return false
 }
 
-func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Condition) bool {
+func noneSatisfied(logger hclog.Logger, matches []any, condition Condition) bool {
 	for _, match := range matches {
 		sat := satisfied(logger, match, condition)
 		if sat {
@@ -214,7 +214,7 @@ func noneSatisfied(logger hclog.Logger, matches []interface{}, condition Conditi
 	return true
 }
 
-func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool {
+func satisfied(logger hclog.Logger, match any, condition Condition) bool {
 	switch v := match.(type) {
 	case string:
 		return stringSatisfied(v, condition)
@@ -223,7 +223,7 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 	case bool:
 		return boolSatisfied(v, condition)
 	default:
-		fields := make([]interface{}, 0, 4)
+		fields := make([]any, 0, 4)
 		if f, ok := condition[keyField].(string); ok {
 			fields = append(fields, "field", f)
 		}
@@ -234,13 +234,13 @@ func satisfied(logger hclog.Logger, match interface{}, condition Condition) bool
 			fields = append(fields, "value", match)
 		}
 
-		logger.Error("Value of field in Elasticsearch response is not a string, number, or boolean. Ignoring condition for this value", fields...) // nolint: lll
+		logger.Error("Value of field in Elasticsearch response is not a string, number, or boolean. Ignoring condition for this value", fields...) //nolint:lll
 
 		return true
 	}
 }
 
-func numberSatisfied(k json.Number, condition Condition) bool { // nolint: gocyclo
+func numberSatisfied(k json.Number, condition Condition) bool { //nolint:gocyclo,gocognit
 	d := decimal.RequireFromString(k.String())
 
 	dec := decimal.RequireFromString
