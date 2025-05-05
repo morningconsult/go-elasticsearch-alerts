@@ -18,6 +18,8 @@ import (
 
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/mitchellh/mapstructure"
+	"golang.org/x/xerrors"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/email"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
@@ -25,7 +27,6 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/sns"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/query"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
-	"golang.org/x/xerrors"
 )
 
 func buildQueryHandlers(

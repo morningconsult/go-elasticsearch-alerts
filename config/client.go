@@ -16,8 +16,8 @@ package config
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"net/http"
+	"os"
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"golang.org/x/xerrors"
@@ -82,19 +82,18 @@ func (c *Config) NewESClient() (*http.Client, error) {
 	}
 
 	// Load CA certificate
-	caCert, err := ioutil.ReadFile(c.Elasticsearch.Client.CACert)
+	caCert, err := os.ReadFile(c.Elasticsearch.Client.CACert)
 	if err != nil {
 		return nil, xerrors.Errorf("error reading CA certificate file: %w", err)
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig := &tls.Config{ // nolint: gosec
+	tlsConfig := &tls.Config{ //nolint:gosec
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      caCertPool,
 		ServerName:   c.Elasticsearch.Client.ServerName,
 	}
-	tlsConfig.BuildNameToCertificate()
 	client.Transport.(*http.Transport).TLSClientConfig = tlsConfig
 	return client, nil
 }

@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	consul "github.com/hashicorp/consul/api"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 

@@ -15,7 +15,6 @@ package email
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
@@ -82,11 +81,9 @@ func TestNewAlertMethod(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			switch tc.name {
 			case "password-set-in-env":
-				os.Setenv(EnvEmailAuthPassword, "random-password")
-				defer os.Unsetenv(EnvEmailAuthPassword)
+				t.Setenv(EnvEmailAuthPassword, "random-password")
 			case "username-set-in-env":
-				os.Setenv(EnvEmailAuthUsername, "test@gmail.com")
-				defer os.Unsetenv(EnvEmailAuthUsername)
+				t.Setenv(EnvEmailAuthUsername, "test@gmail.com")
 			default:
 			}
 			_, err := NewAlertMethod(tc.config)

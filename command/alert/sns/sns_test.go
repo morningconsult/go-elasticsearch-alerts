@@ -18,6 +18,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
@@ -165,7 +166,7 @@ func TestAlertMethod_renderTemplate(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			a := &AlertMethod{
-				template: template.Must(template.New("test").Funcs(template.FuncMap(sprig.FuncMap())).Parse(tc.template)),
+				template: template.Must(template.New("test").Funcs(sprig.FuncMap()).Parse(tc.template)),
 			}
 			msg, err := a.renderTemplate("TEST ERROR ALERT", tc.records)
 			if tc.expectErr {

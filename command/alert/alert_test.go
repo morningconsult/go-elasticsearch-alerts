@@ -70,7 +70,7 @@ func (e *errorAlertMethod) Write(ctx context.Context, rule string, records []*Re
 func TestRun(t *testing.T) {
 	outputCh := make(chan *Alert, 1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 
 	ah := NewHandler(&HandlerConfig{
 		Logger: hclog.NewNullLogger(),
@@ -147,7 +147,7 @@ func TestRun(t *testing.T) {
 func TestRunError(t *testing.T) {
 	outputCh := make(chan *Alert, 1)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 
 	buf := new(bytes.Buffer)
 	logger := hclog.New(&hclog.LoggerOptions{

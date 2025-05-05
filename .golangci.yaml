@@ -41,6 +41,10 @@ linters:
         - fmt.Fprint(net/http.ResponseWriter)
         - fmt.Fprintf(net/http.ResponseWriter)
         - fmt.Fprintln(net/http.ResponseWriter)
+        - os.Setenv
+        - os.Unsetenv
+        - os.Remove
+        - (*github.com/hashicorp/consul/api.Lock).Unlock
 
         # Handled by errchkjson
         - encoding/json.Marshal
@@ -76,6 +80,8 @@ linters:
       - linters: [revive]
         path: _test\.go
         text: unused-parameter
+      - linters: [revive]
+        text: package-comments
 
       # Duplicates of errcheck
       - linters: [gosec]

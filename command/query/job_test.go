@@ -30,6 +30,7 @@ import (
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	hclog "github.com/hashicorp/go-hclog"
 	uuid "github.com/hashicorp/go-uuid"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
@@ -54,7 +55,7 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
@@ -68,7 +69,7 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
@@ -82,7 +83,7 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
@@ -96,7 +97,7 @@ func TestNewQueryHandler(t *testing.T) {
 				Name:         "Test Errors",
 				ESUrl:        ElasticsearchURL,
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
@@ -111,7 +112,7 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"ayy": "lmao",
 				},
 				Schedule: "@every 10m",
@@ -126,7 +127,7 @@ func TestNewQueryHandler(t *testing.T) {
 				ESUrl:        ElasticsearchURL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"ayy": "lmao",
 				},
 				Schedule: "blah",
@@ -161,19 +162,15 @@ func TestBuildHTTPRequestFunc(t *testing.T) {
 		username := "foo@bar.com"
 		password := "baz"
 
-		oldUser := os.Getenv(envESBasicAuthUsername)
-		defer os.Setenv(envESBasicAuthUsername, oldUser)
-		os.Setenv(envESBasicAuthUsername, username)
+		t.Setenv(envESBasicAuthUsername, username)
 
-		oldPassword := os.Getenv(envESBasicAuthPassword)
-		defer os.Setenv(envESBasicAuthPassword, oldPassword)
-		os.Setenv(envESBasicAuthPassword, password)
+		t.Setenv(envESBasicAuthPassword, password)
 
 		reqFunc, err := buildHTTPRequestFunc()
 		if err != nil {
 			t.Fatal(err)
 		}
-		req, err := reqFunc(context.Background(), http.MethodGet, "http://example.com", nil)
+		req, err := reqFunc(t.Context(), http.MethodGet, "http://example.com", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -192,12 +189,9 @@ func TestBuildHTTPRequestFunc(t *testing.T) {
 	t.Run("username-and-password-not-both-set", func(t *testing.T) {
 		username := "foo@bar.com"
 
-		oldUser := os.Getenv(envESBasicAuthUsername)
-		defer os.Setenv(envESBasicAuthUsername, oldUser)
-		os.Setenv(envESBasicAuthUsername, username)
+		t.Setenv(envESBasicAuthUsername, username)
 
-		oldPassword := os.Getenv(envESBasicAuthPassword)
-		defer os.Setenv(envESBasicAuthPassword, oldPassword)
+		t.Setenv(envESBasicAuthPassword, "")
 		os.Unsetenv(envESBasicAuthPassword)
 
 		_, err := buildHTTPRequestFunc()
@@ -224,15 +218,15 @@ func TestPutTemplate(t *testing.T) {
 	cases := []struct {
 		name   string
 		status int
-		data   interface{}
+		data   any
 		err    bool
 	}{
 		{badURL, 200, "lol", true},
 		{"non-200-response", 500, "", true},
 		{"non-json-response", 200, "not a json!!", true},
-		{"no-acknowledged-field", 200, map[string]interface{}{"ayy": "lmao"}, true},
-		{"non-bool-acknowledged-field", 200, map[string]interface{}{"acknowledged": "true"}, true},
-		{"success", 200, map[string]interface{}{"acknowledged": true}, false},
+		{"no-acknowledged-field", 200, map[string]any{"ayy": "lmao"}, true},
+		{"non-bool-acknowledged-field", 200, map[string]any{"acknowledged": "true"}, true},
+		{"success", 200, map[string]any{"acknowledged": true}, false},
 	}
 
 	for _, tc := range cases {
@@ -249,7 +243,7 @@ func TestPutTemplate(t *testing.T) {
 					var data []byte
 					var err error
 					switch v := tc.data.(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						data, err = json.Marshal(v)
 						if err != nil {
 							t.Fatal(err)
@@ -278,7 +272,7 @@ func TestPutTemplate(t *testing.T) {
 				newRequest: reqFunc,
 			}
 
-			err := qh.PutTemplate(context.Background())
+			err := qh.PutTemplate(t.Context())
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -297,7 +291,7 @@ func TestGetNextQuery(t *testing.T) {
 	cases := []struct {
 		name   string
 		status int
-		data   interface{}
+		data   any
 		err    bool
 	}{
 		{
@@ -321,7 +315,7 @@ func TestGetNextQuery(t *testing.T) {
 		{
 			"no-hits-field",
 			200,
-			map[string]interface{}{
+			map[string]any{
 				"ayy": "lmao",
 			},
 			true,
@@ -329,12 +323,12 @@ func TestGetNextQuery(t *testing.T) {
 		{
 			"non-string-next-query-field",
 			200,
-			map[string]interface{}{
-				"hits": map[string]interface{}{
-					"hits": []interface{}{
-						map[string]interface{}{
-							"_source": map[string]interface{}{
-								"next_query": map[string]interface{}{
+			map[string]any{
+				"hits": map[string]any{
+					"hits": []any{
+						map[string]any{
+							"_source": map[string]any{
+								"next_query": map[string]any{
 									"ayy": "lmao",
 								},
 							},
@@ -347,11 +341,11 @@ func TestGetNextQuery(t *testing.T) {
 		{
 			"non-timestamp-next-query-field",
 			200,
-			map[string]interface{}{
-				"hits": map[string]interface{}{
-					"hits": []interface{}{
-						map[string]interface{}{
-							"_source": map[string]interface{}{
+			map[string]any{
+				"hits": map[string]any{
+					"hits": []any{
+						map[string]any{
+							"_source": map[string]any{
 								"next_query": "not a timestamp!!!",
 							},
 						},
@@ -363,11 +357,11 @@ func TestGetNextQuery(t *testing.T) {
 		{
 			"success",
 			200,
-			map[string]interface{}{
-				"hits": map[string]interface{}{
-					"hits": []interface{}{
-						map[string]interface{}{
-							"_source": map[string]interface{}{
+			map[string]any{
+				"hits": map[string]any{
+					"hits": []any{
+						map[string]any{
+							"_source": map[string]any{
 								"next_query": expected,
 							},
 						},
@@ -392,7 +386,7 @@ func TestGetNextQuery(t *testing.T) {
 					var data []byte
 					var err error
 					switch v := tc.data.(type) {
-					case map[string]interface{}:
+					case map[string]any:
 						data, err = json.Marshal(v)
 						if err != nil {
 							t.Fatal(err)
@@ -420,7 +414,7 @@ func TestGetNextQuery(t *testing.T) {
 				ESUrl:        u,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"hello": "world",
 				},
 				Schedule: "@every 10m",
@@ -429,7 +423,7 @@ func TestGetNextQuery(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			timestamp, err := qh.getNextQuery(context.Background())
+			timestamp, err := qh.getNextQuery(t.Context())
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -449,11 +443,11 @@ func TestGetNextQuery(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	queryIndex := randomUUID(t)
-	expected := map[string]interface{}{
-		"hits": map[string]interface{}{
-			"hits": []interface{}{
-				map[string]interface{}{
-					"_source": map[string]interface{}{
+	expected := map[string]any{
+		"hits": map[string]any{
+			"hits": []any{
+				map[string]any{
+					"_source": map[string]any{
 						"hello": "world",
 					},
 				},
@@ -514,9 +508,9 @@ func TestRun(t *testing.T) {
 		ESUrl:        ts.URL,
 		QueryIndex:   queryIndex,
 		AlertMethods: []alert.Method{fileAM},
-		QueryData: map[string]interface{}{
-			"query": map[string]interface{}{
-				"term": map[string]interface{}{
+		QueryData: map[string]any{
+			"query": map[string]any{
+				"term": map[string]any{
 					"hello": "world",
 				},
 			},
@@ -528,7 +522,7 @@ func TestRun(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Second)
 	defer cancel()
 
 	outputCh := make(chan *alert.Alert, 1)
@@ -605,7 +599,7 @@ func TestSetNextQuery(t *testing.T) {
 				ESUrl:        ts.URL,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"query": "test",
 				},
 				Schedule: "@every 10s",
@@ -614,7 +608,7 @@ func TestSetNextQuery(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = qh.setNextQuery(context.Background(), time.Now().Add(1*time.Hour), nil)
+			err = qh.setNextQuery(t.Context(), time.Now().Add(1*time.Hour), nil)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -629,11 +623,11 @@ func TestSetNextQuery(t *testing.T) {
 }
 
 func TestQuery(t *testing.T) {
-	expected := map[string]interface{}{"some": "data"}
+	expected := map[string]any{"some": "data"}
 	cases := []struct {
 		name   string
 		status int
-		data   interface{}
+		data   any
 		err    bool
 	}{
 		{badURL, 200, "lol", true},
@@ -657,7 +651,7 @@ func TestQuery(t *testing.T) {
 				ESUrl:        u,
 				QueryIndex:   "test-*",
 				AlertMethods: []alert.Method{&file.AlertMethod{}},
-				QueryData: map[string]interface{}{
+				QueryData: map[string]any{
 					"hello": "world",
 				},
 				Schedule: "@every 10m",
@@ -666,7 +660,7 @@ func TestQuery(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			data, err := qh.query(context.Background())
+			data, err := qh.query(t.Context())
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -702,7 +696,7 @@ func TestNewRequestErrors(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{newRequest: reqFunc}
-			_, err := qh.newRequest(context.Background(), tc.method, "http://example.com", bytes.NewBuffer(tc.payload))
+			_, err := qh.newRequest(t.Context(), tc.method, "http://example.com", bytes.NewBuffer(tc.payload))
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -723,7 +717,7 @@ func TestCanceledContext(t *testing.T) {
 		ESUrl:        "http://example.com",
 		QueryIndex:   "test-*",
 		AlertMethods: []alert.Method{&file.AlertMethod{}},
-		QueryData: map[string]interface{}{
+		QueryData: map[string]any{
 			"hello": "world",
 		},
 		Schedule: "@every 10m",
@@ -732,7 +726,7 @@ func TestCanceledContext(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	outputCh := make(chan *alert.Alert, 1)
 	doneCh := make(chan struct{})
 	cancel()
@@ -764,7 +758,7 @@ func randomUUID(t *testing.T) string {
 	return id
 }
 
-func newTestServer(status int, payload interface{}) *httptest.Server {
+func newTestServer(status int, payload any) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
@@ -776,7 +770,7 @@ func newTestServer(status int, payload interface{}) *httptest.Server {
 			var data []byte
 			var err error
 			switch v := payload.(type) {
-			case map[string]interface{}:
+			case map[string]any:
 				data, err = json.Marshal(v)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)

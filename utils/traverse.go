@@ -14,87 +14,30 @@
 package utils
 
 import (
-	"regexp"
-	"strconv"
 	"strings"
 )
-
-var re = regexp.MustCompile(`\[[0-9]*\]$`)
-
-// Get functions much like JavaScript's lodash.get() function.
-// It traverses the JSON via the provided path and returns the
-// element that matches the path. If no match is found, it
-// returns nil. Note that the returned value is an interface{};
-// therefore you may have to cast it to some other type.
-func Get(json map[string]interface{}, path string) interface{} {
-	return get(strings.Split(path, "."), json)
-}
-
-func get(indices []string, data interface{}) interface{} {
-	var err error
-
-	if len(indices) < 1 {
-		return data
-	}
-
-	m, ok := data.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
-	first := indices[0]
-	i := -1
-	if idx := re.FindString(first); idx != "" {
-		i, err = strconv.Atoi(strings.Trim(strings.Trim(idx, "["), "]"))
-		if err != nil {
-			return nil
-		}
-		first = first[:strings.Index(first, "[")]
-	}
-
-	elem := m[first]
-	if i == -1 {
-		return get(dequeue(indices), elem)
-	}
-
-	list, ok := elem.([]interface{})
-	if !ok {
-		return nil
-	}
-	if len(list) < i+1 {
-		return nil
-	}
-	return get(dequeue(indices), list[i])
-}
-
-func dequeue(is []string) []string {
-	if len(is) < 2 {
-		return []string{}
-	}
-	return is[1:]
-}
 
 // GetAll recursively traverses the JSON via the provided path
 // and returns all elements matching the path. If no elements
 // are found, it will return [<nil>].
-func GetAll(json map[string]interface{}, path string) []interface{} {
+func GetAll(json map[string]any, path string) []any {
 	raw := getall(0, strings.Split(path, "."), json, "")
-	if v, ok := raw.([]interface{}); ok {
+	if v, ok := raw.([]any); ok {
 		return v
 	}
-	return []interface{}{raw}
+	return []any{raw}
 }
 
-func getall(i int, stack []string, elem interface{}, keychain string) interface{} { // nolint: gocyclo
+func getall(i int, stack []string, elem any, keychain string) any { //nolint:gocyclo,gocognit
 	if i > len(stack)-1 {
-		if list, ok := elem.([]interface{}); ok {
-			var mod []interface{}
+		if list, ok := elem.([]any); ok {
+			var mod []any
 			for _, e := range list {
 				mod = append(mod, addkey(e, keychain))
 			}
 			return mod
 		}
-		if m, ok := elem.(map[string]interface{}); ok {
+		if m, ok := elem.(map[string]any); ok {
 			return addkey(m, keychain)
 		}
 		return elem
@@ -102,7 +45,7 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 
 	key := stack[i]
 
-	if m, ok := elem.(map[string]interface{}); ok {
+	if m, ok := elem.(map[string]any); ok {
 		v, ok := m[key]
 		if !ok {
 			return nil
@@ -111,15 +54,15 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 		return getall(i, stack, v, keychain)
 	}
 
-	buckets, ok := elem.([]interface{})
+	buckets, ok := elem.([]any)
 	if !ok {
 		return nil
 	}
 
-	var mod []interface{}
+	var mod []any
 	for _, item := range buckets {
 		kc := keychain
-		if e, ok := item.(map[string]interface{}); ok {
+		if e, ok := item.(map[string]any); ok {
 			if k, ok := e["key"].(string); ok {
 				if kc == "" {
 					kc = k
@@ -131,9 +74,9 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 
 		a := getall(i, stack, item, kc)
 		switch v := a.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			mod = append(mod, v)
-		case []interface{}:
+		case []any:
 			mod = append(mod, v...)
 		case nil:
 		default:
@@ -143,8 +86,8 @@ func getall(i int, stack []string, elem interface{}, keychain string) interface{
 	return mod
 }
 
-func addkey(i interface{}, keychain string) interface{} {
-	obj, ok := i.(map[string]interface{})
+func addkey(i any, keychain string) any {
+	obj, ok := i.(map[string]any)
 	if !ok {
 		return i
 	}

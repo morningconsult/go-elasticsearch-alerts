@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,13 +30,12 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	multierror "github.com/hashicorp/go-multierror"
 	uuid "github.com/hashicorp/go-uuid"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 	"github.com/robfig/cron"
 	"golang.org/x/xerrors"
 
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
+	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
 )
 
 const (
@@ -50,7 +48,7 @@ const (
 )
 
 // QueryHandlerConfig is passed as an argument to NewQueryHandler().
-type QueryHandlerConfig struct { // nolint: golint
+type QueryHandlerConfig struct { //nolint:revive
 	// Name is the name of the rule. This should come from
 	// the 'name' field of the rule configuration file
 	Name string
@@ -71,7 +69,7 @@ type QueryHandlerConfig struct { // nolint: golint
 	// QueryData is the payload to be included in the query. This
 	// should come from the 'body' field of the rule configuration
 	// file
-	QueryData map[string]interface{}
+	QueryData map[string]any
 
 	// QueryIndex is the Elasticsearch index to be queried. This
 	// should come from the 'index' field of the rule configuration
@@ -103,7 +101,7 @@ type QueryHandlerConfig struct { // nolint: golint
 // QueryHandler performs the defined Elasticsearch query at the
 // specified interval and sends results to the AlertHandler if
 // there are any.
-type QueryHandler struct { // nolint: golint
+type QueryHandler struct { //nolint:revive
 	// StopCh terminates the Run() method when closed
 	StopCh chan struct{}
 
@@ -114,7 +112,7 @@ type QueryHandler struct { // nolint: golint
 	client       *http.Client
 	esURL        string
 	queryIndex   string
-	queryData    map[string]interface{}
+	queryData    map[string]any
 	schedule     cron.Schedule
 	bodyField    string
 	filters      []string
@@ -198,7 +196,7 @@ func validateConfig(config *QueryHandlerConfig) error {
 		allErrors = multierror.Append(allErrors, xerrors.New("at least one alert method must be specified"))
 	}
 
-	if config.QueryData == nil || len(config.QueryData) < 1 {
+	if len(config.QueryData) < 1 {
 		allErrors = multierror.Append(allErrors, xerrors.New("no query body provided"))
 	}
 	return allErrors.ErrorOrNil()
@@ -226,7 +224,7 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 	password := os.Getenv(envESBasicAuthPassword)
 
 	if username != "" || password != "" {
-		if !(username != "" && password != "") {
+		if username == "" || password == "" {
 			return nil, xerrors.Errorf(
 				"both %s and %s should be set when using basic auth",
 				envESBasicAuthUsername,
@@ -259,7 +257,7 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 // equals the next time the query shall be executed per the provided
 // cron schedule. It will only execute the query if distLock.Acquired()
 // is true.
-func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
+func (q *QueryHandler) Run( //nolint:gocyclo,gocognit
 	ctx context.Context,
 	outputCh chan *alert.Alert,
 	wg *sync.WaitGroup,
@@ -306,7 +304,7 @@ func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
 	}
 
 	for {
-		hits := []map[string]interface{}{}
+		hits := []map[string]any{}
 		select {
 		case <-ctx.Done():
 			return
@@ -360,7 +358,7 @@ func (q *QueryHandler) Run( // nolint: gocyclo, funlen, gocognit
 // will serve as an alias for the state indices. The state indices
 // will be named 'go-es-alerts-status-{date}'; therefore, this template
 // enables searching all state indices via this alias.
-func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funlen
+func (q *QueryHandler) PutTemplate(ctx context.Context) error {
 	payload := fmt.Sprintf(`{
     "index_patterns": [
       "%s-status-%s-*"
@@ -443,7 +441,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funle
 			resp.Status, q.readErrRespBody(resp))
 	}
 
-	var data map[string]interface{}
+	var data map[string]any
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return xerrors.Errorf("error JSON-decoding response body: %v", err)
 	}
@@ -466,7 +464,7 @@ func (q *QueryHandler) PutTemplate(ctx context.Context) error { // nolint: funle
 // created document belonging to this rule. It then attempts to
 // parse the 'next_query' field in order to inform the Run() loop
 // when to next execute the query.
-func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { // nolint: funlen
+func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) {
 	payload := fmt.Sprintf(`{
     "query": {
       "bool": {
@@ -509,26 +507,29 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { /
 		return nil, xerrors.Errorf("received non-200 response status (status: %q)", resp.Status)
 	}
 
-	data := make(map[string]interface{})
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil { // nolint: govet
+	var data struct {
+		Hits struct {
+			Hits []struct {
+				Source struct {
+					NextQuery string `json:"next_query"`
+				} `json:"_source"`
+			} `json:"hits"`
+		} `json:"hits"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil { //nolint:govet
 		return nil, xerrors.Errorf("error JSON-decoding HTTP response: %v", err)
 	}
 
-	if len(data) < 1 {
+	if len(data.Hits.Hits) < 1 {
 		return nil, xerrors.New("no records found for this rule")
 	}
 
-	nextRaw := utils.Get(data, "hits.hits[0]._source.next_query")
-	if nextRaw == nil {
+	next := data.Hits.Hits[0].Source.NextQuery
+	if next == "" {
 		return nil, xerrors.New("field 'next_query' not found")
 	}
 
-	nextString, ok := nextRaw.(string)
-	if !ok {
-		return nil, xerrors.New("'next_query' value could not be cast to string")
-	}
-
-	t, err := time.Parse(defaultTimestampFormat, nextString)
+	t, err := time.Parse(defaultTimestampFormat, next)
 	if err != nil {
 		return nil, xerrors.Errorf("error parsing time: %v", err)
 	}
@@ -538,14 +539,14 @@ func (q *QueryHandler) getNextQuery(ctx context.Context) (*time.Time, error) { /
 // setNextQuery creates a new document in a state index to
 // inform the Run() loop when to next execute the query if
 // the process gets restarted.
-func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []map[string]interface{}) error {
+func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []map[string]any) error {
 	status := struct {
-		Time  string                   `json:"@timestamp"`
-		Name  string                   `json:"rule_name"`
-		Next  string                   `json:"next_query"`
-		Host  string                   `json:"hostname"`
-		NHits int                      `json:"hits_count"`
-		Hits  []map[string]interface{} `json:"hits,omitempty"`
+		Time  string           `json:"@timestamp"`
+		Name  string           `json:"rule_name"`
+		Next  string           `json:"next_query"`
+		Host  string           `json:"hostname"`
+		NHits int              `json:"hits_count"`
+		Hits  []map[string]any `json:"hits,omitempty"`
 	}{
 		Time:  time.Now().Format(defaultTimestampFormat),
 		Name:  q.cleanedName(),
@@ -573,7 +574,7 @@ func (q *QueryHandler) setNextQuery(ctx context.Context, ts time.Time, hits []ma
 	return nil
 }
 
-func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error) {
+func (q *QueryHandler) query(ctx context.Context) (map[string]any, error) {
 	payload := bytes.Buffer{}
 	if err := json.NewEncoder(&payload).Encode(&q.queryData); err != nil {
 		return nil, xerrors.Errorf("error JSON-encoding Elasticsearch query body: %v", err)
@@ -593,7 +594,7 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
 
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	if err := dec.Decode(&data); err != nil {
 		return nil, xerrors.Errorf("error JSON-decoding Elasticsearch response: %v", err)
 	}
@@ -601,7 +602,7 @@ func (q *QueryHandler) query(ctx context.Context) (map[string]interface{}, error
 }
 
 func (q *QueryHandler) cleanedName() string {
-	return strings.Replace(strings.ToLower(q.name), " ", "-", -1)
+	return strings.ReplaceAll(strings.ToLower(q.name), " ", "-")
 }
 
 func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, data io.Reader) (*http.Response, error) {
@@ -615,7 +616,7 @@ func (q *QueryHandler) makeRequest(ctx context.Context, method, url string, data
 func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
 	switch resp.Header.Get("Content-Type") {
 	case "application/json":
-		var data map[string]interface{}
+		var data map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 			return ""
 		}
@@ -626,7 +627,7 @@ func (q *QueryHandler) readErrRespBody(resp *http.Response) string {
 		}
 		return string(buf)
 	default:
-		data, err := ioutil.ReadAll(resp.Body)
+		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return ""
 		}

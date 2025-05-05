@@ -43,14 +43,14 @@ type OutputConfig struct {
 	// The content of this field is specific to the output type.
 	// Please refer to the README for more detailed information
 	// on this field
-	Config map[string]interface{} `json:"config"`
+	Config map[string]any `json:"config"`
 }
 
 func (o OutputConfig) validate() error {
 	if o.Type == "" {
 		return errors.New("all outputs must have a type specified ('output.type')")
 	}
-	if o.Config == nil || len(o.Config) < 1 {
+	if len(o.Config) < 1 {
 		return errors.New("all outputs must have a config field ('output.config')")
 	}
 	return nil
@@ -100,11 +100,11 @@ type RuleConfig struct {
 	// alert should send when querying Elasticsearch. This
 	// value should come from the 'body' field of the
 	// rule configuration file
-	ElasticsearchBodyRaw interface{} `json:"body"`
+	ElasticsearchBodyRaw any `json:"body"`
 
 	// ElasticsearchBody is the typed query that this alert
 	// will send when querying Elasticsearch
-	ElasticsearchBody map[string]interface{} `json:"-"`
+	ElasticsearchBody map[string]any `json:"-"`
 
 	// Filters are the additional fields on which the application
 	// should group query responses before sending alerts. This
@@ -120,7 +120,7 @@ type RuleConfig struct {
 	Conditions []Condition
 }
 
-func (rule *RuleConfig) validate() error { // nolint: gocyclo
+func (rule *RuleConfig) validate() error { //nolint:gocyclo,gocognit
 	if rule.Name == "" {
 		return errors.New("no 'name' field found")
 	}
@@ -251,7 +251,7 @@ func ParseConfig() (*Config, error) {
 	}
 	if cfg.Distributed {
 		if cfg.Consul == nil {
-			return nil, xerrors.Errorf("no field 'consul' found in main configuration file %s (required when 'distributed' is true)", configFile) // nolint: lll
+			return nil, xerrors.Errorf("no field 'consul' found in main configuration file %s (required when 'distributed' is true)", configFile) //nolint:lll
 		}
 		if err = cfg.Consul.validate(); err != nil {
 			return nil, xerrors.Errorf("error in main configuration file %s: %v", configFile, err)
@@ -320,12 +320,12 @@ func ParseRules() ([]RuleConfig, error) {
 	return rules, nil
 }
 
-func parseBody(v interface{}) (map[string]interface{}, error) {
+func parseBody(v any) (map[string]any, error) {
 	switch b := v.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		return b, nil
 	case string:
-		var body map[string]interface{}
+		var body map[string]any
 		if err := json.NewDecoder(bytes.NewBufferString(b)).Decode(&body); err != nil {
 			return nil, xerrors.Errorf("error JSON-decoding 'body' field: %v", err)
 		}

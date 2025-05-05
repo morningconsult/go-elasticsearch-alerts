@@ -19,138 +19,26 @@ import (
 	"testing"
 )
 
-func TestGet(t *testing.T) {
-	cases := []struct {
-		name   string
-		json   map[string]interface{}
-		path   string
-		output interface{}
-	}{
-		{
-			"map",
-			map[string]interface{}{
-				"hello": map[string]interface{}{
-					"darkness": map[string]interface{}{
-						"my": map[string]interface{}{
-							"old": "friend",
-						},
-					},
-				},
-			},
-			"hello.darkness.my",
-			map[string]interface{}{
-				"old": "friend",
-			},
-		},
-		{
-			"array",
-			map[string]interface{}{
-				"hello": map[string]interface{}{
-					"darkness": map[string]interface{}{
-						"my": []interface{}{
-							map[string]interface{}{
-								"old": "friend",
-							},
-							map[string]interface{}{
-								"ive": "come",
-							},
-							map[string]interface{}{
-								"to": "talk",
-							},
-						},
-					},
-				},
-			},
-			"hello.darkness.my",
-			[]interface{}{
-				map[string]interface{}{
-					"old": "friend",
-				},
-				map[string]interface{}{
-					"ive": "come",
-				},
-				map[string]interface{}{
-					"to": "talk",
-				},
-			},
-		},
-		{
-			"within-array",
-			map[string]interface{}{
-				"hello": map[string]interface{}{
-					"darkness": map[string]interface{}{
-						"my": []interface{}{
-							map[string]interface{}{
-								"old": "friend",
-							},
-							map[string]interface{}{
-								"ive": "come",
-							},
-							map[string]interface{}{
-								"to": "talk",
-							},
-						},
-					},
-				},
-			},
-			"hello.darkness.my[2].to",
-			"talk",
-		},
-		{
-			"non-int-index",
-			map[string]interface{}{
-				"hello": map[string]interface{}{
-					"darkness": map[string]interface{}{
-						"my": []interface{}{
-							map[string]interface{}{
-								"old": "friend",
-							},
-							map[string]interface{}{
-								"ive": "come",
-							},
-							map[string]interface{}{
-								"to": "talk",
-							},
-						},
-					},
-				},
-			},
-			"hello.darkness.my[a].to",
-			nil,
-		},
-	}
-
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			out := Get(tc.json, tc.path)
-			if !reflect.DeepEqual(out, tc.output) {
-				t.Fatalf("Got:\n%+v\n\nExpected:\n%+v", out, tc.output)
-			}
-		})
-	}
-}
-
 func TestGetAll(t *testing.T) {
 	cases := []struct {
 		name   string
-		json   map[string]interface{}
+		json   map[string]any
 		path   string
-		output interface{}
+		output any
 	}{
 		{
 			"not-nested",
-			map[string]interface{}{
-				"hello": map[string]interface{}{
-					"darkness": map[string]interface{}{
-						"my": []interface{}{
-							map[string]interface{}{
+			map[string]any{
+				"hello": map[string]any{
+					"darkness": map[string]any{
+						"my": []any{
+							map[string]any{
 								"old": "friend",
 							},
-							map[string]interface{}{
+							map[string]any{
 								"ive": "come",
 							},
-							map[string]interface{}{
+							map[string]any{
 								"to": "talk",
 							},
 						},
@@ -158,48 +46,48 @@ func TestGetAll(t *testing.T) {
 				},
 			},
 			"hello.darkness.my",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"old": "friend",
 				},
-				map[string]interface{}{
+				map[string]any{
 					"ive": "come",
 				},
-				map[string]interface{}{
+				map[string]any{
 					"to": "talk",
 				},
 			},
 		},
 		{
 			"nested",
-			map[string]interface{}{
-				"hello": map[string]interface{}{
-					"darkness": map[string]interface{}{
-						"buckets": []interface{}{
-							map[string]interface{}{
+			map[string]any{
+				"hello": map[string]any{
+					"darkness": map[string]any{
+						"buckets": []any{
+							map[string]any{
 								"key": "old",
-								"ayy": map[string]interface{}{
-									"buckets": []interface{}{
-										map[string]interface{}{
+								"ayy": map[string]any{
+									"buckets": []any{
+										map[string]any{
 											"key":   "greg",
 											"hello": "world",
 										},
-										map[string]interface{}{
+										map[string]any{
 											"key":   "friend",
 											"hello": "darkness",
 										},
 									},
 								},
 							},
-							map[string]interface{}{
+							map[string]any{
 								"key": "yesterday",
-								"ayy": map[string]interface{}{
-									"buckets": []interface{}{
-										map[string]interface{}{
+								"ayy": map[string]any{
+									"buckets": []any{
+										map[string]any{
 											"key": "troubles",
 											"far": "away",
 										},
-										map[string]interface{}{
+										map[string]any{
 											"key": "here",
 											"to":  "stay",
 										},
@@ -211,20 +99,20 @@ func TestGetAll(t *testing.T) {
 				},
 			},
 			"hello.darkness.buckets.ayy.buckets",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"key":   "old - greg",
 					"hello": "world",
 				},
-				map[string]interface{}{
+				map[string]any{
 					"key":   "old - friend",
 					"hello": "darkness",
 				},
-				map[string]interface{}{
+				map[string]any{
 					"key": "yesterday - troubles",
 					"far": "away",
 				},
-				map[string]interface{}{
+				map[string]any{
 					"key": "yesterday - here",
 					"to":  "stay",
 				},
@@ -243,86 +131,51 @@ func TestGetAll(t *testing.T) {
 	}
 }
 
-func ExampleGet() {
-	jsonData := map[string]interface{}{
-		"hello": map[string]interface{}{
-			"world": []interface{}{
-				map[string]interface{}{
-					"foo": "example-1",
-					"bar": map[string]interface{}{
-						"bim": "baz",
-					},
-				},
-				map[string]interface{}{
-					"foo": "example-2",
-					"bar": map[string]interface{}{
-						"ping": "pong",
-					},
-				},
-			},
-		},
-	}
-
-	v := Get(jsonData, "hello.world.bar")
-	fmt.Printf("%v\n", v)
-
-	v = Get(jsonData, "hello.world[0].foo")
-	fmt.Printf("%v\n", v)
-
-	v = Get(jsonData, "hello.world[0].bar")
-	fmt.Printf("%#v\n", v)
-
-	// Output:
-	// <nil>
-	// example-1
-	// map[string]interface {}{"bim":"baz"}
-}
-
 func ExampleGetAll() {
-	jsonData := map[string]interface{}{
-		"hits": map[string]interface{}{
-			"hits": []interface{}{
-				map[string]interface{}{
-					"_source": map[string]interface{}{
+	jsonData := map[string]any{
+		"hits": map[string]any{
+			"hits": []any{
+				map[string]any{
+					"_source": map[string]any{
 						"foo": "bar",
 					},
 				},
-				map[string]interface{}{
-					"_source": map[string]interface{}{
+				map[string]any{
+					"_source": map[string]any{
 						"bim": "baz",
 					},
 				},
 			},
 		},
-		"aggregations": map[string]interface{}{
-			"hostname": map[string]interface{}{
-				"buckets": []interface{}{
-					map[string]interface{}{
+		"aggregations": map[string]any{
+			"hostname": map[string]any{
+				"buckets": []any{
+					map[string]any{
 						"key":   "foo",
 						"count": 10,
-						"program": map[string]interface{}{
-							"buckets": []interface{}{
-								map[string]interface{}{
+						"program": map[string]any{
+							"buckets": []any{
+								map[string]any{
 									"key":   "bar",
 									"count": 3,
 								},
-								map[string]interface{}{
+								map[string]any{
 									"key":   "bim",
 									"count": 7,
 								},
 							},
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key":   "hello",
 						"count": 6,
-						"program": map[string]interface{}{
-							"buckets": []interface{}{
-								map[string]interface{}{
+						"program": map[string]any{
+							"buckets": []any{
+								map[string]any{
 									"key":   "world",
 									"count": 2,
 								},
-								map[string]interface{}{
+								map[string]any{
 									"key":   "darkness",
 									"count": 4,
 								},
@@ -334,33 +187,33 @@ func ExampleGetAll() {
 		},
 	}
 
-	expected1 := []interface{}{
-		map[string]interface{}{
+	expected1 := []any{
+		map[string]any{
 			"key":   "foo",
 			"count": 10,
-			"program": map[string]interface{}{
-				"buckets": []interface{}{
-					map[string]interface{}{
+			"program": map[string]any{
+				"buckets": []any{
+					map[string]any{
 						"key":   "bar",
 						"count": 3,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key":   "bim",
 						"count": 7,
 					},
 				},
 			},
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":   "hello",
 			"count": 6,
-			"program": map[string]interface{}{
-				"buckets": []interface{}{
-					map[string]interface{}{
+			"program": map[string]any{
+				"buckets": []any{
+					map[string]any{
 						"key":   "world",
 						"count": 2,
 					},
-					map[string]interface{}{
+					map[string]any{
 						"key":   "darkness",
 						"count": 4,
 					},
@@ -369,20 +222,20 @@ func ExampleGetAll() {
 		},
 	}
 
-	expected2 := []interface{}{
-		map[string]interface{}{
+	expected2 := []any{
+		map[string]any{
 			"key":   "foo - bar",
 			"count": 3,
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":   "foo - bim",
 			"count": 7,
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":   "hello - world",
 			"count": 2,
 		},
-		map[string]interface{}{
+		map[string]any{
 			"key":   "hello - darkness",
 			"count": 4,
 		},

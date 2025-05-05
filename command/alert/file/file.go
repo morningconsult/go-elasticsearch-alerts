@@ -21,8 +21,9 @@ import (
 
 	multierror "github.com/hashicorp/go-multierror"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"golang.org/x/xerrors"
+
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 // Ensure AlertMethod adheres to the alert.Method interface.

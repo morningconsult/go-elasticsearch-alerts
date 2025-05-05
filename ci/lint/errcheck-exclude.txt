@@ -1,7 +1,0 @@
-(io.Closer).Close
-(net/http.ResponseWriter).Write
-os.Setenv
-os.Unsetenv
-os.Remove
-(*github.com/hashicorp/consul/api.Lock).Unlock
-(*os.File).Close

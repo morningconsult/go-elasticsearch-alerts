@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
 	"github.com/morningconsult/go-elasticsearch-alerts/utils"
@@ -31,9 +32,11 @@ const hitsDelimiter = "\n----------------------------------------\n"
 // *QueryHandler.bodyField (if any), and an error if there was an error.
 // If process returns a non-nil error, the other returned values will
 // be nil.
-func (q *QueryHandler) process( // nolint: gocyclo
-	respData map[string]interface{},
-) ([]*alert.Record, []map[string]interface{}, error) {
+//
+//nolint:gocognit
+func (q *QueryHandler) process(
+	respData map[string]any,
+) ([]*alert.Record, []map[string]any, error) {
 	if len(q.conditions) != 0 && !config.ConditionsMet(q.logger.Named("conditions"), respData, q.conditions) {
 		return nil, nil, nil
 	}
@@ -41,7 +44,7 @@ func (q *QueryHandler) process( // nolint: gocyclo
 	records := make([]*alert.Record, 0)
 	for _, filter := range q.filters {
 		elems := utils.GetAll(respData, filter)
-		if elems == nil || len(elems) < 1 {
+		if len(elems) < 1 {
 			continue
 		}
 
@@ -85,11 +88,11 @@ func (q *QueryHandler) process( // nolint: gocyclo
 	return records, hits, nil
 }
 
-func (q *QueryHandler) gatherHits(body []interface{}) ([]string, []map[string]interface{}, error) {
+func (q *QueryHandler) gatherHits(body []any) ([]string, []map[string]any, error) {
 	stringifiedHits := make([]string, 0, len(body))
-	hits := make([]map[string]interface{}, 0, len(body))
+	hits := make([]map[string]any, 0, len(body))
 	for _, elem := range body {
-		hit, ok := elem.(map[string]interface{})
+		hit, ok := elem.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -105,10 +108,10 @@ func (q *QueryHandler) gatherHits(body []interface{}) ([]string, []map[string]in
 	return stringifiedHits, hits, nil
 }
 
-func (q *QueryHandler) gatherFields(elems []interface{}) ([]*alert.Field, error) {
+func (q *QueryHandler) gatherFields(elems []any) ([]*alert.Field, error) {
 	fields := make([]*alert.Field, 0, len(elems))
 	for _, elem := range elems {
-		obj, ok := elem.(map[string]interface{})
+		obj, ok := elem.(map[string]any)
 		if !ok {
 			continue
 		}

@@ -108,7 +108,7 @@ func TestWrite(t *testing.T) {
 					Text:   "{\n    \"ayy\": \"lmao\"\n}",
 				},
 			}
-			ctx := context.Background()
+			ctx := t.Context()
 			err = f.Write(ctx, "test-rule", records)
 			if tc.err {
 				if err == nil {

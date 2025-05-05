@@ -19,11 +19,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
-	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"golang.org/x/xerrors"
+
+	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 )
 
 const defaultTextLimit = 6000
@@ -100,7 +102,7 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 // of the AlertMethod. If there was an error making the
 // HTTP request, it returns a non-nil error.
 func (s *AlertMethod) Write(ctx context.Context, rule string, records []*alert.Record) error {
-	if records == nil || len(records) < 1 {
+	if len(records) < 1 {
 		return nil
 	}
 	return s.post(ctx, s.buildPayload(rule, records))
@@ -144,7 +146,7 @@ func (s *AlertMethod) buildPayload(rule string, records []*alert.Record) payload
 
 			att.Fields = append(att.Fields, field{
 				Title: f.Key,
-				Value: fmt.Sprintf("%d", f.Count),
+				Value: strconv.Itoa(f.Count),
 				Short: short,
 			})
 		}
