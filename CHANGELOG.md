@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Refactor
+- address golangci-lint issues ([#140](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/140))
+
+
+<a name="v0.1.56"></a>
+## [v0.1.56] - 2025-04-23
+### Chore
+- Bump version and update changelog
+
 
 <a name="v0.1.55"></a>
 ## [v0.1.55] - 2025-04-23
@@ -583,7 +592,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.55...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.56...HEAD
+[v0.1.56]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.55...v0.1.56
 [v0.1.55]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.54...v0.1.55
 [v0.1.54]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.53...v0.1.54
 [v0.1.53]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.52...v0.1.53
