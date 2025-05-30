@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Refactor
+- reduce cognitive complexity ([#142](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/142))
+
+
+<a name="v0.1.58"></a>
+## [v0.1.58] - 2025-05-06
+### Chore
+- Bump version and update changelog
+
 
 <a name="v0.1.57"></a>
 ## [v0.1.57] - 2025-05-05
@@ -598,7 +607,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.57...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.58...HEAD
+[v0.1.58]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.57...v0.1.58
 [v0.1.57]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.56...v0.1.57
 [v0.1.56]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.55...v0.1.56
 [v0.1.55]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.54...v0.1.55
