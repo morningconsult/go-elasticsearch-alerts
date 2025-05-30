@@ -125,6 +125,7 @@ func Run() int { //nolint:gocyclo,gocognit
 	}
 }
 
+//nolint:gocognit
 func handleDistOp(
 	ctx context.Context,
 	cfg config.ConsulConfig,

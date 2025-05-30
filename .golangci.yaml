@@ -1,6 +1,5 @@
 version: "2"
 issues:
-  new: true # TODO: Fix issues and remove this config
   max-same-issues: 0
 
 linters:
