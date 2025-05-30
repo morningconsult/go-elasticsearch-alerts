@@ -15,6 +15,7 @@ package config
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"errors"
 	"os"
@@ -233,10 +234,7 @@ func decodeConfigFile(f string) (*Config, error) {
 // ParseConfig parses the main configuration file and returns a
 // *Config instance or a non-nil error if there was an error.
 func ParseConfig() (*Config, error) {
-	configFile := defaultConfigFile
-	if v := os.Getenv(envConfigFile); v != "" {
-		configFile = v
-	}
+	configFile := cmp.Or(os.Getenv(envConfigFile), defaultConfigFile)
 
 	cfg, err := decodeConfigFile(configFile)
 	if err != nil {
@@ -287,37 +285,50 @@ func ParseRules() ([]RuleConfig, error) {
 
 	rules := make([]RuleConfig, 0, len(ruleFiles))
 	for _, ruleFile := range ruleFiles {
-		file, err := os.Open(filepath.Clean(ruleFile))
+		rule, ok, err := parseRuleFile(ruleFile)
 		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, xerrors.Errorf("error opening file: %v", err)
+			return nil, err
 		}
-
-		dec := json.NewDecoder(file)
-		dec.UseNumber()
-
-		var rule RuleConfig
-		if err = dec.Decode(&rule); err != nil {
-			file.Close()
-			return nil, xerrors.Errorf("error JSON-decoding rule file %s: %v", file.Name(), err)
-		}
-		file.Close()
-
-		rule.ElasticsearchBody, err = parseBody(rule.ElasticsearchBodyRaw)
-		if err != nil {
-			return nil, xerrors.Errorf("error in rule file %s: %v", file.Name(), err)
-		}
-		rule.ElasticsearchBodyRaw = nil
-
-		if err := rule.validate(); err != nil {
-			return nil, xerrors.Errorf("error in rule file %s: %v", file.Name(), err)
+		if !ok {
+			continue
 		}
 
 		rules = append(rules, rule)
 	}
 	return rules, nil
+}
+
+func parseRuleFile(ruleFile string) (RuleConfig, bool, error) {
+	var out RuleConfig
+
+	file, err := os.Open(filepath.Clean(ruleFile))
+	if os.IsNotExist(err) {
+		return out, false, nil
+	}
+	if err != nil {
+		return out, false, xerrors.Errorf("error opening file: %v", err)
+	}
+	defer file.Close()
+
+	dec := json.NewDecoder(file)
+	dec.UseNumber()
+
+	var rule RuleConfig
+	if err = dec.Decode(&rule); err != nil {
+		return out, false, xerrors.Errorf("error JSON-decoding rule file %s: %v", file.Name(), err)
+	}
+
+	rule.ElasticsearchBody, err = parseBody(rule.ElasticsearchBodyRaw)
+	if err != nil {
+		return out, false, xerrors.Errorf("error in rule file %s: %v", file.Name(), err)
+	}
+	rule.ElasticsearchBodyRaw = nil
+
+	if err := rule.validate(); err != nil {
+		return out, false, xerrors.Errorf("error in rule file %s: %v", file.Name(), err)
+	}
+
+	return rule, true, nil
 }
 
 func parseBody(v any) (map[string]any, error) {

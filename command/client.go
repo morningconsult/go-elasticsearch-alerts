@@ -14,6 +14,7 @@
 package command
 
 import (
+	"cmp"
 	"os"
 	"strings"
 
@@ -22,36 +23,31 @@ import (
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
 )
 
-func newConsulClient(config config.ConsulConfig) (*consul.Client, error) {
-	consulEnvVars := []string{
-		consul.HTTPAddrEnvName,
-		consul.HTTPTokenEnvName,
-		consul.HTTPSSLEnvName,
-		consul.HTTPCAFile,
-		consul.HTTPCAPath,
-		consul.HTTPClientCert,
-		consul.HTTPClientKey,
-		consul.HTTPTLSServerName,
-		consul.HTTPSSLVerifyEnvName,
-	}
+var consulEnvVars = []string{
+	consul.HTTPAddrEnvName,
+	consul.HTTPTokenEnvName,
+	consul.HTTPSSLEnvName,
+	consul.HTTPCAFile,
+	consul.HTTPCAPath,
+	consul.HTTPClientCert,
+	consul.HTTPClientKey,
+	consul.HTTPTLSServerName,
+	consul.HTTPSSLVerifyEnvName,
+}
 
+func newConsulClient(config config.ConsulConfig) (*consul.Client, error) {
 	for _, env := range consulEnvVars {
 		if os.Getenv(strings.ToUpper(env)) != "" {
 			continue
 		}
 
-		v, ok := config[env]
-		if !ok {
-			v, ok = config[strings.ToLower(env)]
-			if !ok {
-				continue
-			}
+		v := cmp.Or(config[env], config[strings.ToLower(env)])
+		if v == "" {
+			continue
 		}
 
-		if v != "" {
-			os.Setenv(env, v)
-			defer os.Unsetenv(env)
-		}
+		reset := setEnvTemp(env, v)
+		defer reset()
 	}
 
 	client, err := consul.NewClient(&consul.Config{})
@@ -59,4 +55,17 @@ func newConsulClient(config config.ConsulConfig) (*consul.Client, error) {
 		return nil, err
 	}
 	return client, nil
+}
+
+// setEnvTemp sets an environment variable and returns a function that restores
+// the previous state.
+func setEnvTemp(k, v string) (reset func()) {
+	old, ok := os.LookupEnv(k)
+	os.Setenv(k, v)
+
+	if !ok {
+		return func() { os.Unsetenv(k) }
+	}
+
+	return func() { os.Setenv(k, old) }
 }

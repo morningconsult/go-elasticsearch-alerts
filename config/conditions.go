@@ -130,31 +130,42 @@ func (c Condition) validateNumOperators() []error {
 	return errors
 }
 
-func (c Condition) validateMultiOperators() []error {
-	strOrNumOperators := []string{
-		operatorEqual,
-		operatorNotEqual,
-	}
+var strOrNumOperators = []string{
+	operatorEqual,
+	operatorNotEqual,
+}
 
-	errors := make([]error, 0)
+func (c Condition) validateMultiOperators() []error {
+	var errors []error
 	for _, operator := range strOrNumOperators {
-		if raw, ok := c[operator]; ok {
-			switch v := raw.(type) {
-			case json.Number:
-				if string(v) == "" {
-					errors = append(errors, xerrors.Errorf("value of operator '%s' should not be empty", operator))
-				}
-			case string:
-				if v == "" {
-					errors = append(errors, xerrors.Errorf("value of operator '%s' should not be empty", operator))
-				}
-			default:
-				errors = append(errors, xerrors.Errorf("value of operator '%s' should either be a number or a string", operator))
-			}
+		raw, ok := c[operator]
+		if !ok {
+			continue
+		}
+
+		if err := assertOperator(raw, operator); err != nil {
+			errors = append(errors, err)
 		}
 	}
 
 	return errors
+}
+
+func assertOperator(raw any, operator string) error {
+	switch v := raw.(type) {
+	case json.Number:
+		if string(v) == "" {
+			return xerrors.Errorf("value of operator '%s' should not be empty", operator)
+		}
+		return nil
+	case string:
+		if v == "" {
+			return xerrors.Errorf("value of operator '%s' should not be empty", operator)
+		}
+		return nil
+	default:
+		return xerrors.Errorf("value of operator '%s' should either be a number or a string", operator)
+	}
 }
 
 // ConditionsMet returns true if the response JSON meets the given conditions.

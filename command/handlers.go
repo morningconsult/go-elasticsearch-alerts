@@ -35,16 +35,14 @@ func buildQueryHandlers(
 	esClient *http.Client,
 	logger hclog.Logger,
 ) ([]*query.QueryHandler, error) {
-	if len(rules) < 1 {
+	switch {
+	case len(rules) < 1:
 		return nil, xerrors.New("at least one rule must be provided")
-	}
-	if logger == nil {
+	case logger == nil:
 		return nil, xerrors.New("no logger provided")
-	}
-	if esClient == nil {
+	case esClient == nil:
 		return nil, xerrors.New("no HTTP client provided")
-	}
-	if esURL == "" {
+	case esURL == "":
 		return nil, xerrors.New("no URL provided")
 	}
 

@@ -207,45 +207,33 @@ func validateConfig(config *QueryHandlerConfig) error {
 const compatibilityHeader = "application/vnd.elasticsearch+json;compatible-with=7"
 
 func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*http.Request, error), error) {
-	reqFunc := func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
-		req, err := http.NewRequest(method, url, data)
+	username := os.Getenv(envESBasicAuthUsername)
+	password := os.Getenv(envESBasicAuthPassword)
+
+	if (username != "" || password != "") && (username == "" || password == "") {
+		return nil, xerrors.Errorf(
+			"both %s and %s should be set when using basic auth",
+			envESBasicAuthUsername,
+			envESBasicAuthPassword,
+		)
+	}
+
+	f := func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
+		req, err := http.NewRequestWithContext(ctx, method, url, data)
 		if err != nil {
 			return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
+		}
+		if username != "" {
+			req.SetBasicAuth(username, password)
 		}
 		req.Header.Set("Accept", compatibilityHeader)
 		if data != nil {
 			req.Header.Set("Content-Type", compatibilityHeader)
 		}
-		req = req.WithContext(ctx)
 		return req, nil
 	}
 
-	username := os.Getenv(envESBasicAuthUsername)
-	password := os.Getenv(envESBasicAuthPassword)
-
-	if username != "" || password != "" {
-		if username == "" || password == "" {
-			return nil, xerrors.Errorf(
-				"both %s and %s should be set when using basic auth",
-				envESBasicAuthUsername,
-				envESBasicAuthPassword,
-			)
-		}
-		reqFunc = func(ctx context.Context, method, url string, data io.Reader) (*http.Request, error) {
-			req, err := http.NewRequest(method, url, data)
-			if err != nil {
-				return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
-			}
-			req.SetBasicAuth(username, password)
-			req.Header.Set("Accept", compatibilityHeader)
-			if data != nil {
-				req.Header.Set("Content-Type", compatibilityHeader)
-			}
-			req = req.WithContext(ctx)
-			return req, nil
-		}
-	}
-	return reqFunc, nil
+	return f, nil
 }
 
 // Run starts the QueryHandler. It first attempts to get the "state"
