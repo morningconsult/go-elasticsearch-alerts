@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Build
+- bump dependency versions ([#145](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/145))
+
+
+<a name="v0.1.59"></a>
+## [v0.1.59] - 2025-05-30
+### Chore
+- Bump version and update changelog
+
 ### Refactor
 - reduce cognitive complexity ([#142](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/142))
 
@@ -607,7 +616,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.58...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.59...HEAD
+[v0.1.59]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.58...v0.1.59
 [v0.1.58]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.57...v0.1.58
 [v0.1.57]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.56...v0.1.57
 [v0.1.56]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.55...v0.1.56
