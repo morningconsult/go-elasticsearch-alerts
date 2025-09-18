@@ -35,7 +35,7 @@ import (
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
+	"github.com/morningconsult/go-elasticsearch-alerts/internal/lock"
 )
 
 const (

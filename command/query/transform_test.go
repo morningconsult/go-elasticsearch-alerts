@@ -484,7 +484,6 @@ func TestProcess(t *testing.T) {
 	logger := hclog.NewNullLogger()
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{
 				logger:     logger,

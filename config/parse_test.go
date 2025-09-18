@@ -122,7 +122,6 @@ func TestParseConfig_MainConfig(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Setenv(envConfigFile, tc.path)
 
@@ -545,7 +544,6 @@ func TestParseConfig_Rules(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Setenv(envRulesDir, tc.path)
 

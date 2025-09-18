@@ -33,7 +33,7 @@ import (
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils/lock"
+	"github.com/morningconsult/go-elasticsearch-alerts/internal/lock"
 )
 
 const (
@@ -138,7 +138,6 @@ func TestNewQueryHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := NewQueryHandler(tc.config)
 			if tc.err {
@@ -230,7 +229,6 @@ func TestPutTemplate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -373,7 +371,6 @@ func TestGetNextQuery(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -579,7 +576,6 @@ func TestSetNextQuery(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -637,7 +633,6 @@ func TestQuery(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := newTestServer(tc.status, tc.data)
 			defer ts.Close()
@@ -693,7 +688,6 @@ func TestNewRequestErrors(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			qh := &QueryHandler{newRequest: reqFunc}
 			_, err := qh.newRequest(t.Context(), tc.method, "http://example.com", bytes.NewBuffer(tc.payload))

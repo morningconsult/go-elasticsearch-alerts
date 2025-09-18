@@ -20,9 +20,9 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"golang.org/x/xerrors"
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
@@ -39,7 +39,7 @@ type AlertMethodConfig struct {
 // AlertMethod implements the alert.AlertMethod interface
 // for publishing new alerts to an AWS SNS topic.
 type AlertMethod struct {
-	client   *sns.SNS
+	client   *sns.Client
 	topicARN string
 	template *template.Template
 }
@@ -47,6 +47,8 @@ type AlertMethod struct {
 // NewAlertMethod creates a new *AlertMethod or a
 // non-nil error if there was an error.
 func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
+	ctx := context.TODO()
+
 	if config == nil {
 		return nil, xerrors.New("no config provided")
 	}
@@ -59,18 +61,22 @@ func NewAlertMethod(config *AlertMethodConfig) (alert.Method, error) {
 	if config.Template == "" {
 		return nil, xerrors.New("field 'output.config.template' must not be empty when using the SNS output method")
 	}
+
 	tmpl, err := template.New("sns").Funcs(sprig.FuncMap()).Parse(config.Template)
 	if err != nil {
 		return nil, xerrors.Errorf("error parsing SNS message template: %w", err)
 	}
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(config.Region),
-	})
+
+	cfg, err := awsconfig.LoadDefaultConfig(
+		ctx,
+		awsconfig.WithRegion(config.Region),
+	)
 	if err != nil {
 		return nil, xerrors.Errorf("error creating new SNS alert method: %w", err)
 	}
+
 	return &AlertMethod{
-		client:   sns.New(sess),
+		client:   sns.NewFromConfig(cfg),
 		topicARN: config.TopicARN,
 		template: tmpl,
 	}, nil
@@ -82,15 +88,18 @@ func (a *AlertMethod) Write(ctx context.Context, rule string, records []*alert.R
 	if len(records) < 1 {
 		return nil
 	}
+
 	msg, err := a.renderTemplate(rule, records)
 	if err != nil {
 		return err
 	}
+
 	input := &sns.PublishInput{
 		Message:  aws.String(msg),
 		TopicArn: aws.String(a.topicARN),
 	}
-	_, err = a.client.PublishWithContext(ctx, input)
+
+	_, err = a.client.Publish(ctx, input)
 	if err != nil {
 		return xerrors.Errorf("error publishing alert to SNS: %w", err)
 	}

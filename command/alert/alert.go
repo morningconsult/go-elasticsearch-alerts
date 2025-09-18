@@ -27,7 +27,7 @@ import (
 // field of a rule configuration file.
 type Field struct {
 	// Key is a concatenation of any 'key' fields match a filter.
-	// See github.com/morningconsult/go-elasticsearch-alerts/utils.GetAll()
+	// See github.com/morningconsult/go-elasticsearch-alerts/internal/jsonpath.GetAll()
 	// for more information on how this key is created
 	Key string `json:"key" mapstructure:"key"`
 

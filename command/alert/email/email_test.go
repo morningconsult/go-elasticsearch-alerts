@@ -77,7 +77,6 @@ func TestNewAlertMethod(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			switch tc.name {
 			case "password-set-in-env":

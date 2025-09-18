@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 
-package utils
+package jsonpath
 
 import (
 	"fmt"
@@ -121,7 +121,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			out := GetAll(tc.json, tc.path)
 			if !reflect.DeepEqual(out, tc.output) {

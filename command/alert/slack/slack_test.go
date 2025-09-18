@@ -59,7 +59,6 @@ func TestNewAlertMethod(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			a, err := NewAlertMethod(tc.config)
 			if tc.err {
@@ -195,7 +194,6 @@ func TestBuildPayload(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			payload := s.buildPayload(rule, tc.records)
 			if !reflect.DeepEqual(tc.expected.Attachments, payload.Attachments) {
@@ -270,7 +268,6 @@ func TestWrite(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ts := newMockSlackServer(tc.status)
 

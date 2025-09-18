@@ -5,6 +5,7 @@ issues:
 linters:
   enable:
     - bodyclose
+    - copyloopvar
     - errcheck
     - errchkjson
     - exptostd

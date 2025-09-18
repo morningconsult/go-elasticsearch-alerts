@@ -21,7 +21,7 @@ import (
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/config"
-	"github.com/morningconsult/go-elasticsearch-alerts/utils"
+	"github.com/morningconsult/go-elasticsearch-alerts/internal/jsonpath"
 )
 
 const hitsDelimiter = "\n----------------------------------------\n"
@@ -43,7 +43,7 @@ func (q *QueryHandler) process(
 
 	records := make([]*alert.Record, 0)
 	for _, filter := range q.filters {
-		elems := utils.GetAll(respData, filter)
+		elems := jsonpath.GetAll(respData, filter)
 		if len(elems) < 1 {
 			continue
 		}
@@ -66,7 +66,7 @@ func (q *QueryHandler) process(
 	}
 
 	// Get the body field
-	body := utils.GetAll(respData, q.bodyField)
+	body := jsonpath.GetAll(respData, q.bodyField)
 	if body == nil {
 		return records, nil, nil
 	}
