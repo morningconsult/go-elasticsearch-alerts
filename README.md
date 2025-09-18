@@ -16,10 +16,10 @@ You can download your preferred variant of the binary from the [releases page](h
 
 ### Using `go get`
 
-You can build the binary via `go get` with
+You can build the binary via `go install` with
 
 ```shell
-$ go get github.com/morningconsult/go-elasticsearch-alerts
+$ go install github.com/morningconsult/go-elasticsearch-alerts@latest
 ```
 
 ### Using Docker

@@ -49,7 +49,6 @@ func TestNewAlertMethod(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			a, err := NewAlertMethod(&AlertMethodConfig{
 				OutputFilepath: tc.filename,
@@ -93,7 +92,6 @@ func TestWrite(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			defer os.Remove(tc.filename)
 			f, err := NewAlertMethod(&AlertMethodConfig{

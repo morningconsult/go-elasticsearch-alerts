@@ -163,7 +163,6 @@ func TestAlertMethod_renderTemplate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			a := &AlertMethod{
 				template: template.Must(template.New("test").Funcs(sprig.FuncMap()).Parse(tc.template)),

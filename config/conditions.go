@@ -22,7 +22,7 @@ import (
 	"github.com/shopspring/decimal"
 	"golang.org/x/xerrors"
 
-	"github.com/morningconsult/go-elasticsearch-alerts/utils"
+	"github.com/morningconsult/go-elasticsearch-alerts/internal/jsonpath"
 )
 
 const (
@@ -171,7 +171,7 @@ func assertOperator(raw any, operator string) error {
 // ConditionsMet returns true if the response JSON meets the given conditions.
 func ConditionsMet(logger hclog.Logger, resp map[string]any, conditions []Condition) bool {
 	for _, condition := range conditions {
-		matches := utils.GetAll(resp, condition.field())
+		matches := jsonpath.GetAll(resp, condition.field())
 
 		res := false
 

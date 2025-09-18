@@ -11,9 +11,6 @@ updates:
   labels:
   - dependencies
   ignore:
-  - dependency-name: github.com/aws/aws-sdk-go
-    versions:
-    - "> 1.25.47"
   - dependency-name: github.com/google/go-cmp
     versions:
     - 0.5.4
