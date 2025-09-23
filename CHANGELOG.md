@@ -1,8 +1,14 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.60"></a>
+## [v0.1.60] - 2025-09-18
 ### Build
 - bump dependency versions ([#145](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/145))
+
+### Chore
+- Bump version and update changelog
 
 
 <a name="v0.1.59"></a>
@@ -616,7 +622,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.59...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.60...HEAD
+[v0.1.60]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.59...v0.1.60
 [v0.1.59]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.58...v0.1.59
 [v0.1.58]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.57...v0.1.58
 [v0.1.57]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.56...v0.1.57
