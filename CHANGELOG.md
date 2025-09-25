@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Build
+- bump aws-sdk-go-v2 version ([#150](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/150))
+
+
+<a name="v0.1.61"></a>
+## [v0.1.61] - 2025-09-23
+### Chore
+- Bump version and update changelog
+
 
 <a name="v0.1.60"></a>
 ## [v0.1.60] - 2025-09-18
@@ -622,7 +631,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.60...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.61...HEAD
+[v0.1.61]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.60...v0.1.61
 [v0.1.60]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.59...v0.1.60
 [v0.1.59]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.58...v0.1.59
 [v0.1.58]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.57...v0.1.58
