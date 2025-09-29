@@ -1,8 +1,17 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Ci
+- group dependencies into monthly PRs ([#155](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/155))
+
+
+<a name="v0.1.62"></a>
+## [v0.1.62] - 2025-09-25
 ### Build
 - bump aws-sdk-go-v2 version ([#150](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/150))
+
+### Chore
+- Bump version and update changelog
 
 
 <a name="v0.1.61"></a>
@@ -631,7 +640,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.61...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.62...HEAD
+[v0.1.62]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.61...v0.1.62
 [v0.1.61]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.60...v0.1.61
 [v0.1.60]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.59...v0.1.60
 [v0.1.59]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.58...v0.1.59
