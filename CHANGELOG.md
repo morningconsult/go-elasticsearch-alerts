@@ -1,6 +1,12 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.1.63"></a>
+## [v0.1.63] - 2025-09-29
+### Chore
+- Bump version and update changelog
+
 ### Ci
 - group dependencies into monthly PRs ([#155](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/155))
 
@@ -640,7 +646,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.62...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.63...HEAD
+[v0.1.63]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.62...v0.1.63
 [v0.1.62]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.61...v0.1.62
 [v0.1.61]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.60...v0.1.61
 [v0.1.60]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.59...v0.1.60
