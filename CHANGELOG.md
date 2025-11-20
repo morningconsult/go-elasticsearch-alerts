@@ -2,6 +2,12 @@
 ## [Unreleased]
 
 
+<a name="v0.1.66"></a>
+## [v0.1.66] - 2025-11-03
+### Chore
+- Bump version and update changelog
+
+
 <a name="v0.1.65"></a>
 ## [v0.1.65] - 2025-10-02
 ### Chore
@@ -658,7 +664,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.65...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.66...HEAD
+[v0.1.66]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.65...v0.1.66
 [v0.1.65]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.64...v0.1.65
 [v0.1.64]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.63...v0.1.64
 [v0.1.63]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.62...v0.1.63
