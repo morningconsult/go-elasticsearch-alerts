@@ -31,7 +31,7 @@ func GetAll(json map[string]any, path string) []any {
 func getall(i int, stack []string, elem any, keychain string) any { //nolint:gocyclo,gocognit
 	if i > len(stack)-1 {
 		if list, ok := elem.([]any); ok {
-			var mod []any
+			mod := make([]any, 0, len(list))
 			for _, e := range list {
 				mod = append(mod, addkey(e, keychain))
 			}
