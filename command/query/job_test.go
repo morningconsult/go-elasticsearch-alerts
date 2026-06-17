@@ -233,6 +233,11 @@ func TestPutTemplate(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
 				case "PUT", "POST":
+					contentType := r.Header.Get("Content-Type")
+					if contentType != "application/json" {
+						http.Error(w, fmt.Sprintf("unexpected Content-Type header value (got %q, expected %q)", contentType, "application/json"), http.StatusBadRequest)
+						return
+					}
 					if tc.status-200 > 3 {
 						http.Error(w, http.StatusText(tc.status), tc.status)
 						return
@@ -258,7 +263,7 @@ func TestPutTemplate(t *testing.T) {
 					http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 				}
 			}))
-			defer ts.Close()
+			t.Cleanup(ts.Close)
 
 			u := ts.URL
 			if tc.name == badURL {
