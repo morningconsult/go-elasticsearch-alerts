@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Feat
+- remove compatibility header ([#167](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/167))
+
+
+<a name="v0.1.74"></a>
+## [v0.1.74] - 2026-06-03
+### Chore
+- Bump version and update changelog
+
 
 <a name="v0.1.73"></a>
 ## [v0.1.73] - 2026-05-18
@@ -706,7 +715,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.73...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.74...HEAD
+[v0.1.74]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.73...v0.1.74
 [v0.1.73]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.72...v0.1.73
 [v0.1.72]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.71...v0.1.72
 [v0.1.71]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.70...v0.1.71
