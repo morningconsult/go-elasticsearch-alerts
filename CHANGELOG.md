@@ -1,8 +1,26 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Fix
+- need to set content type header ([#168](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/168))
+
+
+<a name="v0.1.75"></a>
+## [v0.1.75] - 2026-06-17
+### Chore
+- Bump version and update changelog
+
 ### Feat
 - remove compatibility header ([#167](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/167))
+
+### BREAKING CHANGE
+
+When running against Elasticsearch 9, you can only set
+the compatibility header to ES 8, not 7. To avoid having
+to set this within the application and update it for different
+target Elastsicsearch clusters, this PR removes the header
+entirely. It is up to the user to apply this header using a
+proxy or other means within their network setup.
 
 
 <a name="v0.1.74"></a>
@@ -715,7 +733,8 @@
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.74...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.75...HEAD
+[v0.1.75]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.74...v0.1.75
 [v0.1.74]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.73...v0.1.74
 [v0.1.73]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.72...v0.1.73
 [v0.1.72]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.71...v0.1.72
