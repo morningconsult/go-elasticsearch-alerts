@@ -23,16 +23,19 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	cleanhttp "github.com/hashicorp/go-cleanhttp"
-	hclog "github.com/hashicorp/go-hclog"
-	uuid "github.com/hashicorp/go-uuid"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
+	"github.com/hashicorp/go-cleanhttp"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-uuid"
 
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert"
 	"github.com/morningconsult/go-elasticsearch-alerts/command/alert/file"
+	"github.com/morningconsult/go-elasticsearch-alerts/config"
 	"github.com/morningconsult/go-elasticsearch-alerts/internal/lock"
 )
 
@@ -275,7 +278,7 @@ func TestPutTemplate(t *testing.T) {
 				newRequest: reqFunc,
 			}
 
-			err := qh.PutTemplate(t.Context())
+			err := qh.PutTemplate(t.Context(), nil)
 			if tc.err {
 				if err == nil {
 					t.Fatal("expected an error but didn't receive one")
@@ -286,6 +289,62 @@ func TestPutTemplate(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+func TestPutTemplate_WithILMPolicy(t *testing.T) {
+	t.Parallel()
+
+	reqFunc, err := buildHTTPRequestFunc()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedILMPolicyName := "my-ilm-policy"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if !strings.HasPrefix(r.URL.Path, "/_index_template") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		var indexTemplate types.IndexTemplate
+		if err := json.NewDecoder(r.Body).Decode(&indexTemplate); err != nil {
+			http.Error(w, "invalid template format: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ilmPolicyName := indexTemplate.Template.Settings.Index.Lifecycle.Name
+		if ilmPolicyName == nil {
+			http.Error(w, "missing ilm policy name", http.StatusBadRequest)
+			return
+		}
+
+		if *ilmPolicyName != expectedILMPolicyName {
+			http.Error(w, fmt.Sprintf("unexpected ILM policy name. got: %q, want %q", *ilmPolicyName, expectedILMPolicyName), http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"acknowledged": true}`))
+	}))
+	t.Cleanup(ts.Close)
+
+	qh := &QueryHandler{
+		client:     cleanhttp.DefaultClient(),
+		esURL:      ts.URL,
+		newRequest: reqFunc,
+	}
+
+	cfg := &config.StateTemplateConfig{
+		ILMPolicyName: expectedILMPolicyName,
+	}
+
+	if err := qh.PutTemplate(t.Context(), cfg); err != nil {
+		t.Fatal(err)
 	}
 }
 

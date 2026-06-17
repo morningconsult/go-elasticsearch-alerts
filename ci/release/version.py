@@ -27,7 +27,7 @@ def next_version(latest_tag, version, repo, branch='main'):
 
     new_feature = False
     for commit in repo.iter_commits(branch):
-        if 'BREAKING CHANGE' in commit.summary:
+        if '!:' in commit.summary or 'BREAKING CHANGE:' in commit.message:
             if pre_v1:
                 version = version.next_minor()
             else:

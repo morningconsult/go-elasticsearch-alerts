@@ -170,9 +170,20 @@ type ServerConfig struct {
 	ElasticsearchURL string `json:"url"`
 }
 
+// StateTemplateConfig represents the 'elasticsearch.state_template' field of the
+// main configuration file.
+type StateTemplateConfig struct {
+	// ILMPolicyName is the name of an Elasticsearch ILM policy to be applied to
+	// the state index settings. It must already exist in Elasticsearch
+	// and is not created by this application. It is optional.
+	ILMPolicyName string `json:"ilm_policy_name"`
+}
+
 // ESConfig represents the 'elasticsearch' field of the
 // main configuration file.
 type ESConfig struct {
+	StateTemplate *StateTemplateConfig `json:"state_template"`
+
 	// Server represents the 'elasticsearch.server' field
 	// of the main configuration file
 	Server *ServerConfig `json:"server"`

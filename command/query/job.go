@@ -26,10 +26,10 @@ import (
 	"sync"
 	"time"
 
-	cleanhttp "github.com/hashicorp/go-cleanhttp"
-	hclog "github.com/hashicorp/go-hclog"
-	multierror "github.com/hashicorp/go-multierror"
-	uuid "github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/go-cleanhttp"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-uuid"
 	"github.com/robfig/cron"
 	"golang.org/x/xerrors"
 
@@ -39,7 +39,7 @@ import (
 )
 
 const (
-	templateVersion        string = "0.0.2"
+	templateVersion        string = "0.0.3"
 	envESBasicAuthUsername string = "GO_ELASTICSEARCH_ALERTS_ES_USERNAME"
 	envESBasicAuthPassword string = "GO_ELASTICSEARCH_ALERTS_ES_PASSWORD"
 	defaultStateIndexAlias string = "go-es-alerts"
@@ -341,78 +341,94 @@ func (q *QueryHandler) Run( //nolint:gocyclo,gocognit
 // will serve as an alias for the state indices. The state indices
 // will be named 'go-es-alerts-status-{date}'; therefore, this template
 // enables searching all state indices via this alias.
-func (q *QueryHandler) PutTemplate(ctx context.Context) error {
-	payload := fmt.Sprintf(`{
-    "index_patterns": [
-      "%s-status-%s-*"
-    ],
-    "order": 0,
-    "aliases": {
-        %q: {}
-    },
-    "settings": {
-      "index": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1,
-        "auto_expand_replicas": "0-2",
-        "codec": "best_compression",
-        "translog": {
-          "flush_threshold_size": "752mb"
-        },
-        "sort": {
-          "field": [
-            "next_query",
-            "rule_name",
-            "hostname"
-          ],
-          "order": [
-            "desc",
-            "desc",
-            "desc"
-          ]
-        }
-      }
-    },
-    "mappings": {
-      "dynamic_templates": [
-        {
-          "strings_as_keywords": {
-            "match_mapping_type": "string",
-            "mapping": {
-              "type": "keyword"
-            }
-          }
-        }
-      ],
-      "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
-        "rule_name": {
-          "type": "keyword"
-        },
-        "next_query": {
-          "type": "date"
-        },
-        "hostname": {
-          "type": "keyword"
-        },
-        "hits_count": {
-          "type": "long",
-          "null_value": 0
-        },
-        "hits": {
-          "enabled": false
-        }
-      }
-    }
-  }`, defaultStateIndexAlias, templateVersion, q.TemplateName())
+func (q *QueryHandler) PutTemplate(ctx context.Context, stateIndexConfig *config.StateTemplateConfig) error {
+	var lifecycle map[string]string
+	if stateIndexConfig != nil && stateIndexConfig.ILMPolicyName != "" {
+		lifecycle = map[string]string{
+			"name": stateIndexConfig.ILMPolicyName,
+		}
+	}
+
+	template := map[string]any{
+		"priority": 100,
+		"index_patterns": []string{
+			fmt.Sprintf("%s-status-%s-*", defaultStateIndexAlias, templateVersion),
+		},
+		"template": map[string]any{
+			"aliases": map[string]any{
+				q.TemplateName(): map[string]any{},
+			},
+			"settings": map[string]any{
+				"index": map[string]any{
+					"number_of_shards":     1,
+					"number_of_replicas":   0,
+					"auto_expand_replicas": "0-1",
+					"codec":                "best_compression",
+					"refresh_interval":     "15s",
+					"translog": map[string]any{
+						"flush_threshold_size": "752mb",
+					},
+					"sort": map[string]any{
+						"field": []string{
+							"next_query",
+							"rule_name",
+							"hostname",
+						},
+						"order": []string{
+							"desc",
+							"desc",
+							"desc",
+						},
+					},
+					"lifecycle": lifecycle,
+				},
+			},
+			"mappings": map[string]any{
+				"dynamic_templates": []map[string]any{
+					{
+						"strings_as_keywords": map[string]any{
+							"match_mapping_type": "string",
+							"mapping": map[string]any{
+								"type": "keyword",
+							},
+						},
+					},
+				},
+				"properties": map[string]any{
+					"@timestamp": map[string]any{
+						"type": "date",
+					},
+					"rule_name": map[string]any{
+						"type": "keyword",
+					},
+					"next_query": map[string]any{
+						"type": "date",
+					},
+					"hostname": map[string]any{
+						"type": "keyword",
+					},
+					"hits_count": map[string]any{
+						"type":       "long",
+						"null_value": 0,
+					},
+					"hits": map[string]any{
+						"enabled": false,
+					},
+				},
+			},
+		},
+	}
+
+	var payload bytes.Buffer
+	if err := json.NewEncoder(&payload).Encode(template); err != nil {
+		return xerrors.Errorf("encoding index template: %w", err)
+	}
 
 	resp, err := q.makeRequest(
 		ctx,
 		http.MethodPut,
-		fmt.Sprintf("%s/_template/%s", q.esURL, q.TemplateName()),
-		bytes.NewBufferString(payload),
+		fmt.Sprintf("%s/_index_template/%s", q.esURL, q.TemplateName()),
+		&payload,
 	)
 	if err != nil {
 		return xerrors.Errorf("error making HTTP request: %v", err)

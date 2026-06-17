@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/elastic/go-elasticsearch/v9 v9.4.1
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/consul/api v1.34.3
 	github.com/hashicorp/go-cleanhttp v0.5.2
