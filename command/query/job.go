@@ -219,6 +219,9 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 		if err != nil {
 			return nil, xerrors.Errorf("error creating new HTTP request instance: %v", err)
 		}
+		if data != nil {
+			req.Header.Set("Content-Type", "application/json")
+		}
 		if username != "" {
 			req.SetBasicAuth(username, password)
 		}
