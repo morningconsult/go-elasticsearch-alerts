@@ -202,10 +202,6 @@ func validateConfig(config *QueryHandlerConfig) error {
 	return allErrors.ErrorOrNil()
 }
 
-// compatibilityHeader is the header to enable REST API compatibility.
-// https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-api-compatibility.html
-const compatibilityHeader = "application/vnd.elasticsearch+json;compatible-with=7"
-
 func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*http.Request, error), error) {
 	username := os.Getenv(envESBasicAuthUsername)
 	password := os.Getenv(envESBasicAuthPassword)
@@ -225,10 +221,6 @@ func buildHTTPRequestFunc() (func(context.Context, string, string, io.Reader) (*
 		}
 		if username != "" {
 			req.SetBasicAuth(username, password)
-		}
-		req.Header.Set("Accept", compatibilityHeader)
-		if data != nil {
-			req.Header.Set("Content-Type", compatibilityHeader)
 		}
 		return req, nil
 	}
