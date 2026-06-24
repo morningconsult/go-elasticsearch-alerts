@@ -78,7 +78,7 @@ func Run() int { //nolint:gocyclo,gocognit
 	}
 
 	qh := controller.queryHandlers[0]
-	err = qh.PutTemplate(ctx)
+	err = qh.PutTemplate(ctx, cfg.Elasticsearch.StateTemplate)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error creating template %q", qh.StateAliasURL()), "error", err)
 	} else {

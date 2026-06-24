@@ -33,6 +33,9 @@ func TestParseConfig_MainConfig(t *testing.T) {
 			"testdata/config.json",
 			`{
   "elasticsearch": {
+    "state_template": {
+      "ilm_policy_name": "foobar"
+    },
     "server": {
       "url": "http://127.0.0.1:9200"
     }
