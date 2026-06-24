@@ -1,6 +1,15 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Feat
+- update templates to composable ([#169](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/169))
+
+
+<a name="v0.1.76"></a>
+## [v0.1.76] - 2026-06-17
+### Chore
+- Bump version and update changelog
+
 ### Fix
 - need to set content type header ([#168](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/168))
 
@@ -733,7 +742,8 @@ proxy or other means within their network setup.
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.75...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.76...HEAD
+[v0.1.76]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.75...v0.1.76
 [v0.1.75]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.74...v0.1.75
 [v0.1.74]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.73...v0.1.74
 [v0.1.73]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.72...v0.1.73
