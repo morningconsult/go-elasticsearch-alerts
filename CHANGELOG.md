@@ -1,8 +1,18 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.2.0"></a>
+## [v0.2.0] - 2026-06-24
+### Chore
+- Bump version and update changelog
+
 ### Feat
 - update templates to composable ([#169](https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/issues/169))
+
+### BREAKING CHANGE
+
+This changes the templates to the not use the legacy format.
 
 
 <a name="v0.1.76"></a>
@@ -742,7 +752,8 @@ proxy or other means within their network setup.
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.76...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.2.0...HEAD
+[v0.2.0]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.76...v0.2.0
 [v0.1.76]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.75...v0.1.76
 [v0.1.75]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.74...v0.1.75
 [v0.1.74]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.73...v0.1.74
