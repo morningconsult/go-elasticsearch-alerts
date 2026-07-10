@@ -2,6 +2,12 @@
 ## [Unreleased]
 
 
+<a name="v0.2.1"></a>
+## [v0.2.1] - 2026-07-06
+### Chore
+- Bump version and update changelog
+
+
 <a name="v0.2.0"></a>
 ## [v0.2.0] - 2026-06-24
 ### Chore
@@ -752,7 +758,8 @@ proxy or other means within their network setup.
 - Checked deps into vendoring
 
 
-[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.2.0...HEAD
+[Unreleased]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.2.1...HEAD
+[v0.2.1]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.76...v0.2.0
 [v0.1.76]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.75...v0.1.76
 [v0.1.75]: https://gitlab.morningconsult.com/mci/go-elasticsearch-alerts/compare/v0.1.74...v0.1.75
